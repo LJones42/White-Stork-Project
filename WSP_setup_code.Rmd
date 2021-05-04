@@ -36,8 +36,9 @@ lapply(vis, require, character.only = TRUE)
 setwd("~/Documents/White-Stork-Project")
 
 # Load in the data
-all_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
-View(all_data)
+original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
+all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
+
 ```
 
 ## R Markdown for White Stork Project code
@@ -46,19 +47,34 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 Below are some data cleaning/wrangling code
 
-```{r cleaning}
-# Interview info and consent
-full_clean <- full_data[which(full_data$Paired == "Yes"),]
+```{r data cleaning}
+
+# Visualise the data
+head(all_data)
+
+# Creating two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
+proact_data <- all_data[which(all_data$SurveyType == "Proactive"),]
+natrep_data <- all_data[which(all_data$SurveyType == "NatRep"),]
 
 
 ```
 
-## Including Plots
+# Exploring participant demographics, including some plots
 
-You can also embed plots, for example:
+
+```{r demographics}
+
+
+```
 
 ```{r pressure, echo=FALSE}
 plot(pressure)
 ```
+
+
+
+
+
+
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
