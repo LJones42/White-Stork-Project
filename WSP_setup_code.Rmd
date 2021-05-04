@@ -2,8 +2,9 @@
 title: "WSP setup code"
 author: "Lizzie Jones"
 date: "02/05/2021"
-output: rmarkdown::github_document
+output: html_notebook
 ---
+
 
 ```{r setup/packages, include=FALSE, echo=FALSE}
 # Assuming all packages are installed. If not use 'install.packages' e.g. install.packages("likert")
@@ -29,7 +30,7 @@ lapply(stats, require, character.only = TRUE)
 
 # Favourite data visualisation packages
 vis <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly",
-            "RColorBrewer", "sjPlot")
+            "RColorBrewer", "sjPlot", "ggrepel")
 lapply(vis, require, character.only = TRUE) 
 
 # Load in working  directory and datasets
@@ -39,42 +40,174 @@ setwd("~/Documents/White-Stork-Project")
 original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
 all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
 
-```
-
-## R Markdown for White Stork Project code
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. To generate the document of all content, click the **Knit** button. To change the output (e.g. PDF, HTML) change the 'output' at the top.
-
-Below are some data cleaning/wrangling code
-
-```{r data cleaning}
-
-# Visualise the data
-head(all_data)
-
-# Creating two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
+# Two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
 proact_data <- all_data[which(all_data$SurveyType == "Proactive"),]
 natrep_data <- all_data[which(all_data$SurveyType == "NatRep"),]
 
 
-```
-
-# Exploring participant demographics, including some plots
-
-
-```{r demographics}
-
 
 ```
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+WSP Exploratory analysis
+====================
+
+## About R Markdowns
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. To generate the document of all content, click the **Knit** button. To change the output (e.g. PDF, HTML) change the 'output' at the top to any of the outputs listerd here: https://rmarkdown.rstudio.com/lesson-9.html.
+
+
+
+
+## Exploring participant demographics
+
+The distribution of gender and education is explored and compared between samples using stacked bar plots.
+
+```{r demographics, include=FALSE, warning=FALSE}
+# Create seperate dataframe for all demographics
+all_demo <- all_data %>% select(SurveyType, Age_group, Gender, Education, Education_other,
+                                Occupation, Occupation_other, Region, Area_type, Postcode, ReleaseSite)
+
+# Explore gender percentages across both surveys
+all_demo %>%
+        plyr::summarise(pct.males = sum(all_demo$Gender == 'Male') / length(all_demo$Gender) * 100,
+                        pct.female = sum(all_demo$Gender == 'Female') / length(all_demo$Gender) * 100,
+                        pct.no_answer = sum(all_demo$Gender == 'Prefer not to answer') / length(all_demo$Gender) * 100,
+                        pct.self_desc = sum(all_demo$Gender == 'Prefer to self-describe') / length(all_demo$Gender) * 100)
+
+# Stacked barplot of gender per survey
+all_gender_df<- all_demo  %>%
+  group_by(SurveyType, Gender) %>%
+  summarise(counts = n()) %>%
+  mutate(Percentage = round(counts/sum(counts)*100, 2))
+
+gender_bar <- ggplot(all_gender_df, aes(x = SurveyType, y = Percentage, fill = Gender)) +
+  geom_col(position = position_stack(reverse = TRUE)) +
+  geom_text(aes(label = paste0(Percentage, "%")),
+            position = position_stack(vjust = 0.5, reverse = TRUE)) +
+  scale_fill_brewer(palette = "Pastel1") +
+  theme_minimal(base_size = 12) + xlab("Sample")
+
+
+## Education
+# Calulate percentages
+all_demo %>%
+        plyr::summarise(pct.furthered = sum(all_demo$Education == 'Further Education') / length(all_demo$Education) * 100,
+                        pct.postgrad = sum(all_demo$Education == 'Postgraduate degree (Masters; Doctorate)') / length(all_demo$Education) * 100,
+                        pct.undergrad = sum(all_demo$Education == 'Undergraduate degree') / length(all_demo$Education) * 100,
+                        pct.secondary = sum(all_demo$Education == 'Secondary school (GCSEs, A Levels or equivalent)') / length(all_demo$Education) * 100,
+                        pct.no_formal = sum(all_demo$Education == 'No formal qualifications') / length(all_demo$Education) * 100,
+                        pct.other = sum(all_demo$Education == 'Other') / length(all_demo$Education) * 100,
+                        pct.not_answer = sum(all_demo$Education == 'Prefer not to answer') / length(all_demo$Education) * 100)
+
+# Stacked barplot of gender per survey
+all_education_df<- all_demo  %>%
+  group_by(SurveyType, Education) %>%
+  summarise(counts = n()) %>%
+  mutate(Percentage = round(counts/sum(counts)*100, 2))
+
+levels(all_education_df$Education)[levels(all_education_df$Education)=="Secondary school (GCSEs, A Levels or equivalent)"] <- "Secondary school"
+levels(all_education_df$Education)[levels(all_education_df$Education)=="Postgraduate degree (Masters; Doctorate)"] <- "Postgraduate degree"
+
+education_bar <- ggplot(all_education_df, aes(x = SurveyType, y = Percentage,
+         fill = factor(Education, levels=c("Postgraduate degree",
+         "Undergraduate degree","Further Education","Secondary school",
+         "No formal qualifications", "Prefer not to answer", "Other")))) +
+  geom_col(position = position_stack(reverse = TRUE)) +
+  geom_text(aes(label = paste0(Percentage, "%")),
+            position = position_stack(vjust = 0.5, reverse = TRUE)) + # geom_text_repel
+  scale_fill_brewer(palette = "Pastel1") + labs(fill = "Education", x = "Sample") +
+  theme_minimal(base_size = 12)
+
+
+
+## Occupation
+# Create percentages
+all_occupation_df <- all_demo  %>%
+  group_by(SurveyType, Occupation) %>%
+  summarise(counts = n()) %>%
+  mutate(Percentage = round(counts/sum(counts)*100, 2)) # Too many levels for bar plot - see table below
+
+```
+
+```{r demographics- stacked plots, echo=FALSE, warning=FALSE}
+
+ggarrange(gender_bar, education_bar, ncol=1, nrow=2)
+
+```
+
+### Participant demographics table
+
+The table below (created using the package "table1") outlines the demographic characteriscs of each of the two samples, and the overall demographics of all participants across both samples. For each demographic variable the tables provides a breakdown of the number of participants within each level/group and the percentage.
+
+
+
+```{r demographics tables, echo=FALSE}
+# Demographics table for publication
+library("table1")
+both_demo <- as.data.frame(all_demo)
+both_demo_data <- lapply(both_demo, function(x) x[sample(c(TRUE, NA),
+                                                         prob = c(0.99999, 0.00001),size = length(x), replace = TRUE)])
+# Reanme variables
+levels(both_demo$SurveyType)[levels(both_demo$SurveyType)=="NatRep"] <- "Nationally rep."
+levels(both_demo$Education)[levels(both_demo$Education)=="Secondary school (GCSEs, A Levels or equivalent)"] <- "Secondary school"
+levels(both_demo$Education)[levels(both_demo$Education)=="Postgraduate degree (Masters; Doctorate)"] <- "Postgraduate degree"
+# Reorder education factor
+both_demo$Education <- factor(both_demo$Education, levels=c("Postgraduate degree",
+         "Undergraduate degree","Further Education","Secondary school",
+         "No formal qualifications", "Prefer not to answer", "Other"))
+# Format table
+table1::label(both_demo$Age_group) <- "Age group"
+table1::label(both_demo$Area_type) <- "Area type"
+table1::label(both_demo$ReleaseSite) <- "Release site"
+# Create demo table
+full_demo_table <- table1::table1(~Age_group + Gender + Education + Occupation + Region + Area_type + 
+                                    ReleaseSite | SurveyType, data = both_demo)
+full_demo_table
+
 ```
 
 
+```{r mapping postcodes, echo=FALSE}
+
+library(ggplot2)
+library(rgdal)
+library(maptools)
+if (!require(gpclib)) install.packages("gpclib", type="source")
+library(gpclib)
+gpclibPermit()  # Gives maptool permisssion to use gpclib
+
+# Download UK postcode polygon Shapefile
+download.file(
+  "http://www.opendoorlogistics.com/wp-content/uploads/Data/UK-postcode-boundaries-Jan-2015.zip",
+  "postal_shapefile"
+)
+unzip("postal_shapefile")
+
+# Read the downloaded Shapefile from disk
+postal <- maptools::readShapeSpatial("./Distribution/Areas")
+
+# Assign each "region" an unique id
+postal.count <- nrow(postal@data)
+postal@data$id <- 1:postal.count
+
+# Transform SpatialPolygonsDataFrame to regular data.frame in ggplot format
+postal.fort <- ggplot2::fortify(postal, region='id')
+
+# Generate random data for each postal area
+some_area_codes <- c("AB","AL","B","BA","BB","BD","BH","BL","BN","BR","BS","CA","CB","CF","CH","CM","CO","CR","CT","CV","CW","DA","DD","DE","DG","DH","DL","DN","DT","DY","E","EC","EH","EN","EX","FK","FY","G","GL","GU","HA","HD","HG","HP","HR","HS","HU","HX","IG","IP","IV","KA","KT","KW","KY","L","LA","LD","LE","LL","LN","LS","LU","M","ME","MK","ML","N","NE","NG","NN","NP","NR","NW","OL","OX","PA","PE","PH","PL","PO","PR","RG","RH","RM","S","SA","SE","SG","SK","SL","SM","SN","SO","SP","SR","SS","ST","SW","SY","TA","TD","TF","TN","TQ","TR","TS","TW","UB","W","WA","WC","WD","WF","WN","WR","WS","WV","YO","ZE","BT","GY","IM","JE")
+df <- data.frame(postal_area_code=some_area_codes, freq=sample.int(100, length(some_area_codes), replace=TRUE))
+
+# Add "region" id to frequency data
+df <- merge(df, postal@data, by.x="postal_area_code", by.y="name")
+
+# Merge frequency data onto geogrphical postal polygons
+postal.fort <- merge(postal.fort,  df, by="id", all.x=T, all.y=F)
+postal.fort <- postal.fort[order(postal.fort$order),] # Reordering since ggplot expect data.fram in same order as "order" column
+
+ggplot(postal.fort) + 
+  geom_polygon(aes(x = long, y = lat, group = group, fill=freq), colour='white') + 
+  coord_fixed()
+
+```
 
 
-
-
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
