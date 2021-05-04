@@ -5,18 +5,52 @@ date: "02/05/2021"
 output: rmarkdown::github_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup/packages, include=FALSE, echo=FALSE}
+# Assuming all packages are installed. If not use 'install.packages' e.g. install.packages("likert")
+# Key packages for data wrangling
+wrangling <- c("dplyr","tidyverse","purr","magrittr",
+             "data.table","plyr","tidyr","tibble","reshape2")
+lapply(wrangling, require, character.only = TRUE) 
+
+# Useful survey analysis packages
+survey <- c("likert","careless")
+lapply(survey, require, character.only = TRUE) 
+
+# Useful packages for statistics
+stats <- c("stats","ggpubr","lme4","MASS","car","psych",
+                   "MuMIn","glmmTMB","nlme","DHARMa")
+lapply(stats, require, character.only = TRUE) 
+
+# Useful packages for text analysis
+# text <- c("tm","tau","koRpus","lexicon","sylly","textir",
+#          "textmineR","MediaNews", "lsa","SemNeT","ngram","ngramrr",
+#          "corpustools","udpipe","textstem", "tidytext","text2vec")
+# lapply(text, require, character.only = TRUE) 
+
+# Favourite data visualisation packages
+vis <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly",
+            "RColorBrewer", "sjPlot")
+lapply(vis, require, character.only = TRUE) 
+
+# Load in working  directory and datasets
+setwd("~/Documents/White-Stork-Project")
+
+# Load in the data
+all_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
+View(all_data)
 ```
 
-## R Markdown
+## R Markdown for White Stork Project code
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. To generate the document of all content, click the **Knit** button. To change the output (e.g. PDF, HTML) change the 'output' at the top.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Below are some data cleaning/wrangling code
 
-```{r cars}
-summary(cars)
+```{r cleaning}
+# Interview info and consent
+full_clean <- full_data[which(full_data$Paired == "Yes"),]
+
+
 ```
 
 ## Including Plots
