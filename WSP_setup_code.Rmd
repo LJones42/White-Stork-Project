@@ -1,13 +1,20 @@
 ---
-title: "WSP setup code"
-author: "Lizzie Jones"
+title: "WSP setup and demographics code"
+author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
 date: "02/05/2021"
-output: html_notebook
+output:
+  word_document: default
+  pdf_document:
+    number_sections: yes
+  html_document:
+    number_sections: yes
 ---
 
 
-```{r setup/packages, include=FALSE, echo=FALSE}
-# Assuming all packages are installed. If not use 'install.packages' e.g. install.packages("likert")
+```{r setup/packages, include=FALSE, warning=FALSE}
+
+# This code assumes that all packages are installed. If not, use 'install.packages' e.g. install.packages("likert")
+
 # Key packages for data wrangling
 wrangling <- c("dplyr","tidyverse","purr","magrittr",
              "data.table","plyr","tidyr","tibble","reshape2")
@@ -29,9 +36,13 @@ lapply(stats, require, character.only = TRUE)
 # lapply(text, require, character.only = TRUE) 
 
 # Favourite data visualisation packages
-vis <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly",
-            "RColorBrewer", "sjPlot", "ggrepel")
-lapply(vis, require, character.only = TRUE) 
+vismap <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly",
+            "RColorBrewer", "sjPlot", "ggrepel", "rgdal", "maptools", "gpclib")
+lapply(vismap, require, character.only = TRUE) 
+gpclibPermit()  # Gives maptool permission to use gpclib
+
+```
+```{r working directories and data upload, include=FALSE}
 
 # Load in working  directory and datasets
 setwd("~/Documents/White-Stork-Project")
@@ -44,25 +55,78 @@ all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFacto
 proact_data <- all_data[which(all_data$SurveyType == "Proactive"),]
 natrep_data <- all_data[which(all_data$SurveyType == "NatRep"),]
 
+```
+
+
+
+```{r create column groups for wrangling, include=FALSE}
+# Assuming all packages are installed. If not use 'install.packages' e.g. install.packages("likert")
 
 
 ```
 
-WSP Exploratory analysis
+WSP - Initial data exploration
 ====================
 
-## About R Markdowns
+#### About R Markdowns
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. To generate the document of all content, click the **Knit** button. To change the output (e.g. PDF, HTML) change the 'output' at the top to any of the outputs listerd here: https://rmarkdown.rstudio.com/lesson-9.html.
 
+## Data cleaning
 
+First I am going to go through some data cleaning and outline any participants or data points that are removed and explain why. I am using the 'careless' pakage first to find evidence of straightlining and 
+
+
+```{r data cleaning, warning=FALSE, messages=FALSE}
+# Average time taken to 
+# Percentiles of time 
+
+
+
+
+
+
+##### Data cleaning using the 'Careless' package
+
+# Calculates the even-odd consistency score
+careless_all <- evenodd(all_data, rep(5,10))
+careless_alldiag <- evenodd(all_data, rep(5,10), diag = TRUE)
+
+# Calculates the intra-individual response variability (IRV)
+# calculate the irv over all items
+irv_total <- irv(all_data)
+boxplot(irv_total, main="Intra-individual response variability (IRV)")
+#calculate the irv over all items + calculate the irv for each quarter of the questionnaire
+irv_split <- irv(all_data, split = TRUE, num.split = 4)
+# boxplot(irv_split$irv4) #produce a boxplot of the IRV for the fourth quarter
+
+# Identifies the longest string of identical consecutive responses for each observation
+careless_long <- longstring(all_data, avg = FALSE)
+careless_avg <- longstring(all_data, avg = TRUE)
+boxplot(careless_avg$longstr, main="Number of columns in participant longstring") #produce a boxplot of the longstring index
+boxplot(careless_avg$avgstr, main="Average longstring index")
+
+# Straightlining in relation to time taken
+
+
+
+# Find and graph Mahalanobis Distance (D) and flag potential outliers
+## Need to select only numeric/integer columns
+# mahad_raw <- mahad(all_data) #only the distances themselves
+# mahad_flags <- mahad(all_data, flag = TRUE) #additionally flag outliers
+# mahad_flags <- mahad(all_data, flag = TRUE, confidence = 0.999) #Apply a strict criterion
+
+```
+
+
+\newpage
 
 
 ## Exploring participant demographics
 
 The distribution of gender and education is explored and compared between samples using stacked bar plots.
 
-```{r demographics, include=FALSE, warning=FALSE}
+```{r demographics, echo=FALSE, warning=FALSE, message=FALSE}
 # Create seperate dataframe for all demographics
 all_demo <- all_data %>% select(SurveyType, Age_group, Gender, Education, Education_other,
                                 Occupation, Occupation_other, Region, Area_type, Postcode, ReleaseSite)
@@ -129,11 +193,15 @@ all_occupation_df <- all_demo  %>%
 
 ```
 
-```{r demographics- stacked plots, echo=FALSE, warning=FALSE}
+```{r demographics - stacked plots, echo=FALSE, message=FALSE, warning=FALSE}
 
 ggarrange(gender_bar, education_bar, ncol=1, nrow=2)
 
 ```
+
+
+\newpage
+
 
 ### Participant demographics table
 
@@ -141,7 +209,7 @@ The table below (created using the package "table1") outlines the demographic ch
 
 
 
-```{r demographics tables, echo=FALSE}
+```{r demographics table,echo=FALSE, message=FALSE, warning=FALSE}
 # Demographics table for publication
 library("table1")
 both_demo <- as.data.frame(all_demo)
@@ -162,25 +230,20 @@ table1::label(both_demo$ReleaseSite) <- "Release site"
 # Create demo table
 full_demo_table <- table1::table1(~Age_group + Gender + Education + Occupation + Region + Area_type + 
                                     ReleaseSite | SurveyType, data = both_demo)
+
 full_demo_table
 
 ```
 
 
-```{r mapping postcodes, echo=FALSE}
 
-library(ggplot2)
-library(rgdal)
-library(maptools)
-if (!require(gpclib)) install.packages("gpclib", type="source")
-library(gpclib)
-gpclibPermit()  # Gives maptool permisssion to use gpclib
+```{r mapping postcodes, include=FALSE}
 
 # Download UK postcode polygon Shapefile
-download.file(
-  "http://www.opendoorlogistics.com/wp-content/uploads/Data/UK-postcode-boundaries-Jan-2015.zip",
-  "postal_shapefile"
-)
+# download.file(
+#   "http://www.opendoorlogistics.com/wp-content/uploads/Data/UK-postcode-boundaries-Jan-2015.zip",
+#   "postal_shapefile"
+# )
 unzip("postal_shapefile")
 
 # Read the downloaded Shapefile from disk
@@ -193,20 +256,52 @@ postal@data$id <- 1:postal.count
 # Transform SpatialPolygonsDataFrame to regular data.frame in ggplot format
 postal.fort <- ggplot2::fortify(postal, region='id')
 
-# Generate random data for each postal area
-some_area_codes <- c("AB","AL","B","BA","BB","BD","BH","BL","BN","BR","BS","CA","CB","CF","CH","CM","CO","CR","CT","CV","CW","DA","DD","DE","DG","DH","DL","DN","DT","DY","E","EC","EH","EN","EX","FK","FY","G","GL","GU","HA","HD","HG","HP","HR","HS","HU","HX","IG","IP","IV","KA","KT","KW","KY","L","LA","LD","LE","LL","LN","LS","LU","M","ME","MK","ML","N","NE","NG","NN","NP","NR","NW","OL","OX","PA","PE","PH","PL","PO","PR","RG","RH","RM","S","SA","SE","SG","SK","SL","SM","SN","SO","SP","SR","SS","ST","SW","SY","TA","TD","TF","TN","TQ","TR","TS","TW","UB","W","WA","WC","WD","WF","WN","WR","WS","WV","YO","ZE","BT","GY","IM","JE")
-df <- data.frame(postal_area_code=some_area_codes, freq=sample.int(100, length(some_area_codes), replace=TRUE))
+# Extract first two digits of postcode and make uppercase
+all_demo$postal_area_code = toupper(substr(all_data$Postcode, 1, 2))
+all_demo$postal_area_code <- gsub('[0-9]+', '', all_demo$postal_area_code)
+
+df <- all_demo %>%
+  dplyr::select(postal_area_code) %>% 
+  group_by(postal_area_code) %>%
+  summarise(freq = n())
 
 # Add "region" id to frequency data
 df <- merge(df, postal@data, by.x="postal_area_code", by.y="name")
-
 # Merge frequency data onto geogrphical postal polygons
 postal.fort <- merge(postal.fort,  df, by="id", all.x=T, all.y=F)
 postal.fort <- postal.fort[order(postal.fort$order),] # Reordering since ggplot expect data.fram in same order as "order" column
 
+########################################
+# Read the downloaded Shapefile from disk
+postcode_outcodes <- read_csv("Distribution/postcode-outcodes.csv") # linking into a folder within working directory
+View(postcode_outcodes)
+
+
+
+
+```
+
+\newpage
+
+### Participant postcode mapping 
+
+Map so far of participant postcode (first 1 or 2 alphabetical digits, e.g. SW or N)
+
+
+
+
+
+```{r postcode map, fig.cap = "Participant postcode mapping",fig.dim = c(10, 7), message=FALSE, echo=FALSE, warning=FALSE}
+
+# Create a postcode map
 ggplot(postal.fort) + 
   geom_polygon(aes(x = long, y = lat, group = group, fill=freq), colour='white') + 
+  scale_fill_gradient2(low = "darkgreen", mid = "yellow", high = "red", midpoint = 250) +
+  labs(fill = "Participant frequency", x = "Longitude", y = "Latitude") +
+  
   coord_fixed()
+
+
 
 ```
 
