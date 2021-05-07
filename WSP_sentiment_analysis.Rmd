@@ -1,0 +1,139 @@
+---
+title: "WSP_Sentiment_Analysis"
+author: "Lizzie Jones"
+date: "05/05/2021"
+output: html_document
+---
+
+```{r setup/packages, include=FALSE, echo=FALSE}
+# Assuming all packages are installed. If not use 'install.packages' e.g. install.packages("likert")
+# Key packages for data wrangling
+wrangling <- c("dplyr","tidyverse","purr","magrittr",
+             "data.table","plyr","tidyr","tibble","reshape2")
+lapply(wrangling, require, character.only = TRUE) 
+
+# Useful survey analysis packages
+survey <- c("likert","careless")
+lapply(survey, require, character.only = TRUE) 
+
+# Useful packages for statistics
+stats <- c("stats","ggpubr","lme4","MASS","car","psych",
+                   "MuMIn","glmmTMB","nlme","DHARMa")
+lapply(stats, require, character.only = TRUE) 
+
+# Useful packages for text analysis
+text <- c("tm","koRpus","textstem", "tidytext","text2vec","lexicon","SentimentAnalysis","SnowballC",
+          "qdap", "wordcloud") # "textmineR","MediaNews","tau", "lsa","SemNeT","ngram","sylly","textir","ngramrr","corpustools","udpipe")
+lapply(text, require, character.only = TRUE)
+
+# Favourite data visualisation packages
+vis <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly",
+            "RColorBrewer", "sjPlot", "ggrepel")
+lapply(vis, require, character.only = TRUE) 
+
+
+
+# Load in working  directory and datasets
+setwd("~/Documents/White-Stork-Project")
+
+# Load in the data
+original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
+all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
+
+# Two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
+proact_data <- all_data[which(all_data$SurveyType == "Proactive"),]
+natrep_data <- all_data[which(all_data$SurveyType == "NatRep"),]
+
+```
+
+## R Markdown - WSP Sentiment Analysis
+
+
+```{r text cleaning}
+
+# View column names
+colnames(all_data)
+
+# Remind myself of the key open ended questions and their columns names
+# Reasons for support/not support WSP
+summary(all_data$Q15_WSP_support_open)
+# View on management of WS
+summary(all_data$Q16_views_management_open)
+
+
+# Words used to describe WS - will probably combine into one column, labelled by Respondent ID and SurveyType
+# Need to clean, capitalise first letter etc
+summary(all_data$Q11_word1)
+summary(all_data$Q11_word2)
+summary(all_data$Q11_word3)
+# Create words df
+words_df <- all_data %>%
+  dplyr::select(UniqueID_short, SurveyType, Q11_word1, Q11_word2, Q11_word3) %>% 
+  pivot_longer(
+   cols = starts_with("Q11_"),
+   names_to = "Word_num",
+   values_to = "Words",
+   values_drop_na = TRUE
+ )
+
+```
+
+```{r create Corpus and wordcloud}
+
+# Practicing using Q11 (words to describe WSP)
+
+#Clean text
+head(words_df)
+words_df$Words <- gsub("[^[:graph:]]", " ", words_df$Words) #get rid of non graphical characters
+words_df$Words <- gsub("rt", "", words_df$Words)# Replace blank space ("rt")
+words_df$Words <- gsub("[[:punct:]]", "", words_df$Words)# Remove punctuation
+words_df$Words <- gsub("[ |\t]{2,}", "", words_df$Words)# Remove tabs
+words_df$Words <- gsub("^ ", "", words_df$Words)# Remove blank spaces at the beginning
+words_df$Words <- gsub(" $", "", words_df$Words)# Remove blank spaces at the end
+words_df$Words <- tolower(words_df$Words)#convert all text to lower case
+
+Corpus_words <- Corpus(VectorSource(words_df$Words))
+Corpus_words <- tm_map(Corpus_words, removeNumbers)
+Corpus_words <- tm_map(Corpus_words, removeWords, stopwords("english")) #removes common english stopwords
+# Corpus_words <- tm_map(Corpus_words, removeWords, c("muffin"))  #You can specify words to remove
+Corpus_words <- tm_map(Corpus_words, PlainTextDocument)
+
+#build a term-document matrix
+TDM_words = TermDocumentMatrix(Corpus_words, control = list(minWordLength = 1))
+m = as.matrix(TDM_words)
+v = sort(rowSums(m), decreasing = TRUE)
+d = data.frame(word = names(v),freq=v)
+
+# Queueing up this text data for some analysis and visualizations. Here’s the basic stuff:
+# Create basic word cloud
+library(wordcloud)
+wordcloud(Corpus_words, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0.25, 
+          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
+
+```
+
+
+```{r Word frequency analysis}
+# Frequent word analysis
+# We can find the words that appear at least 50 times by calling the findFreqTerms() function on myTDM
+HiFreq_words <- findFreqTerms(TDM_words,100)
+HiFreq_words
+
+# Now you also see how associated a word is to another word or a list of words. Choose the association coefficient.
+# Compute associations for all high freq terms 
+findAssocs(TDM_words, HiFreq_words, 0.4)
+
+# Looks like only one term had an association of at least 40%
+
+# or, just compute word strength associations
+findAssocs(TDM_words, "learn", 0.5) # Looks like the word “long” and “legs” are very frequently associated (51% of the time)
+
+# Polarity / Sentiment Analysis
+# This is a quick and dirty version of sentiment analysis. There are lots more ways of doing this (see the QDAP package vignette). Here we take a cleaned character vector used earlier (i.e. words_df$Words) and compare its sentiment against a grouping variable.
+
+poldat_surveytype <- with(all_data, polarity(words_df$Words, all_data$SurveyType))
+plot(poldat)
+
+
+
+```
