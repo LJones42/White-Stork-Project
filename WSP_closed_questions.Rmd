@@ -20,25 +20,24 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 This rMarkdown document will be periodically updated and uploaded to the OneDrive folder and pushed to the WSP GitHub code repository. The primary format of this document is HTML, but this can be easily changed by changing the output (e.g. PDF, GitHub) using the 'output' section at the top of the document. The possible output formats are listed here: https://rmarkdown.rstudio.com/lesson-9.html.
 
-```{r setup/packages, include=FALSE, warning=FALSE}
+
+```{r setup/packages, include=FALSE}
 # This code assumes that all packages are installed. If not, use 'install.packages' e.g. install.packages("likert")
-# install.packages("hms")
+
 # Key packages for data wrangling
 wrangling <- c("dplyr","tidyverse","purr","magrittr","lubridate","hms",
              "data.table","plyr","tidyr","tibble","reshape2")
 lapply(wrangling, require, character.only = TRUE) 
+
 # Useful survey analysis packages
 survey <- c("likert","careless")
 lapply(survey, require, character.only = TRUE) 
+
 # Useful packages for statistics
 stats <- c("stats","ggpubr","lme4","MASS","car","psych",
                    "MuMIn","glmmTMB","nlme","DHARMa")
 lapply(stats, require, character.only = TRUE) 
-# Useful packages for text analysis
-# text <- c("tm","tau","koRpus","lexicon","sylly","textir",
-#          "textmineR","MediaNews", "lsa","SemNeT","ngram","ngramrr",
-#          "corpustools","udpipe","textstem", "tidytext","text2vec")
-# lapply(text, require, character.only = TRUE) 
+
 # Favourite data visualisation packages
 vismap <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly","rnaturalearth",
             "RColorBrewer", "sjPlot", "ggrepel", "rgdal", "maptools", "gpclib")
@@ -47,8 +46,7 @@ gpclibPermit()  # Gives maptool permission to use gpclib
 
 ```
 
-
-```{r working directories and data upload, include=FALSE}
+```{r setup and column groups, include=FALSE}
 # Load in working  directory and datasets
 setwd("~/Documents/White-Stork-Project")
 # Load in the data
@@ -64,6 +62,34 @@ proact_data <- final_data[which(final_data$SurveyType == "Proactive"),]
 natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
 
 
+### Grouping columns
+# Grouping Likert scale question columns by selecting Question numbers (and dropping scores or open questions)
+overall_score_colnames <- select(final_data, ends_with("overallscore"))
+
+Q4_knowledge_colnames <- select(final_data, starts_with("Q4"), -ends_with('score'))
+Q5_diet_colnames <- select(final_data, starts_with("Q5"))
+Q6_habitat_colnames <- select(final_data, starts_with("Q6"))
+Q8_nesting_colnames <- select(final_data, ends_with("nesting"))
+Q8_seen_colnames <- select(final_data, starts_with("Q8_"))
+
+# Source of information (current and preferred)
+Q10_cursource_colnames <- select(final_data, starts_with("Q10a"))
+Q10_prefsource_colnames <- select(final_data, starts_with("Q10b"))
+
+# Q12-14 = attitudes to white storks
+all_attitude_colnames <- select(final_data, starts_with("Q13"), starts_with("Q13"), starts_with("Q14"), -ends_with('score'))
+Q12_attitude_colnames <- select(final_data, starts_with("Q12"), -ends_with('score'))
+Q13_attitude_colnames <- select(final_data, starts_with("Q13"), -ends_with('score'))
+Q14_attitude_colnames <- select(final_data, starts_with("Q14"), -ends_with('score'))
+
+## Q15 = WSP support
+## Q16 = Views on current management
+Q17_management_colnames <- select(final_data, starts_with("Q17"), -ends_with('open'))
+Q18_exp_colnames <- select(final_data, starts_with("Q18_"), -ends_with('open')) # Frequency of
+Q19_NCI_colnames <- select(final_data, starts_with("Q19"), -ends_with('score')) # Q19 total score = NCI
+Q20_envconcern_colnames <- select(final_data, starts_with("Q20"), -ends_with('score')) # Q21 total score = Env.concern score
+Q21_ProCoBS_colnames <- select(final_data, starts_with("Q21"), -ends_with('score')) # Q21 total score = ProCoBS
+Q23_BIS_colnames <- select(final_data, starts_with("Q23"), -ends_with('score')) # Q23 total score = BirdInterestScore
 ```
 
 
