@@ -1,11 +1,11 @@
 ---
-title: "WSP_Sentiment_Analysis"
+title: "WSP_R_Text_Analysis"
 author: "Lizzie Jones"
 date: "05/05/2021"
 output: html_document
 ---
 
-```{r setup/packages, include=FALSE, echo=FALSE}
+```{r setup/packages, messages = FALSE, include=FALSE}
 # Assuming all packages are installed. If not use 'install.packages' e.g. install.packages("likert")
 # Key packages for data wrangling
 wrangling <- c("dplyr","tidyverse","purr","magrittr",
@@ -23,7 +23,7 @@ lapply(stats, require, character.only = TRUE)
 
 # Useful packages for text analysis
 text <- c("tm","koRpus","textstem", "tidytext","text2vec","lexicon","SentimentAnalysis","SnowballC",
-          "qdap", "wordcloud") # "textmineR","MediaNews","tau", "lsa","SemNeT","ngram","sylly","textir","ngramrr","corpustools","udpipe")
+          "qdap", "wordcloud", "sentimentr") # "textmineR","MediaNews","tau", "lsa","SemNeT","ngram","sylly","textir","ngramrr","corpustools","udpipe")
 lapply(text, require, character.only = TRUE)
 
 # Favourite data visualisation packages
@@ -46,27 +46,24 @@ natrep_data <- all_data[which(all_data$SurveyType == "NatRep"),]
 
 ```
 
-## R Markdown - WSP Sentiment Analysis
+## R Markdown - WSP Text Analysis
+
+#
 
 
-```{r text cleaning}
-
-# View column names
-colnames(all_data)
+```{r text cleaning, include = FALSE}
 
 # Remind myself of the key open ended questions and their columns names
 # Reasons for support/not support WSP
 summary(all_data$Q15_WSP_support_open)
 # View on management of WS
 summary(all_data$Q16_views_management_open)
-
-
 # Words used to describe WS - will probably combine into one column, labelled by Respondent ID and SurveyType
-# Need to clean, capitalise first letter etc
 summary(all_data$Q11_word1)
 summary(all_data$Q11_word2)
 summary(all_data$Q11_word3)
-# Create words df
+
+# Create words df to seperately clean, capitalise first letter etc
 words_df <- all_data %>%
   dplyr::select(UniqueID_short, SurveyType, Q11_word1, Q11_word2, Q11_word3) %>% 
   pivot_longer(
@@ -78,10 +75,9 @@ words_df <- all_data %>%
 
 ```
 
-```{r create Corpus and wordcloud}
+```{r create Corpus and wordcloud, messages=FALSE, warning=FALSE}
 
 # Practicing using Q11 (words to describe WSP)
-
 #Clean text
 head(words_df)
 words_df$Words <- gsub("[^[:graph:]]", " ", words_df$Words) #get rid of non graphical characters
@@ -96,43 +92,88 @@ Corpus_words <- Corpus(VectorSource(words_df$Words))
 Corpus_words <- tm_map(Corpus_words, removeNumbers)
 Corpus_words <- tm_map(Corpus_words, removeWords, stopwords("english")) #removes common english stopwords
 # Corpus_words <- tm_map(Corpus_words, removeWords, c("muffin"))  #You can specify words to remove
-Corpus_words <- tm_map(Corpus_words, PlainTextDocument)
+# Corpus_words <- tm_map(Corpus_words, PlainTextDocument)
 
 #build a term-document matrix
-TDM_words = TermDocumentMatrix(Corpus_words, control = list(minWordLength = 1))
+library("tm")
+TDM_words = tm::TermDocumentMatrix(Corpus_words, control = list(minWordLength = 1))
 m = as.matrix(TDM_words)
 v = sort(rowSums(m), decreasing = TRUE)
 d = data.frame(word = names(v),freq=v)
 
-# Queueing up this text data for some analysis and visualizations. Here’s the basic stuff:
-# Create basic word cloud
-library(wordcloud)
+# Create a wordcloud
 wordcloud(Corpus_words, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0.25, 
           use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
 
 ```
 
+### Word frequency analysis (Words used to describe White Storks)
 
-```{r Word frequency analysis}
+```{r Word frequency analysis, messages=FALSE, warning=FALSE}
 # Frequent word analysis
-# We can find the words that appear at least 50 times by calling the findFreqTerms() function on myTDM
-HiFreq_words <- findFreqTerms(TDM_words,100)
+# We can find the words that appear at least 100 times by calling the findFreqTerms() function on the term.doc.matrix
+HiFreq_words <- findFreqTerms(TDM_words, 100)
 HiFreq_words
 
-# Now you also see how associated a word is to another word or a list of words. Choose the association coefficient.
-# Compute associations for all high freq terms 
+# Now you also see how associated a word is to another word or a list of words.
 findAssocs(TDM_words, HiFreq_words, 0.4)
-
-# Looks like only one term had an association of at least 40%
-
 # or, just compute word strength associations
-findAssocs(TDM_words, "learn", 0.5) # Looks like the word “long” and “legs” are very frequently associated (51% of the time)
+findAssocs(TDM_words, "long", 0.5) # Looks like the word “long” and “legs” are very frequently associated (51% of the time)
 
+barplot(d[1:15,]$freq, las = 2, names.arg = d[1:15,]$word,
+        col ="lightblue", main ="Most frequent words used to describe White Storks",
+        ylab = "Word frequencies")
+```
+
+
+### Sentiment analysis
+
+
+```{r Sentiment analysis, messages=FALSE, warning=FALSE}
 # Polarity / Sentiment Analysis
-# This is a quick and dirty version of sentiment analysis. There are lots more ways of doing this (see the QDAP package vignette). Here we take a cleaned character vector used earlier (i.e. words_df$Words) and compare its sentiment against a grouping variable.
 
-poldat_surveytype <- with(all_data, polarity(words_df$Words, all_data$SurveyType))
-plot(poldat)
+### Q8. How did you feel when you saw WS in the wild?
+head(all_data$Q8.2_feelings)
+# Clean the data
+all_data$Q8.2_feelings_text <- gsub("[^[:graph:]]", " ", all_data$Q8.2_feelings) #get rid of non graphical characters
+all_data$Q8.2_feelings_text <- gsub("^ ", "", all_data$Q8.2_feelings_text)# Remove blank spaces at the beginning
+# Sentiment
+class(all_data$Q8.2_feelings_text)
+sentiment(get_sentences(all_data$Q8.2_feelings_text))
+
+
+
+
+
+### Q15. Do you support the WSP?
+head(all_data$Q15_WSP_support_open)
+# Clean the data
+all_data$Q15_WSP_support_text <- gsub("[^[:graph:]]", " ", all_data$Q15_WSP_support_open) #get rid of non graphical characters
+all_data$Q15_WSP_support_text <- gsub("^ ", "", all_data$Q15_WSP_support_text)# Remove blank spaces at the beginning
+all_data$Q15_WSP_support_text <- gsub(" $", "", all_data$Q15_WSP_support_text)# Remove blank spaces at the end
+
+# Reasons for support/not support WSP
+class(all_data$Q15_WSP_support_text)
+sentiment(get_sentences(all_data$Q15_WSP_support_text))
+
+
+# There are lots more ways of doing this (see the QDAP package vignette). Here we take a cleaned character vector used earlier (i.e. words_df$Words) and compare its sentiment against a grouping variable (e.g. SurveyType)
+# poldat_surveytype <- with(all_data, polarity(words_df$Words, all_data$SurveyType))
+# plot(poldat)
+
+
+
+### Q16. What are yours views on the management of White Storks?
+head(all_data$Q16_views_management_open)
+# Clean the data
+all_data$Q16_views_management_text <- gsub("[^[:graph:]]", " ", all_data$Q16_views_management_open) #get rid of non graphical characters
+all_data$Q16_views_management_text <- gsub("^ ", "", all_data$Q16_views_management_text)# Remove blank spaces at the beginning
+all_data$Q16_views_management_text <- gsub(" $", "", all_data$Q16_views_management_text)# Remove blank spaces at the end
+
+# Reasons for support/not support WSP
+class(all_data$Q16_views_management_text)
+sentiment(get_sentences(all_data$Q16_views_management_text))
+
 
 
 

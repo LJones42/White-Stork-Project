@@ -1,0 +1,71 @@
+---
+title: "WSP closed question analysis"
+author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
+date: "10/05/2021"
+output:
+  html_document:
+    number_sections: yes
+  pdf_document:
+    number_sections: yes
+  word_document: default
+---
+
+====================
+WSP - Analysis, stats and visualisations for closed questions
+====================
+
+### About this rMarkdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. To generate the document of all content, click the **Knit** button. 
+
+This rMarkdown document will be periodically updated and uploaded to the OneDrive folder and pushed to the WSP GitHub code repository. The primary format of this document is HTML, but this can be easily changed by changing the output (e.g. PDF, GitHub) using the 'output' section at the top of the document. The possible output formats are listed here: https://rmarkdown.rstudio.com/lesson-9.html.
+
+```{r setup/packages, include=FALSE, warning=FALSE}
+# This code assumes that all packages are installed. If not, use 'install.packages' e.g. install.packages("likert")
+# install.packages("hms")
+# Key packages for data wrangling
+wrangling <- c("dplyr","tidyverse","purr","magrittr","lubridate","hms",
+             "data.table","plyr","tidyr","tibble","reshape2")
+lapply(wrangling, require, character.only = TRUE) 
+# Useful survey analysis packages
+survey <- c("likert","careless")
+lapply(survey, require, character.only = TRUE) 
+# Useful packages for statistics
+stats <- c("stats","ggpubr","lme4","MASS","car","psych",
+                   "MuMIn","glmmTMB","nlme","DHARMa")
+lapply(stats, require, character.only = TRUE) 
+# Useful packages for text analysis
+# text <- c("tm","tau","koRpus","lexicon","sylly","textir",
+#          "textmineR","MediaNews", "lsa","SemNeT","ngram","ngramrr",
+#          "corpustools","udpipe","textstem", "tidytext","text2vec")
+# lapply(text, require, character.only = TRUE) 
+# Favourite data visualisation packages
+vismap <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly","rnaturalearth",
+            "RColorBrewer", "sjPlot", "ggrepel", "rgdal", "maptools", "gpclib")
+lapply(vismap, require, character.only = TRUE) 
+gpclibPermit()  # Gives maptool permission to use gpclib
+
+```
+
+
+```{r working directories and data upload, include=FALSE}
+# Load in working  directory and datasets
+setwd("~/Documents/White-Stork-Project")
+# Load in the data
+original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
+all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
+
+# Load in cleaned dataset
+final_data <- read.csv("WSP_R_cleaned_dataset.csv", header = TRUE, stringsAsFactors=TRUE)
+# View cleaned dataset
+summary(final_data)
+### Create two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
+proact_data <- final_data[which(final_data$SurveyType == "Proactive"),]
+natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
+
+
+```
+
+
+
+
