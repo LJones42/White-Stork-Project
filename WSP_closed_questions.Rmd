@@ -4,17 +4,19 @@ author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
 date: "10/05/2021"
 output:
   html_document:
-    number_sections: yes
+    number_sections: no
   pdf_document:
-    number_sections: yes
+    number_sections: no
   word_document: default
 ---
 
-====================
-WSP - Analysis, stats and visualisations for closed questions
-====================
 
-### About this rMarkdown
+## WSP - Analysis, stats and visualisations for closed questions
+
+
+This rMarkdown explores and analyses the closed 
+
+### About rMarkdowns
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. To generate the document of all content, click the **Knit** button. 
 
@@ -46,7 +48,7 @@ gpclibPermit()  # Gives maptool permission to use gpclib
 
 ```
 
-```{r setup and column groups, include=FALSE}
+```{r setwd and dataframes, include=FALSE}
 # Load in working  directory and datasets
 setwd("~/Documents/White-Stork-Project")
 # Load in the data
@@ -54,13 +56,15 @@ original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFacto
 all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
 
 # Load in cleaned dataset
-final_data <- read.csv("WSP_R_cleaned_dataset.csv", header = TRUE, stringsAsFactors=TRUE)
+final_data <- read.csv("WSP_R_cleaned_dataset3.csv", header = TRUE, stringsAsFactors=TRUE)
 # View cleaned dataset
-summary(final_data)
+# str(final_data)
 ### Create two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
 proact_data <- final_data[which(final_data$SurveyType == "Proactive"),]
 natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
+```
 
+```{r column groups, include=FALSE}
 
 ### Grouping columns
 # Grouping Likert scale question columns by selecting Question numbers (and dropping scores or open questions)
@@ -90,8 +94,185 @@ Q19_NCI_colnames <- select(final_data, starts_with("Q19"), -ends_with('score')) 
 Q20_envconcern_colnames <- select(final_data, starts_with("Q20"), -ends_with('score')) # Q21 total score = Env.concern score
 Q21_ProCoBS_colnames <- select(final_data, starts_with("Q21"), -ends_with('score')) # Q21 total score = ProCoBS
 Q23_BIS_colnames <- select(final_data, starts_with("Q23"), -ends_with('score')) # Q23 total score = BirdInterestScore
+
+```
+
+### Question sample size per survey
+
+Creating a table to calculate and display the sample sizes per column, per survey type.
+
+```{r n per column, echo=TRUE, messages=FALSE}
+
+### Calculate sample size per column/question and create a table 
+# str(final_data)
+
+# All numeric columns
+# vars <- names(final_data)[11:222]
+# final_data %>% 
+#   dplyr::group_by(SurveyType) %>% 
+#   dplyr::summarise_at(vars, ~sum(!is.na(.)))
+# 
+# # Just the score columns
+# final_data %>% 
+#   dplyr::group_by(SurveyType) %>% 
+#   dplyr::summarise_at(vars(ends_with("score")), ~sum(!is.na(.)))
+
+
 ```
 
 
 
 
+## Sectioned analysis (in order found in questionnaire)
+
+### Respondent knowledge
+
+Respondent knowledge questions have yes/no/notsure or incorrect/correct answer formats, lending themselves to Likert sytle plots. Below I have created some initial plots (both samples together at the moment but will seperate according to sample next week). I have made the following plots uisng the Likert package.
+
+Some useful Likert plotting guides and packages:
+* https://cran.r-project.org/web/packages/sjPlot/vignettes/plot_likert_scales.html
+* https://towardsdatascience.com/how-to-plot-likert-scales-with-a-weighted-survey-in-a-dplyr-friendly-way-68df600881a 
+* https://www.r-graph-gallery.com/202-barplot-for-likert-type-items.html
+
+```{r Q3 Knowledge questions, echo=FALSE, messages=FALSE}
+# summary(final_data$Q3_is_native)
+final_data$Q3_is_native = factor(final_data$Q3_is_native, ordered = TRUE)
+# Select the columns and convert to Likert data using the 'Likert' package
+Q3_native_scores <- as.data.frame(final_data$Q3_is_native)
+Q3_native_results = likert(Q3_native_scores)
+# summary(Q3_native_results)
+plot(Q3_native_results, type="bar")
+
+```
+
+
+```{r Q4 Knowledge questions, echo=FALSE, messages=FALSE}
+
+knowl_cols <- c("Q4.1_migrate_score", "Q4.2_wingspan_score", "Q4.3_globallyrare_score")
+### White stork knowledge
+final_data <- final_data %<>% mutate_at(knowl_cols, funs(factor(.)))
+# Select the columns and convert to Likert data using the 'Likert' package
+Q4_knowledge_scores <- final_data[knowl_cols]
+Q4_knowledge_results = likert(Q4_knowledge_scores)
+# summary(Q4_knowledge_results)
+plot(Q4_knowledge_results, type="bar")
+```
+
+```{r Q5 diet questions, echo=FALSE, messages=FALSE}
+
+# Create list of diet columns names for easier factorsation and labelling
+diet_cols <- c("Q5a_amphibians_diet","Q5b_birdeggs.chicks_diet","Q5c_carrion_diet","Q5d_fish_diet",
+              "Q5e_foodwaste_diet","Q5f_fruit_diet","Q5g_inverts_diet","Q5h_reptiles_diet","Q5i_seeds_diet",
+              "Q5j_smallmammals_diet","Q5k_vegetation_diet","Q5l_diet_Don.tKnow")
+final_data %<>% mutate_at(diet_cols, funs(factor(.,
+                       levels = c("0", "1"), labels = c("Incorrect", "Correct"), ordered = TRUE)))
+# str(final_data[diet_cols])
+
+# Select the columns and convert to Likert data using the 'Likert' package
+Q5_diet_colnames <- final_data[diet_cols]
+Q5_diet_results = likert(Q5_diet_colnames)
+# summary(Q5_diet_results)
+plot(Q5_diet_results, type="bar")
+```
+
+```{r Q6 habitat questions, echo=FALSE, messages=FALSE}
+head(final_data$Q6a_farmland_habitat)
+# Create list of diet columns names for easier factorsation and labelling
+habitat_cols <- c("Q6a_farmland_habitat", "Q6b_grassland_habitat","Q6c_wetlands_habitat","Q6d_woodland_habitat",                                                              "Q6e_urban_habitat","Q6f_habitat_Don.tKnow")
+final_data %<>% mutate_at(habitat_cols, funs(factor(.,
+                       levels = c("0", "1"), labels = c("Incorrect", "Correct"), ordered = TRUE)))
+# str(final_data[habitat_cols])
+# Select the columns and convert to Likert data using the 'Likert' package
+Q6_habitat_colnames <- final_data[habitat_cols]
+Q6_habitat_results = likert(Q6_habitat_colnames)
+# summary(Q6_habitat_results)
+plot(Q6_habitat_results, type="bar")
+# sjPlot::plot_likert(final_data[habitat_cols])
+
+```
+
+
+
+
+```{r Q7 nesting questions, echo=FALSE, messages=FALSE}
+# head(final_data$Q7a_chimneys_nesting)
+# Create list of diet columns names for easier factorsation and labelling
+nest_cols <- c("Q7a_chimneys_nesting","Q7b_ground_nesting","Q7c_roofs_nesting",
+                  "Q7d_telegraphpoles_nesting","Q7e_trees_nesting","Q7f_nesting_Don.tKnow")
+final_data %<>% mutate_at(nest_cols, funs(factor(.,
+                       levels = c("0", "1"), labels = c("Incorrect", "Correct"), ordered = TRUE)))
+# str(final_data[nest_cols])
+# Select the columns and convert to Likert data using the 'Likert' package
+Q7_nesting_colnames <- final_data[nest_cols]
+Q7_nesting_results = likert(Q7_nesting_colnames)
+# summary(Q7_nesting_results)
+plot(Q7_nesting_results, type="bar")
+```
+
+
+
+```{r stacked bar charts, include=FALSE}
+
+# ## Age
+# # Stacked barplot of gender per survey
+# all_habitat_df<- final_data  %>%
+#   group_by(SurveyType, Age_group_match) %>%
+#   summarise(counts = n()) %>%
+#   mutate(Percentage = round(counts/sum(counts)*100, 2))
+# age_bar <- ggplot(all_age_df, aes(x = SurveyType, y = Percentage, fill = Age_group_match)) +
+#   geom_col(position = position_stack(reverse = TRUE)) +
+#   geom_text(aes(label = paste0(Percentage, "%")),
+#             position = position_stack(vjust = 0.5, reverse = TRUE)) +
+#   scale_fill_brewer(palette = "Pastel1") +
+#   theme_minimal(base_size = 12) + xlab("Sample")
+# 
+# ## Gender
+# # Stacked barplot of gender per survey
+# all_gender_df<- all_demo  %>%
+#   group_by(SurveyType, Gender) %>%
+#   summarise(counts = n()) %>%
+#   mutate(Percentage = round(counts/sum(counts)*100, 2))
+# gender_bar <- ggplot(all_gender_df, aes(x = SurveyType, y = Percentage, fill = Gender)) +
+#   geom_col(position = position_stack(reverse = TRUE)) +
+#   geom_text(aes(label = paste0(Percentage, "%")),
+#             position = position_stack(vjust = 0.5, reverse = TRUE)) +
+#   scale_fill_brewer(palette = "Pastel1") +
+#   theme_minimal(base_size = 12) + xlab("Sample")
+# 
+# ## Education
+# # Stacked barplot of gender per survey
+# all_education_df <- all_demo  %>%
+#   group_by(SurveyType, Education) %>%
+#   summarise(counts = n()) %>%
+#   mutate(Percentage = round(counts/sum(counts)*100, 2))
+# levels(all_education_df$Education)[levels(all_education_df$Education)=="Secondary school (GCSEs, A Levels or equivalent)"] <- "Secondary school"
+# levels(all_education_df$Education)[levels(all_education_df$Education)=="Postgraduate degree (Masters; Doctorate)"] <- "Postgraduate degree"
+# education_bar <- ggplot(all_education_df, aes(x = SurveyType, y = Percentage,
+#          fill = factor(Education, levels=c("Postgraduate degree",
+#          "Undergraduate degree","Further Education","Secondary school",
+#          "No formal qualifications", "Prefer not to answer", "Other")))) +
+#   geom_col(position = position_stack(reverse = TRUE)) +
+#   geom_text(aes(label = paste0(Percentage, "%")),
+#             position = position_stack(vjust = 0.5, reverse = TRUE)) + # geom_text_repel
+#   scale_fill_brewer(palette = "Pastel1") + labs(fill = "Education", x = "Sample") +
+#   theme_minimal(base_size = 12)
+# 
+# ## Occupation
+# # Create percentages
+# all_occupation_df <- all_demo  %>%
+#   group_by(SurveyType, Occupation) %>%
+#   summarise(counts = n()) %>%
+#   mutate(Percentage = round(counts/sum(counts)*100, 2))
+```
+
+
+
+
+## Exploring score questions
+
+The respondent scores are explored and compared between samples using...
+
+```{r overall scores, echo=FALSE, warning=FALSE, message=FALSE}
+# Create seperate dataframe for all demographics
+
+```

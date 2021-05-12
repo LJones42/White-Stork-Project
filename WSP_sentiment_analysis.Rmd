@@ -1,9 +1,32 @@
 ---
-title: "WSP_R_Text_Analysis"
-author: "Lizzie Jones"
-date: "05/05/2021"
-output: html_document
+title: "WSP R Open Question Analysis"
+author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
+date: "02/05/2021"
+output:
+  html_document:
+    number_sections: no
+  pdf_document:
+    number_sections: yno
+  word_document: default
 ---
+
+
+## Text analysis and visualisations for open questions
+
+
+This rMarkdown explores and analyses the open questions using text, work frequency and sentiment analysis techniques which are beyond the scope of NVivo (or where R is more effective).
+
+The key open-ended questions include:
+
+* Q8. How did you feel when you saw WS in the wild?
+* Q11a-c. Three words used to describe white storks
+* Q15. Do you support the White Stork Project?
+* Q16. What are yours views on the management of White Storks?
+
+I clean and explore each question in turn in the sections below and comment on any interesting findings.
+
+
+
 
 ```{r setup/packages, messages = FALSE, include=FALSE}
 # Assuming all packages are installed. If not use 'install.packages' e.g. install.packages("likert")
@@ -32,39 +55,39 @@ vis <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly",
 lapply(vis, require, character.only = TRUE) 
 
 
-
 # Load in working  directory and datasets
 setwd("~/Documents/White-Stork-Project")
-
 # Load in the data
 original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
 all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
 
-# Two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
-proact_data <- all_data[which(all_data$SurveyType == "Proactive"),]
-natrep_data <- all_data[which(all_data$SurveyType == "NatRep"),]
+# Load in cleaned dataset
+final_data <- read.csv("WSP_R_cleaned_dataset3.csv", header = TRUE, stringsAsFactors=TRUE)
+# View cleaned dataset
+# summary(final_data)
+### Create two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
+proact_data <- final_data[which(final_data$SurveyType == "Proactive"),]
+natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
+
 
 ```
 
-## R Markdown - WSP Text Analysis
-
-#
-
-
-```{r text cleaning, include = FALSE}
+```{r text cleaning}
 
 # Remind myself of the key open ended questions and their columns names
 # Reasons for support/not support WSP
-summary(all_data$Q15_WSP_support_open)
+summary(final_data$Q15_WSP_support_open) 
+
 # View on management of WS
-summary(all_data$Q16_views_management_open)
+summary(final_data$Q16_views_management_open)### Can see some abnormal answers (e.g. '?????'). These should be removed when we clean the text but I will also check manually and remove respondents if needed (e.g. answers like "sjdgksbdfkb")
+
 # Words used to describe WS - will probably combine into one column, labelled by Respondent ID and SurveyType
-summary(all_data$Q11_word1)
-summary(all_data$Q11_word2)
-summary(all_data$Q11_word3)
+summary(final_data$Q11_word1)
+summary(final_data$Q11_word2)
+summary(final_data$Q11_word3)
 
 # Create words df to seperately clean, capitalise first letter etc
-words_df <- all_data %>%
+words_df <- final_data %>%
   dplyr::select(UniqueID_short, SurveyType, Q11_word1, Q11_word2, Q11_word3) %>% 
   pivot_longer(
    cols = starts_with("Q11_"),
@@ -75,9 +98,19 @@ words_df <- all_data %>%
 
 ```
 
+
+\newpage
+
+### Q11. What descriptive words do you associate with white storks?
+
+
+
+
+
+
 ```{r create Corpus and wordcloud, messages=FALSE, warning=FALSE}
 
-# Practicing using Q11 (words to describe WSP)
+# Q11 (words to describe WSP)
 #Clean text
 head(words_df)
 words_df$Words <- gsub("[^[:graph:]]", " ", words_df$Words) #get rid of non graphical characters
@@ -103,11 +136,13 @@ d = data.frame(word = names(v),freq=v)
 
 # Create a wordcloud
 wordcloud(Corpus_words, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0.25, 
-          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
+          use.r.layout=FALSE, colors=brewer.pal(10,"Spectral"))
+
+
 
 ```
 
-### Word frequency analysis (Words used to describe White Storks)
+#### Word frequency analysis (Words used to describe White Storks)
 
 ```{r Word frequency analysis, messages=FALSE, warning=FALSE}
 # Frequent word analysis
@@ -125,56 +160,120 @@ barplot(d[1:15,]$freq, las = 2, names.arg = d[1:15,]$word,
         ylab = "Word frequencies")
 ```
 
+### Q8. How did you feel when you saw WS in the wild?
 
-### Sentiment analysis
 
 
-```{r Sentiment analysis, messages=FALSE, warning=FALSE}
+```{r Sentiment feelings wild, messages=FALSE, warning=FALSE}
 # Polarity / Sentiment Analysis
 
 ### Q8. How did you feel when you saw WS in the wild?
-head(all_data$Q8.2_feelings)
+head(final_data$Q8.2_feelings)
 # Clean the data
-all_data$Q8.2_feelings_text <- gsub("[^[:graph:]]", " ", all_data$Q8.2_feelings) #get rid of non graphical characters
-all_data$Q8.2_feelings_text <- gsub("^ ", "", all_data$Q8.2_feelings_text)# Remove blank spaces at the beginning
+final_data$Q8.2_feelings_text <- gsub("[^[:graph:]]", " ", final_data$Q8.2_feelings) #get rid of non graphical characters
+final_data$Q8.2_feelings_text <- gsub("^ ", "", final_data$Q8.2_feelings_text)# Remove blank spaces at the beginning
 # Sentiment
-class(all_data$Q8.2_feelings_text)
-sentiment(get_sentences(all_data$Q8.2_feelings_text))
+class(final_data$Q8.2_feelings_text)
+sentiment(get_sentences(final_data$Q8.2_feelings_text))
+
+Corpus_feelings <- Corpus(VectorSource(final_data$Q8.2_feelings_text))
+Corpus_feelings <- tm_map(Corpus_feelings, removeNumbers)
+Corpus_feelings <- tm_map(Corpus_feelings, removeWords, stopwords("english")) #removes common english stopwords
+Corpus_feelings <- tm_map(Corpus_feelings, removeWords, c("they", "the", "also", "I'm", "don't", "can"))  #You can specify words to remove
+
+#build a term-document matrix
+TDM_feelings = tm::TermDocumentMatrix(Corpus_feelings, control = list(minWordLength = 1))
+m_feelings = as.matrix(TDM_feelings)
+v_feelings = sort(rowSums(m_feelings), decreasing = TRUE)
+d_feelings = data.frame(word = names(v_feelings),freq=v_feelings)
+
+# Create a wordcloud
+wordcloud(Corpus_feelings, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0, 
+          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
 
 
 
+```
 
+\newpage
+
+### Q15a. Support for WS reintroduction
+
+Question = Do you support the reintroduction of white Storks to southern England? 
+
+
+```{r Sentiment support WSP, messages=FALSE, warning=FALSE}
 
 ### Q15. Do you support the WSP?
-head(all_data$Q15_WSP_support_open)
+head(final_data$Q15_WSP_support_open)
 # Clean the data
-all_data$Q15_WSP_support_text <- gsub("[^[:graph:]]", " ", all_data$Q15_WSP_support_open) #get rid of non graphical characters
-all_data$Q15_WSP_support_text <- gsub("^ ", "", all_data$Q15_WSP_support_text)# Remove blank spaces at the beginning
-all_data$Q15_WSP_support_text <- gsub(" $", "", all_data$Q15_WSP_support_text)# Remove blank spaces at the end
+final_data$Q15_WSP_support_text <- gsub("[^[:graph:]]", " ", final_data$Q15_WSP_support_open) # get rid of non graphical characters
+final_data$Q15_WSP_support_text <- gsub(",", " ", final_data$Q15_WSP_support_open) # Remove commas after words
+final_data$Q15_WSP_support_text <- gsub("'", "", final_data$Q15_WSP_support_open) # Remove apostrophes
+final_data$Q15_WSP_support_text <- gsub("^ ", "", final_data$Q15_WSP_support_text) # Remove blank spaces at the beginning
+final_data$Q15_WSP_support_text <- gsub(" $", "", final_data$Q15_WSP_support_text) # Remove blank spaces at the end
 
 # Reasons for support/not support WSP
-class(all_data$Q15_WSP_support_text)
-sentiment(get_sentences(all_data$Q15_WSP_support_text))
+class(final_data$Q15_WSP_support_text)
+sentiment(get_sentences(final_data$Q15_WSP_support_text))
 
+Corpus_support <- Corpus(VectorSource(final_data$Q15_WSP_support_text))
+Corpus_support <- tm_map(Corpus_support, removeNumbers)
+Corpus_support <- tm_map(Corpus_support, removeWords, stopwords("english")) #removes common english stopwords
+Corpus_support <- tm_map(Corpus_support, removeWords, c("they", "the", "also", "I'm", "don't", "can"))  #You can specify words to remove
+
+#build a term-document matrix
+TDM_support = tm::TermDocumentMatrix(Corpus_support, control = list(minWordLength = 1))
+m_support = as.matrix(TDM_support)
+v_support = sort(rowSums(m_support), decreasing = TRUE)
+d_support = data.frame(word = names(v_support),freq=v_support)
+
+# Create a wordcloud
+wordcloud(Corpus_support, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0, 
+          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
 
 # There are lots more ways of doing this (see the QDAP package vignette). Here we take a cleaned character vector used earlier (i.e. words_df$Words) and compare its sentiment against a grouping variable (e.g. SurveyType)
 # poldat_surveytype <- with(all_data, polarity(words_df$Words, all_data$SurveyType))
 # plot(poldat)
 
+```
 
+\newpage
+
+### Q16a. Expressing views on WS management
+
+Question = Do you feel that you can express your views on the ongoing white stork reintroduction in a way that will influence management decisions? 
+
+
+```{r Sentiment views management, messages=FALSE, warning=FALSE}
+# Polarity / Sentiment Analysis
 
 ### Q16. What are yours views on the management of White Storks?
-head(all_data$Q16_views_management_open)
+head(final_data$Q16_views_management_open)
 # Clean the data
-all_data$Q16_views_management_text <- gsub("[^[:graph:]]", " ", all_data$Q16_views_management_open) #get rid of non graphical characters
-all_data$Q16_views_management_text <- gsub("^ ", "", all_data$Q16_views_management_text)# Remove blank spaces at the beginning
-all_data$Q16_views_management_text <- gsub(" $", "", all_data$Q16_views_management_text)# Remove blank spaces at the end
+final_data$Q16_views_management_text <- gsub("[^[:graph:]]", " ", final_data$Q16_views_management_open) #get rid of non graphical characters
+final_data$Q16_views_management_text <- gsub("^ ", "", final_data$Q16_views_management_text)# Remove blank spaces at the beginning
+final_data$Q16_views_management_text <- gsub(" $", "", final_data$Q16_views_management_text)# Remove blank spaces at the end
 
 # Reasons for support/not support WSP
-class(all_data$Q16_views_management_text)
-sentiment(get_sentences(all_data$Q16_views_management_text))
+class(final_data$Q16_views_management_text)
+sentiment(get_sentences(final_data$Q16_views_management_text))
 
+# Wrd frequencies
+Corpus_management <- Corpus(VectorSource(final_data$Q16_views_management_text))
+Corpus_management <- tm_map(Corpus_management, removeNumbers)
+Corpus_management <- tm_map(Corpus_management, removeWords, stopwords("english")) #removes common english stopwords
+Corpus_management <- tm_map(Corpus_management, removeWords, c("they", "the", "also"))  #You can specify words to remove
 
+#build a term-document matrix
+TDM_management = tm::TermDocumentMatrix(Corpus_management, control = list(minWordLength = 1))
+m_management = as.matrix(TDM_management)
+v_management = sort(rowSums(m_management), decreasing = TRUE)
+d_management = data.frame(word = names(v_management),freq=v_management)
 
-
+# Create a wordcloud
+wordcloud(Corpus_management, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0, 
+          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
 ```
+
+

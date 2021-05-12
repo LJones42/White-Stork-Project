@@ -13,7 +13,7 @@
 
 <meta name="date" content="2021-02-05" />
 
-<title>WSP setup and demographics code</title>
+<title>WSP setup and cleaning code</title>
 
 <script>/*! jQuery v1.11.3 | (c) 2005, 2015 jQuery Foundation, Inc. | jquery.org/license */
 !function(a,b){"object"==typeof module&&"object"==typeof module.exports?module.exports=a.document?b(a,!0):function(a){if(!a.document)throw new Error("jQuery requires a window with a document");return b(a)}:b(a)}("undefined"!=typeof window?window:this,function(a,b){var c=[],d=c.slice,e=c.concat,f=c.push,g=c.indexOf,h={},i=h.toString,j=h.hasOwnProperty,k={},l="1.11.3",m=function(a,b){return new m.fn.init(a,b)},n=/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,o=/^-ms-/,p=/-([\da-z])/gi,q=function(a,b){return b.toUpperCase()};m.fn=m.prototype={jquery:l,constructor:m,selector:"",length:0,toArray:function(){return d.call(this)},get:function(a){return null!=a?0>a?this[a+this.length]:this[a]:d.call(this)},pushStack:function(a){var b=m.merge(this.constructor(),a);return b.prevObject=this,b.context=this.context,b},each:function(a,b){return m.each(this,a,b)},map:function(a){return this.pushStack(m.map(this,function(b,c){return a.call(b,c,b)}))},slice:function(){return this.pushStack(d.apply(this,arguments))},first:function(){return this.eq(0)},last:function(){return this.eq(-1)},eq:function(a){var b=this.length,c=+a+(0>a?b:0);return this.pushStack(c>=0&&b>c?[this[c]]:[])},end:function(){return this.prevObject||this.constructor(null)},push:f,sort:c.sort,splice:c.splice},m.extend=m.fn.extend=function(){var a,b,c,d,e,f,g=arguments[0]||{},h=1,i=arguments.length,j=!1;for("boolean"==typeof g&&(j=g,g=arguments[h]||{},h++),"object"==typeof g||m.isFunction(g)||(g={}),h===i&&(g=this,h--);i>h;h++)if(null!=(e=arguments[h]))for(d in e)a=g[d],c=e[d],g!==c&&(j&&c&&(m.isPlainObject(c)||(b=m.isArray(c)))?(b?(b=!1,f=a&&m.isArray(a)?a:[]):f=a&&m.isPlainObject(a)?a:{},g[d]=m.extend(j,f,c)):void 0!==c&&(g[d]=c));return g},m.extend({expando:"jQuery"+(l+Math.random()).replace(/\D/g,""),isReady:!0,error:function(a){throw new Error(a)},noop:function(){},isFunction:function(a){return"function"===m.type(a)},isArray:Array.isArray||function(a){return"array"===m.type(a)},isWindow:function(a){return null!=a&&a==a.window},isNumeric:function(a){return!m.isArray(a)&&a-parseFloat(a)+1>=0},isEmptyObject:function(a){var b;for(b in a)return!1;return!0},isPlainObject:function(a){var b;if(!a||"object"!==m.type(a)||a.nodeType||m.isWindow(a))return!1;try{if(a.constructor&&!j.call(a,"constructor")&&!j.call(a.constructor.prototype,"isPrototypeOf"))return!1}catch(c){return!1}if(k.ownLast)for(b in a)return j.call(a,b);for(b in a);return void 0===b||j.call(a,b)},type:function(a){return null==a?a+"":"object"==typeof a||"function"==typeof a?h[i.call(a)]||"object":typeof a},globalEval:function(b){b&&m.trim(b)&&(a.execScript||function(b){a.eval.call(a,b)})(b)},camelCase:function(a){return a.replace(o,"ms-").replace(p,q)},nodeName:function(a,b){return a.nodeName&&a.nodeName.toLowerCase()===b.toLowerCase()},each:function(a,b,c){var d,e=0,f=a.length,g=r(a);if(c){if(g){for(;f>e;e++)if(d=b.apply(a[e],c),d===!1)break}else for(e in a)if(d=b.apply(a[e],c),d===!1)break}else if(g){for(;f>e;e++)if(d=b.call(a[e],e,a[e]),d===!1)break}else for(e in a)if(d=b.call(a[e],e,a[e]),d===!1)break;return a},trim:function(a){return null==a?"":(a+"").replace(n,"")},makeArray:function(a,b){var c=b||[];return null!=a&&(r(Object(a))?m.merge(c,"string"==typeof a?[a]:a):f.call(c,a)),c},inArray:function(a,b,c){var d;if(b){if(g)return g.call(b,a,c);for(d=b.length,c=c?0>c?Math.max(0,d+c):c:0;d>c;c++)if(c in b&&b[c]===a)return c}return-1},merge:function(a,b){var c=+b.length,d=0,e=a.length;while(c>d)a[e++]=b[d++];if(c!==c)while(void 0!==b[d])a[e++]=b[d++];return a.length=e,a},grep:function(a,b,c){for(var d,e=[],f=0,g=a.length,h=!c;g>f;f++)d=!b(a[f],f),d!==h&&e.push(a[f]);return e},map:function(a,b,c){var d,f=0,g=a.length,h=r(a),i=[];if(h)for(;g>f;f++)d=b(a[f],f,c),null!=d&&i.push(d);else for(f in a)d=b(a[f],f,c),null!=d&&i.push(d);return e.apply([],i)},guid:1,proxy:function(a,b){var c,e,f;return"string"==typeof b&&(f=a[b],b=a,a=f),m.isFunction(a)?(c=d.call(arguments,2),e=function(){return a.apply(b||this,c.concat(d.call(arguments)))},e.guid=a.guid=a.guid||m.guid++,e):void 0},now:function(){return+new Date},support:k}),m.each("Boolean Number String Function Array Date RegExp Object Error".split(" "),function(a,b){h["[object "+b+"]"]=b.toLowerCase()});function r(a){var b="length"in a&&a.length,c=m.type(a);return"function"===c||m.isWindow(a)?!1:1===a.nodeType&&b?!0:"array"===c||0===b||"number"==typeof b&&b>0&&b-1 in a}var s=function(a){var b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u="sizzle"+1*new Date,v=a.document,w=0,x=0,y=ha(),z=ha(),A=ha(),B=function(a,b){return a===b&&(l=!0),0},C=1<<31,D={}.hasOwnProperty,E=[],F=E.pop,G=E.push,H=E.push,I=E.slice,J=function(a,b){for(var c=0,d=a.length;d>c;c++)if(a[c]===b)return c;return-1},K="checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped",L="[\\x20\\t\\r\\n\\f]",M="(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",N=M.replace("w","w#"),O="\\["+L+"*("+M+")(?:"+L+"*([*^$|!~]?=)"+L+"*(?:'((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\"|("+N+"))|)"+L+"*\\]",P=":("+M+")(?:\\((('((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\")|((?:\\\\.|[^\\\\()[\\]]|"+O+")*)|.*)\\)|)",Q=new RegExp(L+"+","g"),R=new RegExp("^"+L+"+|((?:^|[^\\\\])(?:\\\\.)*)"+L+"+$","g"),S=new RegExp("^"+L+"*,"+L+"*"),T=new RegExp("^"+L+"*([>+~]|"+L+")"+L+"*"),U=new RegExp("="+L+"*([^\\]'\"]*?)"+L+"*\\]","g"),V=new RegExp(P),W=new RegExp("^"+N+"$"),X={ID:new RegExp("^#("+M+")"),CLASS:new RegExp("^\\.("+M+")"),TAG:new RegExp("^("+M.replace("w","w*")+")"),ATTR:new RegExp("^"+O),PSEUDO:new RegExp("^"+P),CHILD:new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\("+L+"*(even|odd|(([+-]|)(\\d*)n|)"+L+"*(?:([+-]|)"+L+"*(\\d+)|))"+L+"*\\)|)","i"),bool:new RegExp("^(?:"+K+")$","i"),needsContext:new RegExp("^"+L+"*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\("+L+"*((?:-\\d)?\\d*)"+L+"*\\)|)(?=[^-]|$)","i")},Y=/^(?:input|select|textarea|button)$/i,Z=/^h\d$/i,$=/^[^{]+\{\s*\[native \w/,_=/^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,aa=/[+~]/,ba=/'|\\/g,ca=new RegExp("\\\\([\\da-f]{1,6}"+L+"?|("+L+")|.)","ig"),da=function(a,b,c){var d="0x"+b-65536;return d!==d||c?b:0>d?String.fromCharCode(d+65536):String.fromCharCode(d>>10|55296,1023&d|56320)},ea=function(){m()};try{H.apply(E=I.call(v.childNodes),v.childNodes),E[v.childNodes.length].nodeType}catch(fa){H={apply:E.length?function(a,b){G.apply(a,I.call(b))}:function(a,b){var c=a.length,d=0;while(a[c++]=b[d++]);a.length=c-1}}}function ga(a,b,d,e){var f,h,j,k,l,o,r,s,w,x;if((b?b.ownerDocument||b:v)!==n&&m(b),b=b||n,d=d||[],k=b.nodeType,"string"!=typeof a||!a||1!==k&&9!==k&&11!==k)return d;if(!e&&p){if(11!==k&&(f=_.exec(a)))if(j=f[1]){if(9===k){if(h=b.getElementById(j),!h||!h.parentNode)return d;if(h.id===j)return d.push(h),d}else if(b.ownerDocument&&(h=b.ownerDocument.getElementById(j))&&t(b,h)&&h.id===j)return d.push(h),d}else{if(f[2])return H.apply(d,b.getElementsByTagName(a)),d;if((j=f[3])&&c.getElementsByClassName)return H.apply(d,b.getElementsByClassName(j)),d}if(c.qsa&&(!q||!q.test(a))){if(s=r=u,w=b,x=1!==k&&a,1===k&&"object"!==b.nodeName.toLowerCase()){o=g(a),(r=b.getAttribute("id"))?s=r.replace(ba,"\\$&"):b.setAttribute("id",s),s="[id='"+s+"'] ",l=o.length;while(l--)o[l]=s+ra(o[l]);w=aa.test(a)&&pa(b.parentNode)||b,x=o.join(",")}if(x)try{return H.apply(d,w.querySelectorAll(x)),d}catch(y){}finally{r||b.removeAttribute("id")}}}return i(a.replace(R,"$1"),b,d,e)}function ha(){var a=[];function b(c,e){return a.push(c+" ")>d.cacheLength&&delete b[a.shift()],b[c+" "]=e}return b}function ia(a){return a[u]=!0,a}function ja(a){var b=n.createElement("div");try{return!!a(b)}catch(c){return!1}finally{b.parentNode&&b.parentNode.removeChild(b),b=null}}function ka(a,b){var c=a.split("|"),e=a.length;while(e--)d.attrHandle[c[e]]=b}function la(a,b){var c=b&&a,d=c&&1===a.nodeType&&1===b.nodeType&&(~b.sourceIndex||C)-(~a.sourceIndex||C);if(d)return d;if(c)while(c=c.nextSibling)if(c===b)return-1;return a?1:-1}function ma(a){return function(b){var c=b.nodeName.toLowerCase();return"input"===c&&b.type===a}}function na(a){return function(b){var c=b.nodeName.toLowerCase();return("input"===c||"button"===c)&&b.type===a}}function oa(a){return ia(function(b){return b=+b,ia(function(c,d){var e,f=a([],c.length,b),g=f.length;while(g--)c[e=f[g]]&&(c[e]=!(d[e]=c[e]))})})}function pa(a){return a&&"undefined"!=typeof a.getElementsByTagName&&a}c=ga.support={},f=ga.isXML=function(a){var b=a&&(a.ownerDocument||a).documentElement;return b?"HTML"!==b.nodeName:!1},m=ga.setDocument=function(a){var b,e,g=a?a.ownerDocument||a:v;return g!==n&&9===g.nodeType&&g.documentElement?(n=g,o=g.documentElement,e=g.defaultView,e&&e!==e.top&&(e.addEventListener?e.addEventListener("unload",ea,!1):e.attachEvent&&e.attachEvent("onunload",ea)),p=!f(g),c.attributes=ja(function(a){return a.className="i",!a.getAttribute("className")}),c.getElementsByTagName=ja(function(a){return a.appendChild(g.createComment("")),!a.getElementsByTagName("*").length}),c.getElementsByClassName=$.test(g.getElementsByClassName),c.getById=ja(function(a){return o.appendChild(a).id=u,!g.getElementsByName||!g.getElementsByName(u).length}),c.getById?(d.find.ID=function(a,b){if("undefined"!=typeof b.getElementById&&p){var c=b.getElementById(a);return c&&c.parentNode?[c]:[]}},d.filter.ID=function(a){var b=a.replace(ca,da);return function(a){return a.getAttribute("id")===b}}):(delete d.find.ID,d.filter.ID=function(a){var b=a.replace(ca,da);return function(a){var c="undefined"!=typeof a.getAttributeNode&&a.getAttributeNode("id");return c&&c.value===b}}),d.find.TAG=c.getElementsByTagName?function(a,b){return"undefined"!=typeof b.getElementsByTagName?b.getElementsByTagName(a):c.qsa?b.querySelectorAll(a):void 0}:function(a,b){var c,d=[],e=0,f=b.getElementsByTagName(a);if("*"===a){while(c=f[e++])1===c.nodeType&&d.push(c);return d}return f},d.find.CLASS=c.getElementsByClassName&&function(a,b){return p?b.getElementsByClassName(a):void 0},r=[],q=[],(c.qsa=$.test(g.querySelectorAll))&&(ja(function(a){o.appendChild(a).innerHTML="<a id='"+u+"'></a><select id='"+u+"-\f]' msallowcapture=''><option selected=''></option></select>",a.querySelectorAll("[msallowcapture^='']").length&&q.push("[*^$]="+L+"*(?:''|\"\")"),a.querySelectorAll("[selected]").length||q.push("\\["+L+"*(?:value|"+K+")"),a.querySelectorAll("[id~="+u+"-]").length||q.push("~="),a.querySelectorAll(":checked").length||q.push(":checked"),a.querySelectorAll("a#"+u+"+*").length||q.push(".#.+[+~]")}),ja(function(a){var b=g.createElement("input");b.setAttribute("type","hidden"),a.appendChild(b).setAttribute("name","D"),a.querySelectorAll("[name=d]").length&&q.push("name"+L+"*[*^$|!~]?="),a.querySelectorAll(":enabled").length||q.push(":enabled",":disabled"),a.querySelectorAll("*,:x"),q.push(",.*:")})),(c.matchesSelector=$.test(s=o.matches||o.webkitMatchesSelector||o.mozMatchesSelector||o.oMatchesSelector||o.msMatchesSelector))&&ja(function(a){c.disconnectedMatch=s.call(a,"div"),s.call(a,"[s!='']:x"),r.push("!=",P)}),q=q.length&&new RegExp(q.join("|")),r=r.length&&new RegExp(r.join("|")),b=$.test(o.compareDocumentPosition),t=b||$.test(o.contains)?function(a,b){var c=9===a.nodeType?a.documentElement:a,d=b&&b.parentNode;return a===d||!(!d||1!==d.nodeType||!(c.contains?c.contains(d):a.compareDocumentPosition&&16&a.compareDocumentPosition(d)))}:function(a,b){if(b)while(b=b.parentNode)if(b===a)return!0;return!1},B=b?function(a,b){if(a===b)return l=!0,0;var d=!a.compareDocumentPosition-!b.compareDocumentPosition;return d?d:(d=(a.ownerDocument||a)===(b.ownerDocument||b)?a.compareDocumentPosition(b):1,1&d||!c.sortDetached&&b.compareDocumentPosition(a)===d?a===g||a.ownerDocument===v&&t(v,a)?-1:b===g||b.ownerDocument===v&&t(v,b)?1:k?J(k,a)-J(k,b):0:4&d?-1:1)}:function(a,b){if(a===b)return l=!0,0;var c,d=0,e=a.parentNode,f=b.parentNode,h=[a],i=[b];if(!e||!f)return a===g?-1:b===g?1:e?-1:f?1:k?J(k,a)-J(k,b):0;if(e===f)return la(a,b);c=a;while(c=c.parentNode)h.unshift(c);c=b;while(c=c.parentNode)i.unshift(c);while(h[d]===i[d])d++;return d?la(h[d],i[d]):h[d]===v?-1:i[d]===v?1:0},g):n},ga.matches=function(a,b){return ga(a,null,null,b)},ga.matchesSelector=function(a,b){if((a.ownerDocument||a)!==n&&m(a),b=b.replace(U,"='$1']"),!(!c.matchesSelector||!p||r&&r.test(b)||q&&q.test(b)))try{var d=s.call(a,b);if(d||c.disconnectedMatch||a.document&&11!==a.document.nodeType)return d}catch(e){}return ga(b,n,null,[a]).length>0},ga.contains=function(a,b){return(a.ownerDocument||a)!==n&&m(a),t(a,b)},ga.attr=function(a,b){(a.ownerDocument||a)!==n&&m(a);var e=d.attrHandle[b.toLowerCase()],f=e&&D.call(d.attrHandle,b.toLowerCase())?e(a,b,!p):void 0;return void 0!==f?f:c.attributes||!p?a.getAttribute(b):(f=a.getAttributeNode(b))&&f.specified?f.value:null},ga.error=function(a){throw new Error("Syntax error, unrecognized expression: "+a)},ga.uniqueSort=function(a){var b,d=[],e=0,f=0;if(l=!c.detectDuplicates,k=!c.sortStable&&a.slice(0),a.sort(B),l){while(b=a[f++])b===a[f]&&(e=d.push(f));while(e--)a.splice(d[e],1)}return k=null,a},e=ga.getText=function(a){var b,c="",d=0,f=a.nodeType;if(f){if(1===f||9===f||11===f){if("string"==typeof a.textContent)return a.textContent;for(a=a.firstChild;a;a=a.nextSibling)c+=e(a)}else if(3===f||4===f)return a.nodeValue}else while(b=a[d++])c+=e(b);return c},d=ga.selectors={cacheLength:50,createPseudo:ia,match:X,attrHandle:{},find:{},relative:{">":{dir:"parentNode",first:!0}," ":{dir:"parentNode"},"+":{dir:"previousSibling",first:!0},"~":{dir:"previousSibling"}},preFilter:{ATTR:function(a){return a[1]=a[1].replace(ca,da),a[3]=(a[3]||a[4]||a[5]||"").replace(ca,da),"~="===a[2]&&(a[3]=" "+a[3]+" "),a.slice(0,4)},CHILD:function(a){return a[1]=a[1].toLowerCase(),"nth"===a[1].slice(0,3)?(a[3]||ga.error(a[0]),a[4]=+(a[4]?a[5]+(a[6]||1):2*("even"===a[3]||"odd"===a[3])),a[5]=+(a[7]+a[8]||"odd"===a[3])):a[3]&&ga.error(a[0]),a},PSEUDO:function(a){var b,c=!a[6]&&a[2];return X.CHILD.test(a[0])?null:(a[3]?a[2]=a[4]||a[5]||"":c&&V.test(c)&&(b=g(c,!0))&&(b=c.indexOf(")",c.length-b)-c.length)&&(a[0]=a[0].slice(0,b),a[2]=c.slice(0,b)),a.slice(0,3))}},filter:{TAG:function(a){var b=a.replace(ca,da).toLowerCase();return"*"===a?function(){return!0}:function(a){return a.nodeName&&a.nodeName.toLowerCase()===b}},CLASS:function(a){var b=y[a+" "];return b||(b=new RegExp("(^|"+L+")"+a+"("+L+"|$)"))&&y(a,function(a){return b.test("string"==typeof a.className&&a.className||"undefined"!=typeof a.getAttribute&&a.getAttribute("class")||"")})},ATTR:function(a,b,c){return function(d){var e=ga.attr(d,a);return null==e?"!="===b:b?(e+="","="===b?e===c:"!="===b?e!==c:"^="===b?c&&0===e.indexOf(c):"*="===b?c&&e.indexOf(c)>-1:"$="===b?c&&e.slice(-c.length)===c:"~="===b?(" "+e.replace(Q," ")+" ").indexOf(c)>-1:"|="===b?e===c||e.slice(0,c.length+1)===c+"-":!1):!0}},CHILD:function(a,b,c,d,e){var f="nth"!==a.slice(0,3),g="last"!==a.slice(-4),h="of-type"===b;return 1===d&&0===e?function(a){return!!a.parentNode}:function(b,c,i){var j,k,l,m,n,o,p=f!==g?"nextSibling":"previousSibling",q=b.parentNode,r=h&&b.nodeName.toLowerCase(),s=!i&&!h;if(q){if(f){while(p){l=b;while(l=l[p])if(h?l.nodeName.toLowerCase()===r:1===l.nodeType)return!1;o=p="only"===a&&!o&&"nextSibling"}return!0}if(o=[g?q.firstChild:q.lastChild],g&&s){k=q[u]||(q[u]={}),j=k[a]||[],n=j[0]===w&&j[1],m=j[0]===w&&j[2],l=n&&q.childNodes[n];while(l=++n&&l&&l[p]||(m=n=0)||o.pop())if(1===l.nodeType&&++m&&l===b){k[a]=[w,n,m];break}}else if(s&&(j=(b[u]||(b[u]={}))[a])&&j[0]===w)m=j[1];else while(l=++n&&l&&l[p]||(m=n=0)||o.pop())if((h?l.nodeName.toLowerCase()===r:1===l.nodeType)&&++m&&(s&&((l[u]||(l[u]={}))[a]=[w,m]),l===b))break;return m-=e,m===d||m%d===0&&m/d>=0}}},PSEUDO:function(a,b){var c,e=d.pseudos[a]||d.setFilters[a.toLowerCase()]||ga.error("unsupported pseudo: "+a);return e[u]?e(b):e.length>1?(c=[a,a,"",b],d.setFilters.hasOwnProperty(a.toLowerCase())?ia(function(a,c){var d,f=e(a,b),g=f.length;while(g--)d=J(a,f[g]),a[d]=!(c[d]=f[g])}):function(a){return e(a,0,c)}):e}},pseudos:{not:ia(function(a){var b=[],c=[],d=h(a.replace(R,"$1"));return d[u]?ia(function(a,b,c,e){var f,g=d(a,null,e,[]),h=a.length;while(h--)(f=g[h])&&(a[h]=!(b[h]=f))}):function(a,e,f){return b[0]=a,d(b,null,f,c),b[0]=null,!c.pop()}}),has:ia(function(a){return function(b){return ga(a,b).length>0}}),contains:ia(function(a){return a=a.replace(ca,da),function(b){return(b.textContent||b.innerText||e(b)).indexOf(a)>-1}}),lang:ia(function(a){return W.test(a||"")||ga.error("unsupported lang: "+a),a=a.replace(ca,da).toLowerCase(),function(b){var c;do if(c=p?b.lang:b.getAttribute("xml:lang")||b.getAttribute("lang"))return c=c.toLowerCase(),c===a||0===c.indexOf(a+"-");while((b=b.parentNode)&&1===b.nodeType);return!1}}),target:function(b){var c=a.location&&a.location.hash;return c&&c.slice(1)===b.id},root:function(a){return a===o},focus:function(a){return a===n.activeElement&&(!n.hasFocus||n.hasFocus())&&!!(a.type||a.href||~a.tabIndex)},enabled:function(a){return a.disabled===!1},disabled:function(a){return a.disabled===!0},checked:function(a){var b=a.nodeName.toLowerCase();return"input"===b&&!!a.checked||"option"===b&&!!a.selected},selected:function(a){return a.parentNode&&a.parentNode.selectedIndex,a.selected===!0},empty:function(a){for(a=a.firstChild;a;a=a.nextSibling)if(a.nodeType<6)return!1;return!0},parent:function(a){return!d.pseudos.empty(a)},header:function(a){return Z.test(a.nodeName)},input:function(a){return Y.test(a.nodeName)},button:function(a){var b=a.nodeName.toLowerCase();return"input"===b&&"button"===a.type||"button"===b},text:function(a){var b;return"input"===a.nodeName.toLowerCase()&&"text"===a.type&&(null==(b=a.getAttribute("type"))||"text"===b.toLowerCase())},first:oa(function(){return[0]}),last:oa(function(a,b){return[b-1]}),eq:oa(function(a,b,c){return[0>c?c+b:c]}),even:oa(function(a,b){for(var c=0;b>c;c+=2)a.push(c);return a}),odd:oa(function(a,b){for(var c=1;b>c;c+=2)a.push(c);return a}),lt:oa(function(a,b,c){for(var d=0>c?c+b:c;--d>=0;)a.push(d);return a}),gt:oa(function(a,b,c){for(var d=0>c?c+b:c;++d<b;)a.push(d);return a})}},d.pseudos.nth=d.pseudos.eq;for(b in{radio:!0,checkbox:!0,file:!0,password:!0,image:!0})d.pseudos[b]=ma(b);for(b in{submit:!0,reset:!0})d.pseudos[b]=na(b);function qa(){}qa.prototype=d.filters=d.pseudos,d.setFilters=new qa,g=ga.tokenize=function(a,b){var c,e,f,g,h,i,j,k=z[a+" "];if(k)return b?0:k.slice(0);h=a,i=[],j=d.preFilter;while(h){(!c||(e=S.exec(h)))&&(e&&(h=h.slice(e[0].length)||h),i.push(f=[])),c=!1,(e=T.exec(h))&&(c=e.shift(),f.push({value:c,type:e[0].replace(R," ")}),h=h.slice(c.length));for(g in d.filter)!(e=X[g].exec(h))||j[g]&&!(e=j[g](e))||(c=e.shift(),f.push({value:c,type:g,matches:e}),h=h.slice(c.length));if(!c)break}return b?h.length:h?ga.error(a):z(a,i).slice(0)};function ra(a){for(var b=0,c=a.length,d="";c>b;b++)d+=a[b].value;return d}function sa(a,b,c){var d=b.dir,e=c&&"parentNode"===d,f=x++;return b.first?function(b,c,f){while(b=b[d])if(1===b.nodeType||e)return a(b,c,f)}:function(b,c,g){var h,i,j=[w,f];if(g){while(b=b[d])if((1===b.nodeType||e)&&a(b,c,g))return!0}else while(b=b[d])if(1===b.nodeType||e){if(i=b[u]||(b[u]={}),(h=i[d])&&h[0]===w&&h[1]===f)return j[2]=h[2];if(i[d]=j,j[2]=a(b,c,g))return!0}}}function ta(a){return a.length>1?function(b,c,d){var e=a.length;while(e--)if(!a[e](b,c,d))return!1;return!0}:a[0]}function ua(a,b,c){for(var d=0,e=b.length;e>d;d++)ga(a,b[d],c);return c}function va(a,b,c,d,e){for(var f,g=[],h=0,i=a.length,j=null!=b;i>h;h++)(f=a[h])&&(!c||c(f,d,e))&&(g.push(f),j&&b.push(h));return g}function wa(a,b,c,d,e,f){return d&&!d[u]&&(d=wa(d)),e&&!e[u]&&(e=wa(e,f)),ia(function(f,g,h,i){var j,k,l,m=[],n=[],o=g.length,p=f||ua(b||"*",h.nodeType?[h]:h,[]),q=!a||!f&&b?p:va(p,m,a,h,i),r=c?e||(f?a:o||d)?[]:g:q;if(c&&c(q,r,h,i),d){j=va(r,n),d(j,[],h,i),k=j.length;while(k--)(l=j[k])&&(r[n[k]]=!(q[n[k]]=l))}if(f){if(e||a){if(e){j=[],k=r.length;while(k--)(l=r[k])&&j.push(q[k]=l);e(null,r=[],j,i)}k=r.length;while(k--)(l=r[k])&&(j=e?J(f,l):m[k])>-1&&(f[j]=!(g[j]=l))}}else r=va(r===g?r.splice(o,r.length):r),e?e(null,g,r,i):H.apply(g,r)})}function xa(a){for(var b,c,e,f=a.length,g=d.relative[a[0].type],h=g||d.relative[" "],i=g?1:0,k=sa(function(a){return a===b},h,!0),l=sa(function(a){return J(b,a)>-1},h,!0),m=[function(a,c,d){var e=!g&&(d||c!==j)||((b=c).nodeType?k(a,c,d):l(a,c,d));return b=null,e}];f>i;i++)if(c=d.relative[a[i].type])m=[sa(ta(m),c)];else{if(c=d.filter[a[i].type].apply(null,a[i].matches),c[u]){for(e=++i;f>e;e++)if(d.relative[a[e].type])break;return wa(i>1&&ta(m),i>1&&ra(a.slice(0,i-1).concat({value:" "===a[i-2].type?"*":""})).replace(R,"$1"),c,e>i&&xa(a.slice(i,e)),f>e&&xa(a=a.slice(e)),f>e&&ra(a))}m.push(c)}return ta(m)}function ya(a,b){var c=b.length>0,e=a.length>0,f=function(f,g,h,i,k){var l,m,o,p=0,q="0",r=f&&[],s=[],t=j,u=f||e&&d.find.TAG("*",k),v=w+=null==t?1:Math.random()||.1,x=u.length;for(k&&(j=g!==n&&g);q!==x&&null!=(l=u[q]);q++){if(e&&l){m=0;while(o=a[m++])if(o(l,g,h)){i.push(l);break}k&&(w=v)}c&&((l=!o&&l)&&p--,f&&r.push(l))}if(p+=q,c&&q!==p){m=0;while(o=b[m++])o(r,s,g,h);if(f){if(p>0)while(q--)r[q]||s[q]||(s[q]=F.call(i));s=va(s)}H.apply(i,s),k&&!f&&s.length>0&&p+b.length>1&&ga.uniqueSort(i)}return k&&(w=v,j=t),r};return c?ia(f):f}return h=ga.compile=function(a,b){var c,d=[],e=[],f=A[a+" "];if(!f){b||(b=g(a)),c=b.length;while(c--)f=xa(b[c]),f[u]?d.push(f):e.push(f);f=A(a,ya(e,d)),f.selector=a}return f},i=ga.select=function(a,b,e,f){var i,j,k,l,m,n="function"==typeof a&&a,o=!f&&g(a=n.selector||a);if(e=e||[],1===o.length){if(j=o[0]=o[0].slice(0),j.length>2&&"ID"===(k=j[0]).type&&c.getById&&9===b.nodeType&&p&&d.relative[j[1].type]){if(b=(d.find.ID(k.matches[0].replace(ca,da),b)||[])[0],!b)return e;n&&(b=b.parentNode),a=a.slice(j.shift().value.length)}i=X.needsContext.test(a)?0:j.length;while(i--){if(k=j[i],d.relative[l=k.type])break;if((m=d.find[l])&&(f=m(k.matches[0].replace(ca,da),aa.test(j[0].type)&&pa(b.parentNode)||b))){if(j.splice(i,1),a=f.length&&ra(j),!a)return H.apply(e,f),e;break}}}return(n||h(a,o))(f,b,!p,e,aa.test(a)&&pa(b.parentNode)||b),e},c.sortStable=u.split("").sort(B).join("")===u,c.detectDuplicates=!!l,m(),c.sortDetached=ja(function(a){return 1&a.compareDocumentPosition(n.createElement("div"))}),ja(function(a){return a.innerHTML="<a href='#'></a>","#"===a.firstChild.getAttribute("href")})||ka("type|href|height|width",function(a,b,c){return c?void 0:a.getAttribute(b,"type"===b.toLowerCase()?1:2)}),c.attributes&&ja(function(a){return a.innerHTML="<input/>",a.firstChild.setAttribute("value",""),""===a.firstChild.getAttribute("value")})||ka("value",function(a,b,c){return c||"input"!==a.nodeName.toLowerCase()?void 0:a.defaultValue}),ja(function(a){return null==a.getAttribute("disabled")})||ka(K,function(a,b,c){var d;return c?void 0:a[b]===!0?b.toLowerCase():(d=a.getAttributeNode(b))&&d.specified?d.value:null}),ga}(a);m.find=s,m.expr=s.selectors,m.expr[":"]=m.expr.pseudos,m.unique=s.uniqueSort,m.text=s.getText,m.isXMLDoc=s.isXML,m.contains=s.contains;var t=m.expr.match.needsContext,u=/^<(\w+)\s*\/?>(?:<\/\1>|)$/,v=/^.[^:#\[\.,]*$/;function w(a,b,c){if(m.isFunction(b))return m.grep(a,function(a,d){return!!b.call(a,d,a)!==c});if(b.nodeType)return m.grep(a,function(a){return a===b!==c});if("string"==typeof b){if(v.test(b))return m.filter(b,a,c);b=m.filter(b,a)}return m.grep(a,function(a){return m.inArray(a,b)>=0!==c})}m.filter=function(a,b,c){var d=b[0];return c&&(a=":not("+a+")"),1===b.length&&1===d.nodeType?m.find.matchesSelector(d,a)?[d]:[]:m.find.matches(a,m.grep(b,function(a){return 1===a.nodeType}))},m.fn.extend({find:function(a){var b,c=[],d=this,e=d.length;if("string"!=typeof a)return this.pushStack(m(a).filter(function(){for(b=0;e>b;b++)if(m.contains(d[b],this))return!0}));for(b=0;e>b;b++)m.find(a,d[b],c);return c=this.pushStack(e>1?m.unique(c):c),c.selector=this.selector?this.selector+" "+a:a,c},filter:function(a){return this.pushStack(w(this,a||[],!1))},not:function(a){return this.pushStack(w(this,a||[],!0))},is:function(a){return!!w(this,"string"==typeof a&&t.test(a)?m(a):a||[],!1).length}});var x,y=a.document,z=/^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]*))$/,A=m.fn.init=function(a,b){var c,d;if(!a)return this;if("string"==typeof a){if(c="<"===a.charAt(0)&&">"===a.charAt(a.length-1)&&a.length>=3?[null,a,null]:z.exec(a),!c||!c[1]&&b)return!b||b.jquery?(b||x).find(a):this.constructor(b).find(a);if(c[1]){if(b=b instanceof m?b[0]:b,m.merge(this,m.parseHTML(c[1],b&&b.nodeType?b.ownerDocument||b:y,!0)),u.test(c[1])&&m.isPlainObject(b))for(c in b)m.isFunction(this[c])?this[c](b[c]):this.attr(c,b[c]);return this}if(d=y.getElementById(c[2]),d&&d.parentNode){if(d.id!==c[2])return x.find(a);this.length=1,this[0]=d}return this.context=y,this.selector=a,this}return a.nodeType?(this.context=this[0]=a,this.length=1,this):m.isFunction(a)?"undefined"!=typeof x.ready?x.ready(a):a(m):(void 0!==a.selector&&(this.selector=a.selector,this.context=a.context),m.makeArray(a,this))};A.prototype=m.fn,x=m(y);var B=/^(?:parents|prev(?:Until|All))/,C={children:!0,contents:!0,next:!0,prev:!0};m.extend({dir:function(a,b,c){var d=[],e=a[b];while(e&&9!==e.nodeType&&(void 0===c||1!==e.nodeType||!m(e).is(c)))1===e.nodeType&&d.push(e),e=e[b];return d},sibling:function(a,b){for(var c=[];a;a=a.nextSibling)1===a.nodeType&&a!==b&&c.push(a);return c}}),m.fn.extend({has:function(a){var b,c=m(a,this),d=c.length;return this.filter(function(){for(b=0;d>b;b++)if(m.contains(this,c[b]))return!0})},closest:function(a,b){for(var c,d=0,e=this.length,f=[],g=t.test(a)||"string"!=typeof a?m(a,b||this.context):0;e>d;d++)for(c=this[d];c&&c!==b;c=c.parentNode)if(c.nodeType<11&&(g?g.index(c)>-1:1===c.nodeType&&m.find.matchesSelector(c,a))){f.push(c);break}return this.pushStack(f.length>1?m.unique(f):f)},index:function(a){return a?"string"==typeof a?m.inArray(this[0],m(a)):m.inArray(a.jquery?a[0]:a,this):this[0]&&this[0].parentNode?this.first().prevAll().length:-1},add:function(a,b){return this.pushStack(m.unique(m.merge(this.get(),m(a,b))))},addBack:function(a){return this.add(null==a?this.prevObject:this.prevObject.filter(a))}});function D(a,b){do a=a[b];while(a&&1!==a.nodeType);return a}m.each({parent:function(a){var b=a.parentNode;return b&&11!==b.nodeType?b:null},parents:function(a){return m.dir(a,"parentNode")},parentsUntil:function(a,b,c){return m.dir(a,"parentNode",c)},next:function(a){return D(a,"nextSibling")},prev:function(a){return D(a,"previousSibling")},nextAll:function(a){return m.dir(a,"nextSibling")},prevAll:function(a){return m.dir(a,"previousSibling")},nextUntil:function(a,b,c){return m.dir(a,"nextSibling",c)},prevUntil:function(a,b,c){return m.dir(a,"previousSibling",c)},siblings:function(a){return m.sibling((a.parentNode||{}).firstChild,a)},children:function(a){return m.sibling(a.firstChild)},contents:function(a){return m.nodeName(a,"iframe")?a.contentDocument||a.contentWindow.document:m.merge([],a.childNodes)}},function(a,b){m.fn[a]=function(c,d){var e=m.map(this,b,c);return"Until"!==a.slice(-5)&&(d=c),d&&"string"==typeof d&&(e=m.filter(d,e)),this.length>1&&(C[a]||(e=m.unique(e)),B.test(a)&&(e=e.reverse())),this.pushStack(e)}});var E=/\S+/g,F={};function G(a){var b=F[a]={};return m.each(a.match(E)||[],function(a,c){b[c]=!0}),b}m.Callbacks=function(a){a="string"==typeof a?F[a]||G(a):m.extend({},a);var b,c,d,e,f,g,h=[],i=!a.once&&[],j=function(l){for(c=a.memory&&l,d=!0,f=g||0,g=0,e=h.length,b=!0;h&&e>f;f++)if(h[f].apply(l[0],l[1])===!1&&a.stopOnFalse){c=!1;break}b=!1,h&&(i?i.length&&j(i.shift()):c?h=[]:k.disable())},k={add:function(){if(h){var d=h.length;!function f(b){m.each(b,function(b,c){var d=m.type(c);"function"===d?a.unique&&k.has(c)||h.push(c):c&&c.length&&"string"!==d&&f(c)})}(arguments),b?e=h.length:c&&(g=d,j(c))}return this},remove:function(){return h&&m.each(arguments,function(a,c){var d;while((d=m.inArray(c,h,d))>-1)h.splice(d,1),b&&(e>=d&&e--,f>=d&&f--)}),this},has:function(a){return a?m.inArray(a,h)>-1:!(!h||!h.length)},empty:function(){return h=[],e=0,this},disable:function(){return h=i=c=void 0,this},disabled:function(){return!h},lock:function(){return i=void 0,c||k.disable(),this},locked:function(){return!i},fireWith:function(a,c){return!h||d&&!i||(c=c||[],c=[a,c.slice?c.slice():c],b?i.push(c):j(c)),this},fire:function(){return k.fireWith(this,arguments),this},fired:function(){return!!d}};return k},m.extend({Deferred:function(a){var b=[["resolve","done",m.Callbacks("once memory"),"resolved"],["reject","fail",m.Callbacks("once memory"),"rejected"],["notify","progress",m.Callbacks("memory")]],c="pending",d={state:function(){return c},always:function(){return e.done(arguments).fail(arguments),this},then:function(){var a=arguments;return m.Deferred(function(c){m.each(b,function(b,f){var g=m.isFunction(a[b])&&a[b];e[f[1]](function(){var a=g&&g.apply(this,arguments);a&&m.isFunction(a.promise)?a.promise().done(c.resolve).fail(c.reject).progress(c.notify):c[f[0]+"With"](this===d?c.promise():this,g?[a]:arguments)})}),a=null}).promise()},promise:function(a){return null!=a?m.extend(a,d):d}},e={};return d.pipe=d.then,m.each(b,function(a,f){var g=f[2],h=f[3];d[f[1]]=g.add,h&&g.add(function(){c=h},b[1^a][2].disable,b[2][2].lock),e[f[0]]=function(){return e[f[0]+"With"](this===e?d:this,arguments),this},e[f[0]+"With"]=g.fireWith}),d.promise(e),a&&a.call(e,e),e},when:function(a){var b=0,c=d.call(arguments),e=c.length,f=1!==e||a&&m.isFunction(a.promise)?e:0,g=1===f?a:m.Deferred(),h=function(a,b,c){return function(e){b[a]=this,c[a]=arguments.length>1?d.call(arguments):e,c===i?g.notifyWith(b,c):--f||g.resolveWith(b,c)}},i,j,k;if(e>1)for(i=new Array(e),j=new Array(e),k=new Array(e);e>b;b++)c[b]&&m.isFunction(c[b].promise)?c[b].promise().done(h(b,k,c)).fail(g.reject).progress(h(b,j,i)):--f;return f||g.resolveWith(k,c),g.promise()}});var H;m.fn.ready=function(a){return m.ready.promise().done(a),this},m.extend({isReady:!1,readyWait:1,holdReady:function(a){a?m.readyWait++:m.ready(!0)},ready:function(a){if(a===!0?!--m.readyWait:!m.isReady){if(!y.body)return setTimeout(m.ready);m.isReady=!0,a!==!0&&--m.readyWait>0||(H.resolveWith(y,[m]),m.fn.triggerHandler&&(m(y).triggerHandler("ready"),m(y).off("ready")))}}});function I(){y.addEventListener?(y.removeEventListener("DOMContentLoaded",J,!1),a.removeEventListener("load",J,!1)):(y.detachEvent("onreadystatechange",J),a.detachEvent("onload",J))}function J(){(y.addEventListener||"load"===event.type||"complete"===y.readyState)&&(I(),m.ready())}m.ready.promise=function(b){if(!H)if(H=m.Deferred(),"complete"===y.readyState)setTimeout(m.ready);else if(y.addEventListener)y.addEventListener("DOMContentLoaded",J,!1),a.addEventListener("load",J,!1);else{y.attachEvent("onreadystatechange",J),a.attachEvent("onload",J);var c=!1;try{c=null==a.frameElement&&y.documentElement}catch(d){}c&&c.doScroll&&!function e(){if(!m.isReady){try{c.doScroll("left")}catch(a){return setTimeout(e,50)}I(),m.ready()}}()}return H.promise(b)};var K="undefined",L;for(L in m(k))break;k.ownLast="0"!==L,k.inlineBlockNeedsLayout=!1,m(function(){var a,b,c,d;c=y.getElementsByTagName("body")[0],c&&c.style&&(b=y.createElement("div"),d=y.createElement("div"),d.style.cssText="position:absolute;border:0;width:0;height:0;top:0;left:-9999px",c.appendChild(d).appendChild(b),typeof b.style.zoom!==K&&(b.style.cssText="display:inline;margin:0;border:0;padding:1px;width:1px;zoom:1",k.inlineBlockNeedsLayout=a=3===b.offsetWidth,a&&(c.style.zoom=1)),c.removeChild(d))}),function(){var a=y.createElement("div");if(null==k.deleteExpando){k.deleteExpando=!0;try{delete a.test}catch(b){k.deleteExpando=!1}}a=null}(),m.acceptData=function(a){var b=m.noData[(a.nodeName+" ").toLowerCase()],c=+a.nodeType||1;return 1!==c&&9!==c?!1:!b||b!==!0&&a.getAttribute("classid")===b};var M=/^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,N=/([A-Z])/g;function O(a,b,c){if(void 0===c&&1===a.nodeType){var d="data-"+b.replace(N,"-$1").toLowerCase();if(c=a.getAttribute(d),"string"==typeof c){try{c="true"===c?!0:"false"===c?!1:"null"===c?null:+c+""===c?+c:M.test(c)?m.parseJSON(c):c}catch(e){}m.data(a,b,c)}else c=void 0}return c}function P(a){var b;for(b in a)if(("data"!==b||!m.isEmptyObject(a[b]))&&"toJSON"!==b)return!1;
@@ -349,24 +349,40 @@ pre code {
 
 
 
-<h1 class="title toc-ignore">WSP setup and demographics code</h1>
+<h1 class="title toc-ignore">WSP setup and cleaning code</h1>
 <h4 class="author">Lizzie Jones<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></h4>
 <h4 class="date">02/05/2021</h4>
 
 </div>
 
 
-<div id="wsp---initial-data-exploration" class="section level1">
-<h1><span class="header-section-number">1</span> WSP - Initial data exploration</h1>
+<div id="data-cleaning" class="section level2">
+<h2>Data cleaning!</h2>
 <div id="about-this-rmarkdown" class="section level4">
-<h4><span class="header-section-number">1.0.0.1</span> About this rMarkdown</h4>
+<h4>About this rMarkdown</h4>
 <p>This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <a href="http://rmarkdown.rstudio.com" class="uri">http://rmarkdown.rstudio.com</a>. To generate the document of all content, click the <strong>Knit</strong> button.</p>
 <p>This rMarkdown document will be periodically updated and uploaded to the OneDrive folder and pushed to the WSP GitHub code repository. The primary format of this document is HTML, but this can be easily changed by changing the output (e.g. PDF, GitHub) using the ‘output’ section at the top of the document. The possible output formats are listed here: <a href="https://rmarkdown.rstudio.com/lesson-9.html" class="uri">https://rmarkdown.rstudio.com/lesson-9.html</a>.</p>
 </div>
-<div id="data-cleaning" class="section level2">
-<h2><span class="header-section-number">1.1</span> Data cleaning</h2>
+<div id="data-cleaning-intro" class="section level3">
+<h3>Data cleaning intro</h3>
 <p>First I have conducted some data cleaning to identify any respondents or data points that need to be removed and explain why. First I converted the ‘TimeTaken’ column to a total number of seconds (SecsTaken) for easier to more easily investigate means and quantiles.</p>
 <p>I initially focussed on the fastest 5% of respondents across both surveys as they are most likely to have straightlined through the survey. I visually inspected the data, then used the ‘careless’ package to find evidence of straightlining ‘even-odd’ consistencies, and intra-individual response variability (IRV), across the whole survey and within the multiple choice questions (particularly questions 4, 5, 13, 15, 16, 17, 22, 23, 24).</p>
+<p>Finally I went through the full dataset manually and checked for any respondents that were definitely not taking the questionnaire seriously (e.g. open answers such as “jkjkjkjk”). I removed the entire row for respondents that were also straightlining, but for those who appreared to take the close questions seriously and put junk answers for the open questions, I removed the open answers only.</p>
+<pre class="r"><code>## Cleaning full dataset to prevent having to do code for all samples
+all_data$Age_group_match &lt;- all_data$Age_group # Create new column with matching age-group formats
+all_data &lt;- all_data  %&gt;%
+  dplyr::mutate(Age_group_match = recode(Age_group_match, &quot;c('65-74', '75 and over')='65+'&quot;))
+summary(all_data$Age_group_match)</code></pre>
+<pre><code>##                18-24                25-34                35-44 
+##                  260                  510                  585 
+##                45-54                55-64                  65+ 
+##                  700                  774                  719 
+## Prefer not to answer 
+##                   12</code></pre>
+<pre class="r"><code># Formatting date and time columns
+all_data$SecsTaken &lt;- as.numeric(lubridate::seconds(all_data$TimeTaken)) # Create numeric column of time taken (seconds)
+all_data$StartDate &lt;- as.Date(all_data$StartDate, format = &quot;%d/%m/%Y&quot;)
+all_data$CompletionDate &lt;- as.Date(all_data$CompletionDate, format = &quot;%d/%m/%Y&quot;)</code></pre>
 <pre class="r"><code>##### Data cleaning using the 'careless' package
 
 # Overall straightlining (whole survey)
@@ -413,35 +429,38 @@ rows_straightlined &lt;- all_data[c(2678, 2713, 2723, 2738, 2772, 3121, 3209, 32
 summary(rows_straightlined$SecsTaken) # Most took survey quickly and have skipped the open questions</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##    21.0   106.0   153.0   196.4   242.0   491.0</code></pre>
-<pre class="r"><code>rows_straightlined$UniqueID_short</code></pre>
-<pre><code>##  [1]  285  320  330  345  379  728  816  894  914 1062 1110</code></pre>
-<pre class="r"><code>ID_to_remove &lt;- c(285,320,330,345,379,728,816,894,914,1062,1110)
-
-
+<pre class="r"><code># Removing straightlined participants
+ID_straightlined &lt;- c(2678, 2713, 2723, 2738, 2772, 3121, 3209, 3287, 3307, 3455, 3503)
 ## Create new dataset for further analysis and remove rows with straightlining etc.
-data_clean &lt;- all_data[!all_data$UniqueID_short %in% ID_to_remove,]</code></pre>
+data_clean &lt;- all_data[!all_data$UniqueID_all %in% ID_straightlined,]
+
+# Removing non-serious (and often also straightlined through most questions) participants
+ID_notserious &lt;- c(2607, 2630, 3297, 3285, 3340, 3441, 3439, 3474)
+## Create new dataset for further analysis and remove rows with straightlining etc.
+data_clean &lt;- data_clean[!data_clean$UniqueID_all %in% ID_notserious,]</code></pre>
 <pre class="r"><code>### Explore average time taken to complete questionnaire and check for straightlining
 quantile(data_clean$SecsTaken, 0.1) # Fastest 10% of all respondents = completion in 188.9 seconds/ about 3 mins</code></pre>
 <pre><code>## 10% 
-## 190</code></pre>
+## 191</code></pre>
 <pre class="r"><code>quantile(data_clean$SecsTaken, 0.05) # Fastest 5% of all respondents = completion in 117.95 seconds/ about 2 mins</code></pre>
-<pre><code>##     5% 
-## 118.85</code></pre>
+<pre><code>##  5% 
+## 121</code></pre>
 <pre class="r"><code>quantile(data_clean$SecsTaken, 0.025) # Fastest 2.5% of all respondents = completion in 70.975 seconds/ about 1.2 mins</code></pre>
 <pre><code>## 2.5% 
-##   71</code></pre>
-<pre class="r"><code>fastest_10 &lt;- subset(data_clean, SecsTaken &lt; 190) # Sample of fastest 10% of all respondents
-fastest_5 &lt;- subset(data_clean, SecsTaken &lt; 118) # Sample of fastest 5% of all respondents
-fastest_2.5 &lt;- subset(data_clean, SecsTaken &lt; 71) # Sample of fastest 2.5% of all respondents
+## 71.5</code></pre>
+<pre class="r"><code>fastest_10 &lt;- subset(data_clean, SecsTaken &lt; 191) # Sample of fastest 10% of all respondents
+fastest_5 &lt;- subset(data_clean, SecsTaken &lt; 121) # Sample of fastest 5% of all respondents
+fastest_2.5 &lt;- subset(data_clean, SecsTaken &lt; 72) # Sample of fastest 2.5% of all respondents
 summary(fastest_5$SurveyType) # 96% of respondents in fastest 5% are from the NatRep sample</code></pre>
 <pre><code>##    NatRep Proactive 
-##       168         7</code></pre>
+##       170         7</code></pre>
 <pre class="r"><code>summary(fastest_2.5$SurveyType) # 100% of respondents in fastest 2.5% are from the NatRep sample</code></pre>
 <pre><code>##    NatRep Proactive 
-##        87         0</code></pre>
+##        89         0</code></pre>
 <div style="page-break-after: always;"></div>
+</div>
 <div id="checking-the-fastest-5-of-responses" class="section level3">
-<h3><span class="header-section-number">1.1.1</span> Checking the fastest 5% of responses</h3>
+<h3>Checking the fastest 5% of responses</h3>
 <p>Here I have checked the responses of the fastest 5% of the dataframe (after straightlined responses had been removed). I compare the mean values of the numeric/score columns between the full cleaned dataset and the fastest 5%, checked for overall straightlining again and then manually checked the dataset for any irregularities.</p>
 <p>I have then created a ‘final’ dataset for further data checking, stats and analysis called ‘final_data’.</p>
 <pre class="r"><code>### Checking the fastest 5% of respondents
@@ -451,48 +470,25 @@ evenodd_fastest_5 &lt;- evenodd(fastest_5, rep(5,10)) # Calculates the even-odd 
 
 # Checking the fastest 5% for straightlining within each set of mutliple choice questions
 # Q5 diet
-summary(data_clean$Q5_overallscore_diet)</code></pre>
-<pre><code>## Length  Class   Mode 
-##      0   NULL   NULL</code></pre>
-<pre class="r"><code>summary(fastest_5$Q5_overallscore_diet) ### Not a significant difference in Q5 diet score between all_data, fastest 5% and 2.5% samples</code></pre>
-<pre><code>## Length  Class   Mode 
-##      0   NULL   NULL</code></pre>
-<pre class="r"><code># Q6 habitat
-summary(data_clean$Q6_habitat_overallscore)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   0.000   0.400   0.600   0.588   0.800   1.000</code></pre>
-<pre class="r"><code>summary(fastest_5$Q6_habitat_overallscore)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  0.0000  0.0000  0.6000  0.4217  0.6000  1.0000</code></pre>
-<pre class="r"><code># Overall knowledge score
-summary(data_clean$KnowledgeScore)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   0.000   2.100   3.600   3.585   5.000   7.000</code></pre>
-<pre class="r"><code>summary(fastest_5$KnowledgeScore)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   0.000   1.000   2.000   2.065   3.000   5.000</code></pre>
-<pre class="r"><code># NCI
-summary(data_clean$NCI)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##     0.0    38.0    59.0    59.6    82.0   100.0</code></pre>
-<pre class="r"><code>summary(fastest_5$NCI)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##     0.0    18.0    32.0    36.5    49.5   100.0</code></pre>
-<pre class="r"><code># Pro-cons behaviours
-summary(data_clean$ProCoBS)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
-##    4.00   12.00   16.00   15.94   20.00   28.00      22</code></pre>
-<pre class="r"><code>summary(fastest_5$ProCoBS)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
-##     4.0     8.0    12.0    12.6    16.0    28.0       3</code></pre>
-<pre class="r"><code># Bird Interest Score
-summary(data_clean$BirdInterestScore)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##     4.0    15.0    17.0    16.6    20.0    20.0</code></pre>
-<pre class="r"><code>summary(fastest_5$BirdInterestScore)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##    4.00   11.00   12.00   12.65   14.00   20.00</code></pre>
-<pre class="r"><code>### Full cleaned dataset
+# summary(data_clean$Q5_overallscore_diet)
+# summary(fastest_5$Q5_overallscore_diet) ### Not a significant difference in Q5 diet score between all_data, fastest 5% and 2.5% samples
+# # Q6 habitat
+# summary(data_clean$Q6_habitat_overallscore)
+# summary(fastest_5$Q6_habitat_overallscore)
+# # Overall knowledge score
+# summary(data_clean$KnowledgeScore)
+# summary(fastest_5$KnowledgeScore)
+# # NCI
+# summary(data_clean$NCI)
+# summary(fastest_5$NCI)
+# # Pro-cons behaviours
+# summary(data_clean$ProCoBS)
+# summary(fastest_5$ProCoBS)
+# # Bird Interest Score
+# summary(data_clean$BirdInterestScore)
+# summary(fastest_5$BirdInterestScore)
+  
+### Full cleaned dataset
 # Calculates the even-odd consistency score
 careless_all &lt;- evenodd(data_clean, rep(5,10))
 # Calculates the intra-individual response variability (IRV)
@@ -509,240 +505,64 @@ irv_fast &lt;- irv(fastest_5)
 # write.csv(fastest_5, &quot;WSP_fastest5.csv&quot;) 
 
 # Manually check the data
-manualcheckID_to_remove &lt;- c(566, 916) # Removed as comments suggested not taking the survey seriously (e.g. &quot;lololol&quot;)
+manualcheckID_to_remove &lt;- c(3321, 2643, 566, 916) # Removed as comments suggested not taking the survey seriously (e.g. &quot;lololol&quot;)
 ## Create new dataset for further analysis and remove rows with straightlining etc.
-data_clean1 &lt;- data_clean[!data_clean$UniqueID_short %in% manualcheckID_to_remove,]</code></pre>
+data_clean &lt;- data_clean[!data_clean$UniqueID_all %in% manualcheckID_to_remove,]</code></pre>
+</div>
+<div id="checking-the-final-dataframes-for-incompatible-answers" class="section level3">
+<h3>Checking the final dataframes for incompatible answers</h3>
+<p>Questions with multiple choice columns (e.g., Diet, habitat and nesting habitat - see the full questions below). For these questions respondents had the oppertunity to provide multiple answers (e.g., Diet = fish/ carrion) and able to also select don’t know. For these columns I am using the following code to inspect the data and remove any ‘don’t know’ answers where a respondent has also selected any other choice/answer.</p>
+<p>Questions: Q5) What do white stork’s typically eat? select all that apply Q6) What are white stork’s preferred feeding habitat? select all that apply Q7) Where do white stork’s typically nest? select all that apply</p>
+<pre class="r"><code># colnames(final_data)
+
+### DIET
+# Create a sum of all Q5_diet columns (not Don't know, rawscore, overallscore)
+final_data &lt;- final_data %&gt;% 
+  mutate(Q5_diet_sum = rowSums(select(., starts_with(&quot;Q5&quot;) &amp; ends_with(&quot;diet&quot;))))
+# Where the summed columns &gt;0 set 'don't know' column to 0
+final_data$Q5l_diet_Don.tKnow &lt;- ifelse(final_data$Q5_diet_sum &gt; 0, final_data$Q5l_diet_Don.tKnow, 0)
+# View all diet columns to check data
+Q5_alldiet_colnames &lt;- select(final_data, starts_with(&quot;Q5&quot;))
+# Q5_alldiet_colnames
+
+
+### PREFERRED HABITAT
+# Create a sum of all Q6_habitat columns (not Don't know, rawscore, overallscore)
+final_data &lt;- final_data %&gt;% 
+  mutate(Q6_habitat_sum = rowSums(select(., starts_with(&quot;Q6&quot;) &amp; ends_with(&quot;habitat&quot;))))
+# Where the summed columns &gt;0 set 'don't know' column to 0
+final_data$Q6f_habitat_Don.tKnow &lt;- ifelse(final_data$Q6_habitat_sum &gt; 0, final_data$Q6f_habitat_Don.tKnow, 0)
+# View all habitat columns to check data
+Q6_allhabitat_colnames &lt;- select(final_data, starts_with(&quot;Q6&quot;))
+# Q6_allhabitat_colnames
+
+
+### NESTING HABITAT
+# Create a sum of all Q7_nesting columns (not Don't know, rawscore, overallscore)
+final_data &lt;- final_data %&gt;% 
+  mutate(Q7_nesting_sum = rowSums(select(., ends_with(&quot;nesting&quot;))))
+# Where the summed columns &gt;0 set 'don't know' column to 0
+final_data$Q7f_nesting_Don.tKnow &lt;- ifelse(final_data$Q7_nesting_sum &gt; 0, final_data$Q7f_nesting_Don.tKnow, 0)
+# View all habitat columns to check data
+Q7_allnesting_colnames &lt;- select(final_data, starts_with(&quot;Q7&quot;))
+# Q7_allnesting_colnames
+
+# View the overall score columns 
+overall_score_colnames &lt;- select(final_data, ends_with(&quot;overallscore&quot;)) # Can use for stacked bar charts in closed question analysis
+# overall_score_colnames
+
+# View and save the FINAL cleaned dataframe as a CSV file for use in other r scripts
+# write.csv(final_data, &quot;WSP_R_cleaned_dataset3.csv&quot;)</code></pre>
 </div>
 <div id="cronbachs-alpha" class="section level3">
-<h3><span class="header-section-number">1.1.2</span> Cronbach’s alpha</h3>
+<h3>Cronbach’s alpha</h3>
 <p>Now we have a cleaned dataset I have gone through the grouped columns are numeric scores of Likert or multiple choice questions, including: AttitudeScore, NCI, EnvConcern.score, ProCoBS and BirdInterestScore.</p>
 <p>Based on the 0.7 threshold, all groups have an acceptable Cronbach’s alpha score.</p>
-<pre class="r"><code># Reminding myself of the column names again!
-colnames(final_data)</code></pre>
-<pre><code>##   [1] &quot;SurveyType&quot;                                                                                                             
-##   [2] &quot;UniqueID_long&quot;                                                                                                          
-##   [3] &quot;UniqueID_short&quot;                                                                                                         
-##   [4] &quot;TimeTaken&quot;                                                                                                              
-##   [5] &quot;StartDate&quot;                                                                                                              
-##   [6] &quot;StartTime&quot;                                                                                                              
-##   [7] &quot;CompletionDate&quot;                                                                                                         
-##   [8] &quot;CompletionTime&quot;                                                                                                         
-##   [9] &quot;Q1_aware_stork&quot;                                                                                                         
-##  [10] &quot;Q2_photo_recog&quot;                                                                                                         
-##  [11] &quot;Q2_photo_recog_score&quot;                                                                                                   
-##  [12] &quot;Q3_is_native&quot;                                                                                                           
-##  [13] &quot;Q3_is_native_explain&quot;                                                                                                   
-##  [14] &quot;Q4.1_migrate&quot;                                                                                                           
-##  [15] &quot;Q4.1_migrate_score&quot;                                                                                                     
-##  [16] &quot;Q4.2_wingspan&quot;                                                                                                          
-##  [17] &quot;Q4.2_wingspan_score&quot;                                                                                                    
-##  [18] &quot;Q4.3_globallyrare&quot;                                                                                                      
-##  [19] &quot;Q4.3_globallyrare_score&quot;                                                                                                
-##  [20] &quot;Q4_overallscore&quot;                                                                                                        
-##  [21] &quot;Q5a_amphibians_diet&quot;                                                                                                    
-##  [22] &quot;Q5b_birdeggs.chicks_diet&quot;                                                                                               
-##  [23] &quot;Q5c_carrion_diet&quot;                                                                                                       
-##  [24] &quot;Q5d_fish_diet&quot;                                                                                                          
-##  [25] &quot;Q5e_foodwaste_diet&quot;                                                                                                     
-##  [26] &quot;Q5f_fruit_diet&quot;                                                                                                         
-##  [27] &quot;Q5g_inverts_diet&quot;                                                                                                       
-##  [28] &quot;Q5h_reptiles_diet&quot;                                                                                                      
-##  [29] &quot;Q5i_seeds_diet&quot;                                                                                                         
-##  [30] &quot;Q5j_smallmammals_diet&quot;                                                                                                  
-##  [31] &quot;Q5k_vegetation_diet&quot;                                                                                                    
-##  [32] &quot;Q5l_Don.tKnow_diet&quot;                                                                                                     
-##  [33] &quot;Q5_rawscore_diet&quot;                                                                                                       
-##  [34] &quot;Q5_diet_overallscore&quot;                                                                                                   
-##  [35] &quot;Q6a_farmland_habitat&quot;                                                                                                   
-##  [36] &quot;Q6b_grassland_habitat&quot;                                                                                                  
-##  [37] &quot;Q6c_wetlands_habitat&quot;                                                                                                   
-##  [38] &quot;Q6d_woodland_habitat&quot;                                                                                                   
-##  [39] &quot;Q6e_urban_habitat&quot;                                                                                                      
-##  [40] &quot;Q6f_Don.tKnow_habitat&quot;                                                                                                  
-##  [41] &quot;Q6_habitat_rawscore&quot;                                                                                                    
-##  [42] &quot;Q6_habitat_overallscore&quot;                                                                                                
-##  [43] &quot;Q7a_chimneys_nesting&quot;                                                                                                   
-##  [44] &quot;Q7b_ground_nesting&quot;                                                                                                     
-##  [45] &quot;Q7c_roofs_nesting&quot;                                                                                                      
-##  [46] &quot;Q7d_telegraphpoles_nesting&quot;                                                                                             
-##  [47] &quot;Q7e_trees_nesting&quot;                                                                                                      
-##  [48] &quot;Q7f_Don.tKnow_nesting&quot;                                                                                                  
-##  [49] &quot;Q7_nesting_rawscore&quot;                                                                                                    
-##  [50] &quot;Q7_nesting_overallscore&quot;                                                                                                
-##  [51] &quot;KnowledgeScore&quot;                                                                                                         
-##  [52] &quot;Q8_wild_seen&quot;                                                                                                           
-##  [53] &quot;Q8_captivity_seen&quot;                                                                                                      
-##  [54] &quot;Q8_pictures_video&quot;                                                                                                      
-##  [55] &quot;Q8_No&quot;                                                                                                                  
-##  [56] &quot;Q8_NotSure&quot;                                                                                                             
-##  [57] &quot;Q8.1_UK&quot;                                                                                                                
-##  [58] &quot;Q8.1_OutsideUK&quot;                                                                                                         
-##  [59] &quot;Q8.2_feelings&quot;                                                                                                          
-##  [60] &quot;Q9_heard&quot;                                                                                                               
-##  [61] &quot;Q9a_what_heard&quot;                                                                                                         
-##  [62] &quot;Q10_project_knowledge&quot;                                                                                                  
-##  [63] &quot;Q10a_WSPwebsite&quot;                                                                                                        
-##  [64] &quot;Q10a_Socialmedia&quot;                                                                                                       
-##  [65] &quot;Q10a_TV.Radio&quot;                                                                                                          
-##  [66] &quot;Q10a_Newspaper&quot;                                                                                                         
-##  [67] &quot;Q10a_Email&quot;                                                                                                             
-##  [68] &quot;Q10a_Magazine&quot;                                                                                                          
-##  [69] &quot;Q10a_Leaflet&quot;                                                                                                           
-##  [70] &quot;Q10a_spokesperson&quot;                                                                                                      
-##  [71] &quot;Q10a_VisitingKnepp&quot;                                                                                                     
-##  [72] &quot;Q10a_Wordofmouth&quot;                                                                                                       
-##  [73] &quot;Q10a_Other&quot;                                                                                                             
-##  [74] &quot;Q10a_Other_open&quot;                                                                                                        
-##  [75] &quot;Q10b_WSPwebsite&quot;                                                                                                        
-##  [76] &quot;Q10b_Socialmedia&quot;                                                                                                       
-##  [77] &quot;Q10b_TV.Radio&quot;                                                                                                          
-##  [78] &quot;Q10b_Newspaper&quot;                                                                                                         
-##  [79] &quot;Q10b_Email&quot;                                                                                                             
-##  [80] &quot;Q10b_Magazine&quot;                                                                                                          
-##  [81] &quot;Q10b_Leaflet&quot;                                                                                                           
-##  [82] &quot;Q10b_spokesperson&quot;                                                                                                      
-##  [83] &quot;Q10b_NotInterested&quot;                                                                                                     
-##  [84] &quot;Q10b_Other&quot;                                                                                                             
-##  [85] &quot;Q10b_Other_open&quot;                                                                                                        
-##  [86] &quot;Q11_word1&quot;                                                                                                              
-##  [87] &quot;Q11_word2&quot;                                                                                                              
-##  [88] &quot;Q11_word3&quot;                                                                                                              
-##  [89] &quot;Q12.1..White.storks.symbolise.the.beauty.of.nature.&quot;                                                                    
-##  [90] &quot;Q12.1_agreement_score&quot;                                                                                                  
-##  [91] &quot;Q12.2..White.storks.play.an.important.role.in.their.environment.&quot;                                                       
-##  [92] &quot;Q12.2_agreement_score&quot;                                                                                                  
-##  [93] &quot;Q12.3..Reintroduced.white.storks.may.have.a.negative.impact.on.my.life.&quot;                                                
-##  [94] &quot;Q12.3_agreement_score&quot;                                                                                                  
-##  [95] &quot;Q12.4..I.do.not.want.white.storks.living.near.me.&quot;                                                                      
-##  [96] &quot;Q12.4_agreement_score&quot;                                                                                                  
-##  [97] &quot;Q12.5..White.storks.in.England.could.benefit.the.tourism.industry.where.they.re.found.&quot;                                 
-##  [98] &quot;Q12.5_agreement_score&quot;                                                                                                  
-##  [99] &quot;Q13.1..I.would.find.it.exciting.to.see.white.storks.in.the.wild.in.England.&quot;                                            
-## [100] &quot;Q13.1_agreement_score&quot;                                                                                                  
-## [101] &quot;Q13.2..White.storks.symbolise.hope..rebirth.and.new.life.&quot;                                                              
-## [102] &quot;Q13.2_agreement_score&quot;                                                                                                  
-## [103] &quot;Q13.3..Money.spent.reintroducing.white.storks.would.be.better.spent.elsewhere.&quot;                                         
-## [104] &quot;Q13.3_agreement_score&quot;                                                                                                  
-## [105] &quot;Q13.4..White.storks.might.be.detrimental.to.local.wildlife.&quot;                                                            
-## [106] &quot;Q13.4_agreement_score&quot;                                                                                                  
-## [107] &quot;Q13.5..There.is.no.need.to.reintroduce.the.white.stork.to.England.as.it.is.a.common.species.throughout.mainland.Europe.&quot;
-## [108] &quot;Q13.5_agreement_score&quot;                                                                                                  
-## [109] &quot;Q14.1..I.think.white.storks.are.useless.birds.&quot;                                                                         
-## [110] &quot;Q14.1_agreement_score&quot;                                                                                                  
-## [111] &quot;Q14.2..White.storks.are.part.of.our.cultural.and.natural.heritage.&quot;                                                     
-## [112] &quot;Q14.2_agreement_score&quot;                                                                                                  
-## [113] &quot;Q14.3..The.reintroduced.white.stork.can.help.people..re.connect.with.the.natural.world.&quot;                                
-## [114] &quot;Q14.3_agreement_score&quot;                                                                                                  
-## [115] &quot;Q14.4..The.countryside.will.be.worse.off.with.white.storks.around.&quot;                                                     
-## [116] &quot;Q14.4_agreement_score&quot;                                                                                                  
-## [117] &quot;OverallAttitudeScore&quot;                                                                                                   
-## [118] &quot;Q14.5..Overall..I.support.efforts.that.aim.to.reintroduce.the.UK.s.lost.species.and.restore.its.natural.systems.&quot;       
-## [119] &quot;Q14.5_agreement_score&quot;                                                                                                  
-## [120] &quot;Q15_WSP_support&quot;                                                                                                        
-## [121] &quot;Q15_WSP_support_open&quot;                                                                                                   
-## [122] &quot;Q16_views_management&quot;                                                                                                   
-## [123] &quot;Q16_views_management_open&quot;                                                                                              
-## [124] &quot;Q17.1_Nest_monitoring&quot;                                                                                                  
-## [125] &quot;Q17.2_Nesting_platforms&quot;                                                                                                
-## [126] &quot;Q17.3_Discouragenestbuilding&quot;                                                                                           
-## [127] &quot;Q17.4_Nest_removal&quot;                                                                                                     
-## [128] &quot;Q17.5_Tracking&quot;                                                                                                         
-## [129] &quot;Q17.6_Public_engagement&quot;                                                                                                
-## [130] &quot;Q17.7_Supplementary_food&quot;                                                                                               
-## [131] &quot;Q17.8_compensation_storkdamage&quot;                                                                                         
-## [132] &quot;Q17.9_Stork_relocation&quot;                                                                                                 
-## [133] &quot;Q17.10_Culling&quot;                                                                                                         
-## [134] &quot;Q17_11.management.not.needed&quot;                                                                                           
-## [135] &quot;Q17.12_Don.tknow&quot;                                                                                                       
-## [136] &quot;Q17.13_other&quot;                                                                                                           
-## [137] &quot;Q17.13a_other_open&quot;                                                                                                     
-## [138] &quot;Q18_exp_nature&quot;                                                                                                         
-## [139] &quot;Q18a_dogwalking&quot;                                                                                                        
-## [140] &quot;Q18a_walking&quot;                                                                                                           
-## [141] &quot;Q18a_running.cycling&quot;                                                                                                   
-## [142] &quot;Q18a.golf&quot;                                                                                                              
-## [143] &quot;Q18a.picnic&quot;                                                                                                            
-## [144] &quot;Q18a.horse.riding&quot;                                                                                                      
-## [145] &quot;Q18a.bird.wildlife.watching&quot;                                                                                            
-## [146] &quot;Q18a.photography&quot;                                                                                                       
-## [147] &quot;Q18a.camping&quot;                                                                                                           
-## [148] &quot;Q18a.fishing&quot;                                                                                                           
-## [149] &quot;Q18a.shooting.hunting&quot;                                                                                                  
-## [150] &quot;Q18a.water.sports.swimming&quot;                                                                                             
-## [151] &quot;Q18a.gardening&quot;                                                                                                         
-## [152] &quot;Q18a.don.t.spend.free.time.in.green.natural.spaces&quot;                                                                     
-## [153] &quot;Q18a_other&quot;                                                                                                             
-## [154] &quot;Q18a_other_open&quot;                                                                                                        
-## [155] &quot;Q19.1..I.find.being.in.nature.really.amazing&quot;                                                                           
-## [156] &quot;Q19.1.score&quot;                                                                                                            
-## [157] &quot;Q19.2..Spending.time.in.nature.is.very.important.to.me&quot;                                                                 
-## [158] &quot;Q19.2.score&quot;                                                                                                            
-## [159] &quot;Q19.3..Being.in.nature.makes.me.very.happy&quot;                                                                             
-## [160] &quot;Q19.3.score&quot;                                                                                                            
-## [161] &quot;Q19.4..I.always.find.beauty.in.nature&quot;                                                                                  
-## [162] &quot;Q19.4.score&quot;                                                                                                            
-## [163] &quot;Q19.5..I.always.treat.nature.with.respect&quot;                                                                              
-## [164] &quot;Q19.5.score&quot;                                                                                                            
-## [165] &quot;Q19.6..I.feel.part.of.nature&quot;                                                                                           
-## [166] &quot;Q19.6.score&quot;                                                                                                            
-## [167] &quot;NCI&quot;                                                                                                                    
-## [168] &quot;Q20.1..Damage.to.the.natural.environment&quot;                                                                               
-## [169] &quot;Q20.2..The.consequences.of.a.loss.of.variety.of.wildlife&quot;                                                               
-## [170] &quot;EnvConcern.score&quot;                                                                                                       
-## [171] &quot;Q21.1..When.I.see.litter..I.pick.it.up&quot;                                                                                 
-## [172] &quot;Q21.1.score&quot;                                                                                                            
-## [173] &quot;Q21.2..I.vote.for.nature.or.wildlife.conservation.friendly.legislation.in.local.or.national.referendums.votes.etc.&quot;     
-## [174] &quot;Q21.2.score&quot;                                                                                                            
-## [175] &quot;Q21.3..I.get.in.touch.with.local.authorities.on.nature.conservation.issues&quot;                                             
-## [176] &quot;Q21.3.score&quot;                                                                                                            
-## [177] &quot;Q21.4..I.vote.for.parties..candidates.with.strong.pro.nature.conservation.policies.in.elections&quot;                        
-## [178] &quot;Q21.4.score&quot;                                                                                                            
-## [179] &quot;ProCoBS&quot;                                                                                                                
-## [180] &quot;Q22....Are.you.a.member.of.any.environmental..wildlife.or.conservation.organisations.&quot;                                  
-## [181] &quot;Q22.a..Which.ones...Optional..&quot;                                                                                         
-## [182] &quot;Q23.1..I.pay.attention.to.birds.wherever.I.go.&quot;                                                                         
-## [183] &quot;Q23.1..Score&quot;                                                                                                           
-## [184] &quot;Q23.2..I.can.identify.common.birds.in.my.area.&quot;                                                                         
-## [185] &quot;Q23.2.Score&quot;                                                                                                            
-## [186] &quot;Q23.3..Seeing.a.new.bird.fills.me.with.excitement.&quot;                                                                     
-## [187] &quot;Q23.3.Score&quot;                                                                                                            
-## [188] &quot;Q23.4..I.am.not.interested.in.birds.&quot;                                                                                   
-## [189] &quot;Q24.4.score&quot;                                                                                                            
-## [190] &quot;BirdInterestScore&quot;                                                                                                      
-## [191] &quot;Age_group&quot;                                                                                                              
-## [192] &quot;Gender&quot;                                                                                                                 
-## [193] &quot;Gender_other&quot;                                                                                                           
-## [194] &quot;Region&quot;                                                                                                                 
-## [195] &quot;County&quot;                                                                                                                 
-## [196] &quot;Area_type&quot;                                                                                                              
-## [197] &quot;Postcode&quot;                                                                                                               
-## [198] &quot;ReleaseSite&quot;                                                                                                            
-## [199] &quot;Q27_Knepp_visit&quot;                                                                                                        
-## [200] &quot;Q27.a_Knepp_activity&quot;                                                                                                   
-## [201] &quot;Q27.a_Knepp_activity_other&quot;                                                                                             
-## [202] &quot;Education&quot;                                                                                                              
-## [203] &quot;Education_other&quot;                                                                                                        
-## [204] &quot;Occupation&quot;                                                                                                             
-## [205] &quot;Occupation_other&quot;                                                                                                       
-## [206] &quot;Q30_Press&quot;                                                                                                              
-## [207] &quot;Q30_TV.Radio&quot;                                                                                                           
-## [208] &quot;Q30_Facebook&quot;                                                                                                           
-## [209] &quot;Q30_Twitter&quot;                                                                                                            
-## [210] &quot;Q30_Social_media&quot;                                                                                                       
-## [211] &quot;Q30_Durrell.WSP&quot;                                                                                                        
-## [212] &quot;Q30_Other_wildlife.nature.org.&quot;                                                                                         
-## [213] &quot;Q30_Farming_org.&quot;                                                                                                       
-## [214] &quot;Q30_Business_org.&quot;                                                                                                      
-## [215] &quot;Q30_Tourism_org.&quot;                                                                                                       
-## [216] &quot;Q30_Local_council&quot;                                                                                                      
-## [217] &quot;Q30_Friend.family&quot;                                                                                                      
-## [218] &quot;Q30_Researcher&quot;                                                                                                         
-## [219] &quot;Q30_other&quot;                                                                                                              
-## [220] &quot;Q30.a_Other_open&quot;                                                                                                       
-## [221] &quot;Q31_comments&quot;                                                                                                           
-## [222] &quot;Age_group_match&quot;                                                                                                        
-## [223] &quot;SecsTaken&quot;</code></pre>
-<pre class="r"><code># Testing Cronbach's alpha on the score columns using the psych package (alpha::psych)
+<pre class="r"><code>### Reminding myself of the column names again!
+# colnames(final_data)
+# nrow(final_data)
+
+# Using Cronbach's alpha on the score columns using the psych package (alpha::psych)
 # Question 13 attitudes
 final_data %&gt;%
   select(., starts_with(&quot;Q13&quot;) &amp;  ends_with('score')) %&gt;%
@@ -759,13 +579,13 @@ final_data %&gt;%
 ## 
 ##  Reliability if an item is dropped:
 ##                       raw_alpha std.alpha G6(smc) average_r S/N alpha se var.r
-## Q13.1_agreement_score      0.80      0.79    0.76      0.49 3.8   0.0056 0.025
+## Q13.1_agreement_score      0.80      0.79    0.76      0.49 3.8   0.0056 0.026
 ## Q13.2_agreement_score      0.82      0.82    0.79      0.53 4.5   0.0047 0.014
 ## Q13.3_agreement_score      0.75      0.76    0.73      0.44 3.1   0.0068 0.013
 ## Q13.4_agreement_score      0.78      0.79    0.76      0.48 3.7   0.0059 0.012
 ## Q13.5_agreement_score      0.75      0.75    0.72      0.43 3.0   0.0069 0.013
 ##                       med.r
-## Q13.1_agreement_score  0.49
+## Q13.1_agreement_score  0.50
 ## Q13.2_agreement_score  0.54
 ## Q13.3_agreement_score  0.43
 ## Q13.4_agreement_score  0.46
@@ -773,16 +593,16 @@ final_data %&gt;%
 ## 
 ##  Item statistics 
 ##                          n raw.r std.r r.cor r.drop mean   sd
-## Q13.1_agreement_score 3484  0.72  0.74  0.64   0.57  4.5 0.82
-## Q13.2_agreement_score 3409  0.68  0.67  0.54   0.47  3.9 0.96
-## Q13.3_agreement_score 3381  0.82  0.82  0.77   0.70  3.8 1.04
-## Q13.4_agreement_score 2903  0.76  0.75  0.67   0.61  3.7 1.05
-## Q13.5_agreement_score 3243  0.83  0.83  0.79   0.71  4.0 1.00
+## Q13.1_agreement_score 3491  0.72  0.74  0.64   0.57  4.5 0.82
+## Q13.2_agreement_score 3416  0.68  0.67  0.54   0.47  3.9 0.96
+## Q13.3_agreement_score 3389  0.82  0.82  0.77   0.70  3.8 1.04
+## Q13.4_agreement_score 2910  0.76  0.75  0.67   0.61  3.7 1.05
+## Q13.5_agreement_score 3251  0.83  0.83  0.79   0.72  4.0 1.00
 ## 
 ## Non missing response frequency for each item
 ##                          1    2    3    4    5 miss
-## Q13.1_agreement_score 0.02 0.01 0.07 0.25 0.64 0.01
-## Q13.2_agreement_score 0.02 0.04 0.28 0.34 0.32 0.04
+## Q13.1_agreement_score 0.02 0.01 0.07 0.25 0.65 0.01
+## Q13.2_agreement_score 0.02 0.04 0.28 0.34 0.32 0.03
 ## Q13.3_agreement_score 0.04 0.06 0.26 0.38 0.26 0.04
 ## Q13.4_agreement_score 0.04 0.09 0.28 0.36 0.24 0.18
 ## Q13.5_agreement_score 0.03 0.05 0.18 0.41 0.33 0.08</code></pre>
@@ -795,18 +615,18 @@ final_data %&gt;%
 ## Call: psych::alpha(x = ., title = &quot;Attitudes&quot;)
 ## 
 ##   raw_alpha std.alpha G6(smc) average_r S/N    ase mean   sd median_r
-##       0.77      0.78    0.76      0.41 3.4 0.0063  4.2 0.66      0.4
+##       0.77      0.77    0.76      0.41 3.4 0.0063  4.2 0.66      0.4
 ## 
 ##  lower alpha upper     95% confidence boundaries
 ## 0.75 0.77 0.78 
 ## 
 ##  Reliability if an item is dropped:
 ##                       raw_alpha std.alpha G6(smc) average_r S/N alpha se  var.r
-## Q14.1_agreement_score      0.73      0.74    0.70      0.42 2.9   0.0077 0.0214
-## Q14.2_agreement_score      0.72      0.73    0.69      0.41 2.7   0.0077 0.0091
-## Q14.3_agreement_score      0.69      0.70    0.66      0.37 2.4   0.0085 0.0076
-## Q14.4_agreement_score      0.77      0.77    0.73      0.46 3.4   0.0062 0.0112
-## Q14.5_agreement_score      0.70      0.71    0.68      0.38 2.5   0.0083 0.0160
+## Q14.1_agreement_score      0.73      0.74    0.70      0.42 2.9   0.0077 0.0218
+## Q14.2_agreement_score      0.72      0.73    0.69      0.41 2.7   0.0077 0.0093
+## Q14.3_agreement_score      0.69      0.70    0.65      0.37 2.4   0.0085 0.0078
+## Q14.4_agreement_score      0.77      0.77    0.73      0.46 3.4   0.0062 0.0117
+## Q14.5_agreement_score      0.70      0.71    0.68      0.38 2.5   0.0083 0.0163
 ##                       med.r
 ## Q14.1_agreement_score  0.39
 ## Q14.2_agreement_score  0.40
@@ -816,18 +636,18 @@ final_data %&gt;%
 ## 
 ##  Item statistics 
 ##                          n raw.r std.r r.cor r.drop mean   sd
-## Q14.1_agreement_score 3414  0.70  0.71  0.60   0.53  4.4 0.78
-## Q14.2_agreement_score 3211  0.73  0.73  0.64   0.54  3.8 0.97
-## Q14.3_agreement_score 3416  0.77  0.78  0.73   0.63  4.2 0.84
-## Q14.4_agreement_score 3255  0.68  0.64  0.50   0.42  4.1 1.06
-## Q14.5_agreement_score 3411  0.76  0.76  0.69   0.60  4.4 0.88
+## Q14.1_agreement_score 3421  0.70  0.71  0.60   0.53  4.4 0.78
+## Q14.2_agreement_score 3219  0.73  0.73  0.64   0.54  3.8 0.97
+## Q14.3_agreement_score 3423  0.77  0.78  0.73   0.63  4.2 0.84
+## Q14.4_agreement_score 3262  0.68  0.64  0.49   0.42  4.1 1.06
+## Q14.5_agreement_score 3418  0.76  0.76  0.68   0.60  4.4 0.88
 ## 
 ## Non missing response frequency for each item
 ##                          1    2    3    4    5 miss
 ## Q14.1_agreement_score 0.01 0.02 0.08 0.32 0.58 0.03
 ## Q14.2_agreement_score 0.02 0.05 0.27 0.38 0.27 0.09
 ## Q14.3_agreement_score 0.01 0.02 0.14 0.45 0.38 0.03
-## Q14.4_agreement_score 0.04 0.05 0.13 0.32 0.47 0.08
+## Q14.4_agreement_score 0.04 0.05 0.12 0.32 0.47 0.08
 ## Q14.5_agreement_score 0.02 0.02 0.09 0.27 0.61 0.03</code></pre>
 <pre class="r"><code># Question 21 ProCoBS
 final_data %&gt;%
@@ -838,24 +658,24 @@ final_data %&gt;%
 ## Call: psych::alpha(x = ., title = &quot;ProCoBS&quot;)
 ## 
 ##   raw_alpha std.alpha G6(smc) average_r S/N    ase mean  sd median_r
-##       0.82      0.82    0.79      0.53 4.4 0.0047    4 1.4      0.5
+##       0.82      0.82    0.79      0.52 4.4 0.0047    4 1.4      0.5
 ## 
 ##  lower alpha upper     95% confidence boundaries
 ## 0.81 0.82 0.83 
 ## 
 ##  Reliability if an item is dropped:
 ##             raw_alpha std.alpha G6(smc) average_r S/N alpha se  var.r med.r
-## Q21.1.score      0.84      0.84    0.80      0.64 5.4   0.0045 0.0095  0.61
-## Q21.2.score      0.71      0.71    0.63      0.45 2.4   0.0082 0.0108  0.42
-## Q21.3.score      0.77      0.76    0.73      0.52 3.2   0.0063 0.0424  0.45
-## Q21.4.score      0.75      0.75    0.67      0.49 2.9   0.0071 0.0109  0.45
+## Q21.1.score      0.84      0.84    0.79      0.64 5.4   0.0045 0.0094  0.61
+## Q21.2.score      0.71      0.71    0.63      0.45 2.4   0.0082 0.0111  0.42
+## Q21.3.score      0.77      0.76    0.73      0.52 3.2   0.0063 0.0428  0.44
+## Q21.4.score      0.74      0.74    0.67      0.49 2.9   0.0071 0.0110  0.44
 ## 
 ##  Item statistics 
 ##                n raw.r std.r r.cor r.drop mean  sd
-## Q21.1.score 3512  0.65  0.69  0.51   0.47  4.2 1.4
-## Q21.2.score 3512  0.89  0.88  0.85   0.77  4.5 1.8
-## Q21.3.score 3512  0.81  0.81  0.71   0.65  3.0 1.7
-## Q21.4.score 3512  0.85  0.83  0.79   0.70  4.3 1.9
+## Q21.1.score 3517  0.65  0.69  0.51   0.46  4.2 1.4
+## Q21.2.score 3517  0.89  0.87  0.85   0.77  4.5 1.8
+## Q21.3.score 3517  0.81  0.81  0.71   0.65  3.0 1.7
+## Q21.4.score 3517  0.85  0.83  0.79   0.70  4.3 1.9
 ## 
 ## Non missing response frequency for each item
 ##                1    2    3    4    5    6    7 miss
@@ -880,21 +700,20 @@ final_data %&gt;%
 ##  Reliability if an item is dropped:
 ##              raw_alpha std.alpha G6(smc) average_r S/N alpha se var.r med.r
 ## Q23.1..Score      0.77      0.77    0.63      0.63 3.4   0.0076    NA  0.63
-## Q23.2.Score       0.85      0.85    0.74      0.74 5.7   0.0050    NA  0.74
-## Q23.3.Score       0.81      0.82    0.69      0.69 4.5   0.0062    NA  0.69
+## Q23.2.Score       0.85      0.85    0.74      0.74 5.7   0.0051    NA  0.74
+## Q23.3.Score       0.81      0.82    0.69      0.69 4.4   0.0062    NA  0.69
 ## 
 ##  Item statistics 
 ##                 n raw.r std.r r.cor r.drop mean   sd
-## Q23.1..Score 3534  0.90  0.91  0.85   0.79  4.2 0.91
-## Q23.2.Score  3534  0.88  0.87  0.76   0.71  4.0 1.01
-## Q23.3.Score  3534  0.89  0.89  0.81   0.74  4.1 0.97
+## Q23.1..Score 3539  0.90  0.91  0.85   0.79  4.2 0.90
+## Q23.2.Score  3539  0.88  0.87  0.76   0.71  4.0 1.01
+## Q23.3.Score  3539  0.89  0.89  0.81   0.74  4.1 0.96
 ## 
 ## Non missing response frequency for each item
 ##                 1    2    3    4    5 miss
 ## Q23.1..Score 0.02 0.04 0.13 0.40 0.41    0
 ## Q23.2.Score  0.02 0.08 0.12 0.42 0.36    0
-## Q23.3.Score  0.02 0.05 0.18 0.35 0.41    0</code></pre>
-</div>
+## Q23.3.Score  0.02 0.05 0.17 0.35 0.41    0</code></pre>
 </div>
 </div>
 <div class="footnotes">

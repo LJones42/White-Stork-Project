@@ -4,15 +4,14 @@ author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
 date: "02/05/2021"
 output:
   html_document:
-    number_sections: yes
+    number_sections: no
   pdf_document:
-    number_sections: yes
+    number_sections: no
   word_document: default
 ---
 
-====================
-WSP - Demographics exploration, analysis and visualisations
-====================
+
+## WSP - Demographics exploration, analysis and visualisations
 
 #### About this rMarkdown
 
@@ -55,7 +54,7 @@ original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFacto
 all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
 
 # Load in cleaned dataset
-final_data <- read.csv("WSP_R_cleaned_dataset.csv", header = TRUE, stringsAsFactors=TRUE)
+final_data <- read.csv("WSP_R_cleaned_dataset3.csv", header = TRUE, stringsAsFactors=TRUE)
 # View cleaned dataset
 summary(final_data)
 ### Create two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
@@ -181,7 +180,7 @@ postal@data$id <- 1:postal.count
 # Transform SpatialPolygonsDataFrame to regular data.frame in ggplot format
 postal.fort <- ggplot2::fortify(postal, region='id')
 # Extract first two digits of postcode and make uppercase
-all_demo$postal_area_code = toupper(substr(all_data$Postcode, 1, 2))
+all_demo$postal_area_code = toupper(substr(final_data$Postcode, 1, 2))
 all_demo$postal_area_code <- gsub('[0-9]+', '', all_demo$postal_area_code)
 df <- all_demo %>%
   dplyr::select(postal_area_code) %>% 

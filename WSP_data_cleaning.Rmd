@@ -1,18 +1,18 @@
 ---
-title: "WSP setup and demographics code"
+title: "WSP setup and cleaning code"
 author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
 date: "02/05/2021"
 output:
   html_document:
-    number_sections: yes
+    number_sections: no
   pdf_document:
-    number_sections: yes
+    number_sections: no
   word_document: default
 ---
 
 
-WSP - Initial data exploration
-====================
+## Data cleaning!
+
 
 #### About this rMarkdown
 
@@ -52,19 +52,13 @@ setwd("~/Documents/White-Stork-Project")
 # Load in the data
 original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
 all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
+# I have created a new column called 'UniqueID_all' to allow me to remove inidividual participants 
 
 ```
 
+```{r column groups, include=FALSE}
 
-```{r column grouping, check formats, view data, include=FALSE}
-
-## Here I create a way to call in groups of columns (e.g. Q17.1 - 17.13) as one unit to enable easier and more generalisable functions, data comparison and plotting.
-
-# Original column names
-glimpse(original_data)
-# R adapted column names
-colnames(all_data)
-
+### Grouping columns
 # Grouping Likert scale question columns by selecting Question numbers (and dropping scores or open questions)
 overall_score_colnames <- select(all_data, ends_with("overallscore"))
 
@@ -92,21 +86,21 @@ Q19_NCI_colnames <- select(all_data, starts_with("Q19"), -ends_with('score')) # 
 Q20_envconcern_colnames <- select(all_data, starts_with("Q20"), -ends_with('score')) # Q21 total score = Env.concern score
 Q21_ProCoBS_colnames <- select(all_data, starts_with("Q21"), -ends_with('score')) # Q21 total score = ProCoBS
 Q23_BIS_colnames <- select(all_data, starts_with("Q23"), -ends_with('score')) # Q23 total score = BirdInterestScore
-
-
-# Sample size per column 
-NROW(na.omit(all_data$Q2_photo_recog_score))
 ```
 
 
-## Data cleaning
+
+
+### Data cleaning intro
 
 First I have conducted some data cleaning to identify any respondents or data points that need to be removed and explain why. First I converted the 'TimeTaken' column to a total number of seconds (SecsTaken) for easier to more easily investigate means and quantiles. 
 
 I initially focussed on the fastest 5% of respondents across both surveys as they are most likely to have straightlined through the survey. I visually inspected the data, then used the 'careless' package to find evidence of straightlining 'even-odd' consistencies, and intra-individual response variability (IRV), across the whole survey and within the multiple choice questions (particularly questions 4, 5, 13, 15, 16, 17, 22, 23, 24).
 
+Finally I went through the full dataset manually and checked for any respondents that were definitely not taking the questionnaire seriously (e.g. open answers such as "jkjkjkjk"). I removed the entire row for respondents that were also straightlining, but for those who appreared to take the close questions seriously and put junk answers for the open questions, I removed the open answers only. 
 
-```{r data formatting main dataset, include=FALSE}
+
+```{r data formatting main dataset}
 ## Cleaning full dataset to prevent having to do code for all samples
 all_data$Age_group_match <- all_data$Age_group # Create new column with matching age-group formats
 all_data <- all_data  %>%
@@ -114,8 +108,8 @@ all_data <- all_data  %>%
 summary(all_data$Age_group_match)
 # Formatting date and time columns
 all_data$SecsTaken <- as.numeric(lubridate::seconds(all_data$TimeTaken)) # Create numeric column of time taken (seconds)
-as.Date(all_data$StartDate, format = "%d/%m/%Y")
-as.Date(all_data$CompletionDate, format = "%d/%m/%Y")
+all_data$StartDate <- as.Date(all_data$StartDate, format = "%d/%m/%Y")
+all_data$CompletionDate <- as.Date(all_data$CompletionDate, format = "%d/%m/%Y")
 
 
 ```
@@ -155,26 +149,30 @@ summary(which(grepl(4, ProCoBS_straight))) # 245 rows with 10 consecutive answer
 both_straightline_rownames <- intersect(all_possible_st,attitude_possible_st) # rows in both
 rows_straightlined <- all_data[c(2678, 2713, 2723, 2738, 2772, 3121, 3209, 3287, 3307, 3455, 3503), ] # Create df to view
 summary(rows_straightlined$SecsTaken) # Most took survey quickly and have skipped the open questions
-rows_straightlined$UniqueID_short
-ID_to_remove <- c(285,320,330,345,379,728,816,894,914,1062,1110)
 
-
+# Removing straightlined participants
+ID_straightlined <- c(2678, 2713, 2723, 2738, 2772, 3121, 3209, 3287, 3307, 3455, 3503)
 ## Create new dataset for further analysis and remove rows with straightlining etc.
-data_clean <- all_data[!all_data$UniqueID_short %in% ID_to_remove,]
+data_clean <- all_data[!all_data$UniqueID_all %in% ID_straightlined,]
+
+# Removing non-serious (and often also straightlined through most questions) participants
+ID_notserious <- c(2607, 2630, 3297, 3285, 3340, 3441, 3439, 3474)
+## Create new dataset for further analysis and remove rows with straightlining etc.
+data_clean <- data_clean[!data_clean$UniqueID_all %in% ID_notserious,]
 
 
 ```
 
 
-```{r data time-checks, warning=FALSE, messages=FALSE}
+```{r data time-checks}
 
 ### Explore average time taken to complete questionnaire and check for straightlining
 quantile(data_clean$SecsTaken, 0.1) # Fastest 10% of all respondents = completion in 188.9 seconds/ about 3 mins
 quantile(data_clean$SecsTaken, 0.05) # Fastest 5% of all respondents = completion in 117.95 seconds/ about 2 mins
 quantile(data_clean$SecsTaken, 0.025) # Fastest 2.5% of all respondents = completion in 70.975 seconds/ about 1.2 mins
-fastest_10 <- subset(data_clean, SecsTaken < 190) # Sample of fastest 10% of all respondents
-fastest_5 <- subset(data_clean, SecsTaken < 118) # Sample of fastest 5% of all respondents
-fastest_2.5 <- subset(data_clean, SecsTaken < 71) # Sample of fastest 2.5% of all respondents
+fastest_10 <- subset(data_clean, SecsTaken < 191) # Sample of fastest 10% of all respondents
+fastest_5 <- subset(data_clean, SecsTaken < 121) # Sample of fastest 5% of all respondents
+fastest_2.5 <- subset(data_clean, SecsTaken < 72) # Sample of fastest 2.5% of all respondents
 summary(fastest_5$SurveyType) # 96% of respondents in fastest 5% are from the NatRep sample
 summary(fastest_2.5$SurveyType) # 100% of respondents in fastest 2.5% are from the NatRep sample
 ```
@@ -196,23 +194,23 @@ evenodd_fastest_5 <- evenodd(fastest_5, rep(5,10)) # Calculates the even-odd con
 
 # Checking the fastest 5% for straightlining within each set of mutliple choice questions
 # Q5 diet
-summary(data_clean$Q5_overallscore_diet)
-summary(fastest_5$Q5_overallscore_diet) ### Not a significant difference in Q5 diet score between all_data, fastest 5% and 2.5% samples
-# Q6 habitat
-summary(data_clean$Q6_habitat_overallscore)
-summary(fastest_5$Q6_habitat_overallscore)
-# Overall knowledge score
-summary(data_clean$KnowledgeScore)
-summary(fastest_5$KnowledgeScore)
-# NCI
-summary(data_clean$NCI)
-summary(fastest_5$NCI)
-# Pro-cons behaviours
-summary(data_clean$ProCoBS)
-summary(fastest_5$ProCoBS)
-# Bird Interest Score
-summary(data_clean$BirdInterestScore)
-summary(fastest_5$BirdInterestScore)
+# summary(data_clean$Q5_overallscore_diet)
+# summary(fastest_5$Q5_overallscore_diet) ### Not a significant difference in Q5 diet score between all_data, fastest 5% and 2.5% samples
+# # Q6 habitat
+# summary(data_clean$Q6_habitat_overallscore)
+# summary(fastest_5$Q6_habitat_overallscore)
+# # Overall knowledge score
+# summary(data_clean$KnowledgeScore)
+# summary(fastest_5$KnowledgeScore)
+# # NCI
+# summary(data_clean$NCI)
+# summary(fastest_5$NCI)
+# # Pro-cons behaviours
+# summary(data_clean$ProCoBS)
+# summary(fastest_5$ProCoBS)
+# # Bird Interest Score
+# summary(data_clean$BirdInterestScore)
+# summary(fastest_5$BirdInterestScore)
   
 ### Full cleaned dataset
 # Calculates the even-odd consistency score
@@ -231,23 +229,84 @@ irv_fast <- irv(fastest_5)
 # write.csv(fastest_5, "WSP_fastest5.csv") 
 
 # Manually check the data
-manualcheckID_to_remove <- c(566, 916) # Removed as comments suggested not taking the survey seriously (e.g. "lololol")
+manualcheckID_to_remove <- c(3321, 2643, 566, 916) # Removed as comments suggested not taking the survey seriously (e.g. "lololol")
 ## Create new dataset for further analysis and remove rows with straightlining etc.
-data_clean1 <- data_clean[!data_clean$UniqueID_short %in% manualcheckID_to_remove,]
+data_clean <- data_clean[!data_clean$UniqueID_all %in% manualcheckID_to_remove,]
 
 
 ```
 
 ```{r final dataframes, echo=FALSE, warning=FALSE, message=FALSE}
 # Write in cleaned dataset as a new dataframe - 'final_data'
-final_data <- as.data.frame(data_clean1)
 # View cleaned dataset
-# summary(final_data)
+# summary(data_clean)
 
 # View and save the final cleaned dataframe as a CSV file for use in other r scripts
 # write.csv(final_data, "WSP_R_cleaned_dataset.csv")
 
+# Load in manually cleaned dataset
+final_data <- read.csv("WSP_R_cleaned_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
+
 ```
+
+
+### Checking the final dataframes for incompatible answers
+
+Questions with multiple choice columns (e.g., Diet, habitat and nesting habitat - see the full questions below). For these questions respondents had the oppertunity to provide multiple answers (e.g., Diet =  fish/ carrion) and able to also select don't know. For these columns I am using the following code to inspect the data and remove any 'don't know' answers where a respondent has also selected any other choice/answer.
+
+Questions:
+Q5) What do white stork’s typically eat? select all that apply 
+Q6) What are white stork’s preferred feeding habitat? select all that apply 
+Q7) Where do white stork’s typically nest? select all that apply 
+
+
+
+```{r check double answers}
+# colnames(final_data)
+
+### DIET
+# Create a sum of all Q5_diet columns (not Don't know, rawscore, overallscore)
+final_data <- final_data %>% 
+  mutate(Q5_diet_sum = rowSums(select(., starts_with("Q5") & ends_with("diet"))))
+# Where the summed columns >0 set 'don't know' column to 0
+final_data$Q5l_diet_Don.tKnow <- ifelse(final_data$Q5_diet_sum > 0, final_data$Q5l_diet_Don.tKnow, 0)
+# View all diet columns to check data
+Q5_alldiet_colnames <- select(final_data, starts_with("Q5"))
+# Q5_alldiet_colnames
+
+
+### PREFERRED HABITAT
+# Create a sum of all Q6_habitat columns (not Don't know, rawscore, overallscore)
+final_data <- final_data %>% 
+  mutate(Q6_habitat_sum = rowSums(select(., starts_with("Q6") & ends_with("habitat"))))
+# Where the summed columns >0 set 'don't know' column to 0
+final_data$Q6f_habitat_Don.tKnow <- ifelse(final_data$Q6_habitat_sum > 0, final_data$Q6f_habitat_Don.tKnow, 0)
+# View all habitat columns to check data
+Q6_allhabitat_colnames <- select(final_data, starts_with("Q6"))
+# Q6_allhabitat_colnames
+
+
+### NESTING HABITAT
+# Create a sum of all Q7_nesting columns (not Don't know, rawscore, overallscore)
+final_data <- final_data %>% 
+  mutate(Q7_nesting_sum = rowSums(select(., ends_with("nesting"))))
+# Where the summed columns >0 set 'don't know' column to 0
+final_data$Q7f_nesting_Don.tKnow <- ifelse(final_data$Q7_nesting_sum > 0, final_data$Q7f_nesting_Don.tKnow, 0)
+# View all habitat columns to check data
+Q7_allnesting_colnames <- select(final_data, starts_with("Q7"))
+# Q7_allnesting_colnames
+
+# View the overall score columns 
+overall_score_colnames <- select(final_data, ends_with("overallscore")) # Can use for stacked bar charts in closed question analysis
+# overall_score_colnames
+
+# View and save the FINAL cleaned dataframe as a CSV file for use in other r scripts
+# write.csv(final_data, "WSP_R_cleaned_dataset3.csv")
+
+```
+
+
+
 
 ### Cronbach's alpha
 
@@ -258,10 +317,11 @@ Based on the 0.7 threshold, all groups have an acceptable Cronbach's alpha score
 
 ```{r cronbachs alpha, warning=FALSE, message=FALSE}
 
-# Reminding myself of the column names again!
-colnames(final_data)
+### Reminding myself of the column names again!
+# colnames(final_data)
+# nrow(final_data)
 
-# Testing Cronbach's alpha on the score columns using the psych package (alpha::psych)
+# Using Cronbach's alpha on the score columns using the psych package (alpha::psych)
 # Question 13 attitudes
 final_data %>%
   select(., starts_with("Q13") &  ends_with('score')) %>%
