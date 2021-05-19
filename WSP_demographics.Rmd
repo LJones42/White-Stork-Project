@@ -54,7 +54,7 @@ original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFacto
 all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
 
 # Load in cleaned dataset
-final_data <- read.csv("WSP_R_cleaned_dataset3.csv", header = TRUE, stringsAsFactors=TRUE)
+final_data <- read.csv("WSP_R_cleaned_dataset_Final.csv", header = TRUE, stringsAsFactors=TRUE)
 # View cleaned dataset
 summary(final_data)
 ### Create two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
@@ -126,7 +126,9 @@ all_occupation_df <- all_demo  %>%
 ```
 
 ```{r demographics - stacked plots, echo=FALSE, message=FALSE, warning=FALSE}
-ggarrange(age_bar, gender_bar, education_bar, ncol=1, nrow=3)
+age_bar
+gender_bar
+education_bar
 ```
 
 
@@ -154,13 +156,14 @@ both_demo$Education <- factor(both_demo$Education, levels=c("Postgraduate degree
          "Undergraduate degree","Further Education","Secondary school",
          "No formal qualifications", "Prefer not to answer", "Other"))
 # Format table
-table1::label(both_demo$Age_group) <- "Age group"
+table1::label(both_demo$Age_group_match) <- "Age group"
 table1::label(both_demo$Area_type) <- "Area type"
 table1::label(both_demo$ReleaseSite) <- "Release site"
 # Create demo table
-full_demo_table <- table1::table1(~Age_group + Gender + Education + Occupation + Region + Area_type + 
+full_demo_table <- table1::table1(~Age_group_match + Gender + Education + Occupation + Region + Area_type + 
                                     ReleaseSite | SurveyType, data = both_demo)
 full_demo_table
+
 ```
 
 
@@ -236,7 +239,7 @@ postcode_4_map <- ggplot(data = world) +
   labs(colour="Survey type", title="Postcode map") + xlab("Longitude") + ylab("Latitude") +
   theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.5),
         panel.background = element_rect(fill = "#e6f7ff"))
-# ggsave("Ch4.reservesmap.pdf",width = 6, height = 6, dpi = 300)
+ggsave("Ch4.reservesmap.png",width = 6, height = 6, dpi = 300)
 ```
 
 \newpage

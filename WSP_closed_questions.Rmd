@@ -56,12 +56,14 @@ original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFacto
 all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
 
 # Load in cleaned dataset
-final_data <- read.csv("WSP_R_cleaned_dataset3.csv", header = TRUE, stringsAsFactors=TRUE)
+final_data <- read.csv("WSP_R_cleaned_dataset_Final.csv", header = TRUE, stringsAsFactors=TRUE)
 # View cleaned dataset
-# str(final_data)
+nrow(final_data)
 ### Create two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
 proact_data <- final_data[which(final_data$SurveyType == "Proactive"),]
 natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
+
+
 ```
 
 ```{r column groups, include=FALSE}
@@ -104,18 +106,18 @@ Creating a table to calculate and display the sample sizes per column, per surve
 ```{r n per column, echo=TRUE, messages=FALSE}
 
 ### Calculate sample size per column/question and create a table 
-# str(final_data)
+str(final_data$ReleaseSite)
 
 # All numeric columns
-# vars <- names(final_data)[11:222]
-# final_data %>% 
-#   dplyr::group_by(SurveyType) %>% 
-#   dplyr::summarise_at(vars, ~sum(!is.na(.)))
-# 
-# # Just the score columns
-# final_data %>% 
-#   dplyr::group_by(SurveyType) %>% 
-#   dplyr::summarise_at(vars(ends_with("score")), ~sum(!is.na(.)))
+vars <- names(final_data)[11:222]
+final_data %>%
+  dplyr::group_by(SurveyType, SiteProximity) %>%
+  dplyr::summarise_at(vars, ~sum(!is.na(.)))
+
+# Just the score columns
+final_data %>%
+  dplyr::group_by(SurveyType) %>%
+  dplyr::summarise_at(vars(ends_with("score")), ~sum(!is.na(.)))
 
 
 ```

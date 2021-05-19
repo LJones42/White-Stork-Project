@@ -363,11 +363,62 @@ pre code {
 <p>This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <a href="http://rmarkdown.rstudio.com" class="uri">http://rmarkdown.rstudio.com</a>. To generate the document of all content, click the <strong>Knit</strong> button.</p>
 <p>This rMarkdown document will be periodically updated and uploaded to the OneDrive folder and pushed to the WSP GitHub code repository. The primary format of this document is HTML, but this can be easily changed by changing the output (e.g. PDF, GitHub) using the ‘output’ section at the top of the document. The possible output formats are listed here: <a href="https://rmarkdown.rstudio.com/lesson-9.html" class="uri">https://rmarkdown.rstudio.com/lesson-9.html</a>.</p>
 </div>
-<div id="data-cleaning-intro" class="section level3">
-<h3>Data cleaning intro</h3>
-<p>First I have conducted some data cleaning to identify any respondents or data points that need to be removed and explain why. First I converted the ‘TimeTaken’ column to a total number of seconds (SecsTaken) for easier to more easily investigate means and quantiles.</p>
-<p>I initially focussed on the fastest 5% of respondents across both surveys as they are most likely to have straightlined through the survey. I visually inspected the data, then used the ‘careless’ package to find evidence of straightlining ‘even-odd’ consistencies, and intra-individual response variability (IRV), across the whole survey and within the multiple choice questions (particularly questions 4, 5, 13, 15, 16, 17, 22, 23, 24).</p>
-<p>Finally I went through the full dataset manually and checked for any respondents that were definitely not taking the questionnaire seriously (e.g. open answers such as “jkjkjkjk”). I removed the entire row for respondents that were also straightlining, but for those who appreared to take the close questions seriously and put junk answers for the open questions, I removed the open answers only.</p>
+<div id="data-cleaning-walk-through" class="section level3">
+<h3>Data cleaning walk-through</h3>
+<p>This rMarkdown document has been written to take the reader through the data cleaning process for the White Stork Survey dataset.</p>
+<p>The key aims of this rMarkdown are as follows:</p>
+<ol style="list-style-type: decimal">
+<li>View the data and familiarise the reader with the overall dataset</li>
+<li>Format any data/questions into the appropritae format (e.g. factors or numerical responses)</li>
+<li>Convert any raw data into more useable fomrats (e.g. seconds, rather than sec/min/hr)</li>
+<li>Check for straightlining, even-odd consistencies and non-serious responses and consider for removal</li>
+<li>Check open-ended questions and remove any non-serious/joke responses</li>
+<li>Check for internal consistency of scores using Cronbach’s Alpha</li>
+</ol>
+<div id="initial-formatting" class="section level4">
+<h4>Initial formatting</h4>
+<p>To easily view which respondents had seen white Storks inside or outside the UK, and I have created a new composite value column with which we can sort or subset respondents (column = &quot;Q8.WhereSeen, values = UK, Outside UK, Both, Neither, NA)</p>
+<p>I have created a new age column to create matching age groups for both surveys (new column = ‘Age_group_match’). The oldest age group for both surveys is now 65+. I converted the ‘TimeTaken’ column to a total number of seconds (SecsTaken) for easier to more easily investigate means and quantiles.</p>
+<pre class="r"><code>## Create a composite columns of where respondents had seen White Storks (UK, Outside UK, or Both)
+# colnames(all_data)
+# Multiple conditions when adding new column to dataframe:
+str(all_data$Q8.1_UK) # Column is integer so need to format case_when accordingly</code></pre>
+<pre><code>##  int [1:3560] NA 0 0 0 1 NA NA 0 NA 0 ...</code></pre>
+<pre class="r"><code>all_data &lt;- all_data %&gt;% mutate(Q8.WhereSeen =
+                     case_when(Q8.1_UK == 1L &amp; Q8.1_OutsideUK == 0L ~ &quot;UK&quot;, 
+                               Q8.1_UK == 1L &amp; Q8.1_OutsideUK == NA_integer_ ~ &quot;UK&quot;,
+                               Q8.1_UK == 0L &amp; Q8.1_OutsideUK == 1L ~ &quot;OutsideUK&quot;,
+                               Q8.1_UK == NA_integer_ &amp; Q8.1_OutsideUK == 1L ~ &quot;OutsideUK&quot;,
+                               Q8.1_UK == 1L &amp; Q8.1_OutsideUK == 1L ~ &quot;Both&quot;,
+                               Q8.1_UK == 0L &amp; Q8.1_OutsideUK == 0L ~ &quot;Neither&quot;,
+                               Q8.1_UK == NA_integer_ &amp; Q8.1_OutsideUK == NA_integer_ ~ &quot;NA&quot;,))
+# Move new column next to existing Q8 columns and view new column
+all_data %&gt;% 
+  sjmisc::move_columns(Q8.WhereSeen, .after = &quot;Q8.1_OutsideUK&quot;) %&gt;%
+  select(., starts_with(&quot;Q8.&quot;)) %&gt;% 
+  head(., n=10)</code></pre>
+<pre><code>##    Q8.1_UK Q8.1_OutsideUK Q8.WhereSeen
+## 1       NA             NA         &lt;NA&gt;
+## 2        0              1    OutsideUK
+## 3        0              1    OutsideUK
+## 4        0              1    OutsideUK
+## 5        1              1         Both
+## 6       NA             NA         &lt;NA&gt;
+## 7       NA             NA         &lt;NA&gt;
+## 8        0              1    OutsideUK
+## 9       NA             NA         &lt;NA&gt;
+## 10       0              1    OutsideUK
+##                                                                                                                                                                                                                                                                                                                                                                                                                                                      Q8.2_feelings
+## 1                                                                                                                                                                                                                                                                                                                                                                                                                                                             &lt;NA&gt;
+## 2                                                                                                                                                                                                                                                                                                                                                               I saw them nesting on cliff tops and rocks surrounded by the sea in Portugal - it was really cool!
+## 3                                                                                                                                                                                                                                                                                                                                                                                                  always a pleasing sight, no matter how many you've seen already
+## 4                                                                                                                                                                                                                                                                                                                             They are common throughout many parts of Europe so didn't feel anything in particular but would be ecstatic to see one over London. 
+## 5  Fascinated, and in awe. They're size when flying over head was outstanding (made all the more incredible with a huge feather dropping by my feet!) not something I imagined experiencing in the UK. My first experience of them was in Hungary, when I heard their bizarre clacking and wondered what on earth it was. Soon I saw them nesting on the chimneys and poles in towns and on roads, their clacking gave the soundtrack to the area a 'wild' sense. 
+## 6                                                                                                                                                                                                                                                                                                                                                                                                                                                             &lt;NA&gt;
+## 7                                                                                                                                                                                                                                                                                                                                                                                                                                                             &lt;NA&gt;
+## 8                                                                                                                                                                                                                                                                                                                                                                                                                                                 I was awestruck 
+## 9                                                                                                                                                                                                                                                                                                                                                                                                                                                             &lt;NA&gt;
+## 10                                                                                                                                                                                                                                                                                                                                                                                                                                                 Quite impressed</code></pre>
 <pre class="r"><code>## Cleaning full dataset to prevent having to do code for all samples
 all_data$Age_group_match &lt;- all_data$Age_group # Create new column with matching age-group formats
 all_data &lt;- all_data  %&gt;%
@@ -380,28 +431,70 @@ summary(all_data$Age_group_match)</code></pre>
 ## Prefer not to answer 
 ##                   12</code></pre>
 <pre class="r"><code># Formatting date and time columns
-all_data$SecsTaken &lt;- as.numeric(lubridate::seconds(all_data$TimeTaken)) # Create numeric column of time taken (seconds)
+# Create numeric column of time taken (seconds)
+all_data$SecsTaken &lt;- as.numeric(lubridate::seconds(all_data$TimeTaken)) 
 all_data$StartDate &lt;- as.Date(all_data$StartDate, format = &quot;%d/%m/%Y&quot;)
 all_data$CompletionDate &lt;- as.Date(all_data$CompletionDate, format = &quot;%d/%m/%Y&quot;)</code></pre>
+<p>After the WSP group meeting on 17/05/21 I removed the 3 Northern Irish respondents from the Proactive sample and merged the respondents thta selected Wadhurst and Wadhurst Park as the nearest release site.</p>
+<pre class="r"><code>### Removing the N.Ireland respondents
+summary(all_data$Region)</code></pre>
+<pre><code>##            East Midlands          East of England           Greater London 
+##                      127                      232                      331 
+##               North East               North West         Northern Ireland 
+##                       76                      175                        3 
+##                 Scotland               South East               South West 
+##                      152                     1729                      313 
+##                    Wales            West Midlands Yorkshire and the Humber 
+##                       98                      160                      164</code></pre>
+<pre class="r"><code># Remove rows where Region = &quot;Northern Ireland&quot;
+all_data &lt;- subset(all_data, all_data$Region != &quot;Northern Ireland&quot;) 
+ # Drop the N.Ireland factor level
+all_data$Region &lt;- droplevels(all_data$Region)
+summary(all_data$Region)</code></pre>
+<pre><code>##            East Midlands          East of England           Greater London 
+##                      127                      232                      331 
+##               North East               North West                 Scotland 
+##                       76                      175                      152 
+##               South East               South West                    Wales 
+##                     1729                      313                       98 
+##            West Midlands Yorkshire and the Humber 
+##                      160                      164</code></pre>
+<pre class="r"><code>### Merging the Wadhurst and Wadhurst Park respondents
+all_data &lt;- transform(all_data,
+          ReleaseSite=plyr::revalue(ReleaseSite,c(&quot;Wadhurst&quot;=&quot;Wadhurst Park&quot;)))
+summary(all_data$ReleaseSite)</code></pre>
+<pre><code>##             Knepp Knepp-Wintershall                No     Wadhurst Park 
+##               437               270              2524               198 
+##       Wintershall 
+##               128</code></pre>
+<div style="page-break-after: always;"></div>
+</div>
+<div id="full-dataset-checks" class="section level4">
+<h4>Full dataset checks</h4>
+<p>I initially went through the full dataset manually and checked for any respondents that were clearly straightlining and/or not taking the questionnaire seriously (e.g. open answers such as “jkjkjkjk”). I removed the entire row for respondents that were both non-serious and straightlining, but I removed the open answers only for those who appreared to take the close questions seriously and put junk answers for the open questions.</p>
 <pre class="r"><code>##### Data cleaning using the 'careless' package
 
 # Overall straightlining (whole survey)
-all_straightline &lt;- longstring(all_data, avg = FALSE) # Identifies the longest string of identical consecutive responses for each observation
+ # Identifies the longest string of identical consecutive responses for each observation
+all_straightline &lt;- longstring(all_data, avg = FALSE)
 summary(all_straightline) # Mean number of consecutive attitude answers = 14, max = 14</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##    5.00   11.00   11.00   11.22   13.00   14.00</code></pre>
-<pre class="r"><code>all_possible_st &lt;- which(grepl(14, all_straightline)) # 127 rows with 14 consecutive answers (possible candidates for removal)
+<pre class="r"><code> # 127 rows with 14 consecutive answers (possible candidates for removal)
+all_possible_st &lt;- which(grepl(14, all_straightline))
 
 
 ### Checking straightlining for all Likert style questions with over 3 columns
 # Checking the attitudes to WS columns (Q12, 13 and 14)
 ncol(all_attitude_colnames) # Max possible number of consecutive answers is 10</code></pre>
 <pre><code>## [1] 10</code></pre>
-<pre class="r"><code>attitudes_straight &lt;- longstring(all_attitude_colnames, avg = FALSE) # Identifies the longest string of identical consecutive responses for each observation
+<pre class="r"><code># Identifies the longest string of identical consecutive
+attitudes_straight &lt;- longstring(all_attitude_colnames, avg = FALSE)
 summary(attitudes_straight) # Mean number of consecutive attitude answers = 3</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##   1.000   2.000   2.000   2.995   4.000  10.000</code></pre>
-<pre class="r"><code>attitude_possible_st &lt;-which(grepl(10, attitudes_straight)) # Find rows with 10 consecutive answers (possible candidates for removal)
+<pre class="r"><code># Find rows with 10 consecutive answers (possible candidates for removal)
+attitude_possible_st &lt;-which(grepl(10, attitudes_straight)) 
 
 # Checking the NCI columns
 ncol(Q19_NCI_colnames) # Max possible number of consecutive answers is 6</code></pre>
@@ -410,7 +503,10 @@ ncol(Q19_NCI_colnames) # Max possible number of consecutive answers is 6</code><
 summary(nci_straight) # Mean number of consecutive attitude answers = 3</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##   1.000   3.000   5.000   4.611   6.000   6.000</code></pre>
-<pre class="r"><code>summary(which(grepl(6, nci_straight))) # Find rows with 6 consecutive answers (~1700 gave max consecutive for NCI across both surveys, which makes sense especially for proactive sample, as sample will have a high interest and connection to nature)</code></pre>
+<pre class="r"><code># Find rows with 6 consecutive answers (~1700 gave max consecutive for NCI
+# across both surveys, which makes sense especially for proactive sample, 
+# as sample will have a high interest and connection to nature)
+summary(which(grepl(6, nci_straight))) </code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##     2.0   831.5  1624.0  1672.1  2424.5  3560.0</code></pre>
 <pre class="r"><code># Checking the ProCoBS columns
@@ -420,34 +516,48 @@ ncol(Q21_ProCoBS_colnames) # Max possible number of consecutive answers is 4</co
 summary(ProCoBS_straight) # Mean number of consecutive attitude answers = 3</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##   1.000   1.000   2.000   1.827   2.000   4.000</code></pre>
-<pre class="r"><code>summary(which(grepl(4, ProCoBS_straight))) # 245 rows with 10 consecutive answers (possible candidates for removal, but only 4 questions so unintentional straightlining would be likely for this question)</code></pre>
+<pre class="r"><code># 245 rows with 10 consecutive answers (possible candidates for removal,
+# but only 4 questions so unintentional straightlining would be likely for this question)
+summary(which(grepl(4, ProCoBS_straight))) </code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##       9    1251    2459    2105    2935    3553</code></pre>
 <pre class="r"><code># Comparing overall straightlining row numbers to attitude row numbers
 both_straightline_rownames &lt;- intersect(all_possible_st,attitude_possible_st) # rows in both
-rows_straightlined &lt;- all_data[c(2678, 2713, 2723, 2738, 2772, 3121, 3209, 3287, 3307, 3455, 3503), ] # Create df to view
+rows_straightlined &lt;- all_data[c(2678, 2713, 2723, 2738, 2772,
+             3121, 3209, 3287, 3307, 3455, 3503), ] # Create df to view
 summary(rows_straightlined$SecsTaken) # Most took survey quickly and have skipped the open questions</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##    21.0   106.0   153.0   196.4   242.0   491.0</code></pre>
+##    58.0   380.5   437.0   477.1   574.0  1133.0</code></pre>
 <pre class="r"><code># Removing straightlined participants
-ID_straightlined &lt;- c(2678, 2713, 2723, 2738, 2772, 3121, 3209, 3287, 3307, 3455, 3503)
+ID_straightlined &lt;- c(2678, 2713, 2723, 2738, 2772,
+             3121, 3209, 3287, 3307, 3455, 3503) # 11 respondents
 ## Create new dataset for further analysis and remove rows with straightlining etc.
 data_clean &lt;- all_data[!all_data$UniqueID_all %in% ID_straightlined,]
 
 # Removing non-serious (and often also straightlined through most questions) participants
-ID_notserious &lt;- c(2607, 2630, 3297, 3285, 3340, 3441, 3439, 3474)
+ID_notserious &lt;- c(2607, 2630, 3297, 3285, 3340, 3441, 3439, 3474) # 8 respondents
 ## Create new dataset for further analysis and remove rows with straightlining etc.
-data_clean &lt;- data_clean[!data_clean$UniqueID_all %in% ID_notserious,]</code></pre>
+data_clean &lt;- data_clean[!data_clean$UniqueID_all %in% ID_notserious,]
+
+nrow(all_data)</code></pre>
+<pre><code>## [1] 3557</code></pre>
+<pre class="r"><code>nrow(data_clean)</code></pre>
+<pre><code>## [1] 3538</code></pre>
+<div style="page-break-after: always;"></div>
+</div>
+<div id="checking-the-fastest-responses" class="section level4">
+<h4>Checking the fastest responses</h4>
+<p>I then focussed on the fastest 5% of respondents across both surveys as they are most likely to have straightlined through the survey. I visually inspected the data, then used the ‘careless’ package to find evidence of straightlining ‘even-odd’ consistencies, and intra-individual response variability (IRV), across the whole survey and within the multiple choice questions (particularly questions 4, 5, 13, 15, 16, 17, 22, 23, 24).</p>
 <pre class="r"><code>### Explore average time taken to complete questionnaire and check for straightlining
 quantile(data_clean$SecsTaken, 0.1) # Fastest 10% of all respondents = completion in 188.9 seconds/ about 3 mins</code></pre>
 <pre><code>## 10% 
 ## 191</code></pre>
 <pre class="r"><code>quantile(data_clean$SecsTaken, 0.05) # Fastest 5% of all respondents = completion in 117.95 seconds/ about 2 mins</code></pre>
-<pre><code>##  5% 
-## 121</code></pre>
+<pre><code>##     5% 
+## 120.85</code></pre>
 <pre class="r"><code>quantile(data_clean$SecsTaken, 0.025) # Fastest 2.5% of all respondents = completion in 70.975 seconds/ about 1.2 mins</code></pre>
-<pre><code>## 2.5% 
-## 71.5</code></pre>
+<pre><code>##   2.5% 
+## 71.425</code></pre>
 <pre class="r"><code>fastest_10 &lt;- subset(data_clean, SecsTaken &lt; 191) # Sample of fastest 10% of all respondents
 fastest_5 &lt;- subset(data_clean, SecsTaken &lt; 121) # Sample of fastest 5% of all respondents
 fastest_2.5 &lt;- subset(data_clean, SecsTaken &lt; 72) # Sample of fastest 2.5% of all respondents
@@ -459,34 +569,22 @@ summary(fastest_5$SurveyType) # 96% of respondents in fastest 5% are from the Na
 ##        89         0</code></pre>
 <div style="page-break-after: always;"></div>
 </div>
-<div id="checking-the-fastest-5-of-responses" class="section level3">
-<h3>Checking the fastest 5% of responses</h3>
+</div>
+<div id="focussing-on-the-the-fastest-5-of-responses" class="section level3">
+<h3>Focussing on the the fastest 5% of responses</h3>
 <p>Here I have checked the responses of the fastest 5% of the dataframe (after straightlined responses had been removed). I compare the mean values of the numeric/score columns between the full cleaned dataset and the fastest 5%, checked for overall straightlining again and then manually checked the dataset for any irregularities.</p>
 <p>I have then created a ‘final’ dataset for further data checking, stats and analysis called ‘final_data’.</p>
-<pre class="r"><code>### Checking the fastest 5% of respondents
-# Checking the fastest 5% of the cleaned dataset for straightlining across whole survey 
-long_fastest_5 &lt;- longstring(fastest_5, avg = FALSE) # Identifies the longest string of identical consecutive responses for each respondent
-evenodd_fastest_5 &lt;- evenodd(fastest_5, rep(5,10)) # Calculates the even-odd consistency score
+<pre class="r"><code>### Checking the fastest 5% of respondents for straightlining across whole survey 
+ # Identifies the longest string of identical consecutive responses for each respondent
+long_fastest_5 &lt;- longstring(fastest_5, avg = FALSE)
+ # Calculates the even-odd consistency score
+evenodd_fastest_5 &lt;- evenodd(fastest_5, rep(5,10))
 
 # Checking the fastest 5% for straightlining within each set of mutliple choice questions
-# Q5 diet
+# e.g. Q5 diet
 # summary(data_clean$Q5_overallscore_diet)
-# summary(fastest_5$Q5_overallscore_diet) ### Not a significant difference in Q5 diet score between all_data, fastest 5% and 2.5% samples
-# # Q6 habitat
-# summary(data_clean$Q6_habitat_overallscore)
-# summary(fastest_5$Q6_habitat_overallscore)
-# # Overall knowledge score
-# summary(data_clean$KnowledgeScore)
-# summary(fastest_5$KnowledgeScore)
-# # NCI
-# summary(data_clean$NCI)
-# summary(fastest_5$NCI)
-# # Pro-cons behaviours
-# summary(data_clean$ProCoBS)
-# summary(fastest_5$ProCoBS)
-# # Bird Interest Score
-# summary(data_clean$BirdInterestScore)
-# summary(fastest_5$BirdInterestScore)
+# summary(fastest_5$Q5_overallscore_diet) ### Not a significant difference in Q5 diet score
+# between all_data, fastest 5% and 2.5% samples
   
 ### Full cleaned dataset
 # Calculates the even-odd consistency score
@@ -505,54 +603,11 @@ irv_fast &lt;- irv(fastest_5)
 # write.csv(fastest_5, &quot;WSP_fastest5.csv&quot;) 
 
 # Manually check the data
-manualcheckID_to_remove &lt;- c(3321, 2643, 566, 916) # Removed as comments suggested not taking the survey seriously (e.g. &quot;lololol&quot;)
+# Removed as comments suggested not taking the survey seriously (e.g. &quot;lololol&quot;)
+manualcheckID_to_remove &lt;- c(3321, 2643, 566, 916) 
 ## Create new dataset for further analysis and remove rows with straightlining etc.
 data_clean &lt;- data_clean[!data_clean$UniqueID_all %in% manualcheckID_to_remove,]</code></pre>
-</div>
-<div id="checking-the-final-dataframes-for-incompatible-answers" class="section level3">
-<h3>Checking the final dataframes for incompatible answers</h3>
-<p>Questions with multiple choice columns (e.g., Diet, habitat and nesting habitat - see the full questions below). For these questions respondents had the oppertunity to provide multiple answers (e.g., Diet = fish/ carrion) and able to also select don’t know. For these columns I am using the following code to inspect the data and remove any ‘don’t know’ answers where a respondent has also selected any other choice/answer.</p>
-<p>Questions: Q5) What do white stork’s typically eat? select all that apply Q6) What are white stork’s preferred feeding habitat? select all that apply Q7) Where do white stork’s typically nest? select all that apply</p>
-<pre class="r"><code># colnames(final_data)
-
-### DIET
-# Create a sum of all Q5_diet columns (not Don't know, rawscore, overallscore)
-final_data &lt;- final_data %&gt;% 
-  mutate(Q5_diet_sum = rowSums(select(., starts_with(&quot;Q5&quot;) &amp; ends_with(&quot;diet&quot;))))
-# Where the summed columns &gt;0 set 'don't know' column to 0
-final_data$Q5l_diet_Don.tKnow &lt;- ifelse(final_data$Q5_diet_sum &gt; 0, final_data$Q5l_diet_Don.tKnow, 0)
-# View all diet columns to check data
-Q5_alldiet_colnames &lt;- select(final_data, starts_with(&quot;Q5&quot;))
-# Q5_alldiet_colnames
-
-
-### PREFERRED HABITAT
-# Create a sum of all Q6_habitat columns (not Don't know, rawscore, overallscore)
-final_data &lt;- final_data %&gt;% 
-  mutate(Q6_habitat_sum = rowSums(select(., starts_with(&quot;Q6&quot;) &amp; ends_with(&quot;habitat&quot;))))
-# Where the summed columns &gt;0 set 'don't know' column to 0
-final_data$Q6f_habitat_Don.tKnow &lt;- ifelse(final_data$Q6_habitat_sum &gt; 0, final_data$Q6f_habitat_Don.tKnow, 0)
-# View all habitat columns to check data
-Q6_allhabitat_colnames &lt;- select(final_data, starts_with(&quot;Q6&quot;))
-# Q6_allhabitat_colnames
-
-
-### NESTING HABITAT
-# Create a sum of all Q7_nesting columns (not Don't know, rawscore, overallscore)
-final_data &lt;- final_data %&gt;% 
-  mutate(Q7_nesting_sum = rowSums(select(., ends_with(&quot;nesting&quot;))))
-# Where the summed columns &gt;0 set 'don't know' column to 0
-final_data$Q7f_nesting_Don.tKnow &lt;- ifelse(final_data$Q7_nesting_sum &gt; 0, final_data$Q7f_nesting_Don.tKnow, 0)
-# View all habitat columns to check data
-Q7_allnesting_colnames &lt;- select(final_data, starts_with(&quot;Q7&quot;))
-# Q7_allnesting_colnames
-
-# View the overall score columns 
-overall_score_colnames &lt;- select(final_data, ends_with(&quot;overallscore&quot;)) # Can use for stacked bar charts in closed question analysis
-# overall_score_colnames
-
-# View and save the FINAL cleaned dataframe as a CSV file for use in other r scripts
-# write.csv(final_data, &quot;WSP_R_cleaned_dataset3.csv&quot;)</code></pre>
+<div style="page-break-after: always;"></div>
 </div>
 <div id="cronbachs-alpha" class="section level3">
 <h3>Cronbach’s alpha</h3>
@@ -560,44 +615,60 @@ overall_score_colnames &lt;- select(final_data, ends_with(&quot;overallscore&quo
 <p>Based on the 0.7 threshold, all groups have an acceptable Cronbach’s alpha score.</p>
 <pre class="r"><code>### Reminding myself of the column names again!
 # colnames(final_data)
-# nrow(final_data)
+library(&quot;psych&quot;)
 
 # Using Cronbach's alpha on the score columns using the psych package (alpha::psych)
-# Question 13 attitudes
+# Questions 13 &amp; 14 attitudes
 final_data %&gt;%
-  select(., starts_with(&quot;Q13&quot;) &amp;  ends_with('score')) %&gt;%
+  select(., starts_with(&quot;Q13&quot;), starts_with(&quot;Q14&quot;)) %&gt;%
+  select(., ends_with('score')) %&gt;%
   psych::alpha(title = &quot;Attitudes&quot;)</code></pre>
 <pre><code>## 
 ## Reliability analysis  Attitudes  
 ## Call: psych::alpha(x = ., title = &quot;Attitudes&quot;)
 ## 
-##   raw_alpha std.alpha G6(smc) average_r S/N    ase mean   sd median_r
-##       0.82      0.82    0.81      0.47 4.5 0.0048    4 0.74     0.46
+##   raw_alpha std.alpha G6(smc) average_r S/N   ase mean   sd median_r
+##       0.88      0.88    0.89      0.43 7.7 0.003  4.1 0.66     0.44
 ## 
 ##  lower alpha upper     95% confidence boundaries
-## 0.81 0.82 0.83 
+## 0.88 0.88 0.89 
 ## 
 ##  Reliability if an item is dropped:
-##                       raw_alpha std.alpha G6(smc) average_r S/N alpha se var.r
-## Q13.1_agreement_score      0.80      0.79    0.76      0.49 3.8   0.0056 0.026
-## Q13.2_agreement_score      0.82      0.82    0.79      0.53 4.5   0.0047 0.014
-## Q13.3_agreement_score      0.75      0.76    0.73      0.44 3.1   0.0068 0.013
-## Q13.4_agreement_score      0.78      0.79    0.76      0.48 3.7   0.0059 0.012
-## Q13.5_agreement_score      0.75      0.75    0.72      0.43 3.0   0.0069 0.013
+##                       raw_alpha std.alpha G6(smc) average_r S/N alpha se  var.r
+## Q13.1_agreement_score      0.87      0.87    0.87      0.42 6.6   0.0033 0.0114
+## Q13.2_agreement_score      0.88      0.88    0.88      0.45 7.2   0.0031 0.0095
+## Q13.3_agreement_score      0.87      0.87    0.87      0.43 6.7   0.0034 0.0108
+## Q13.4_agreement_score      0.87      0.87    0.88      0.44 7.0   0.0033 0.0106
+## Q13.5_agreement_score      0.86      0.87    0.87      0.42 6.5   0.0035 0.0106
+## Q14.1_agreement_score      0.87      0.88    0.88      0.44 7.2   0.0032 0.0122
+## Q14.2_agreement_score      0.87      0.87    0.88      0.43 6.9   0.0033 0.0107
+## Q14.3_agreement_score      0.87      0.87    0.87      0.42 6.6   0.0033 0.0106
+## Q14.4_agreement_score      0.88      0.88    0.89      0.46 7.5   0.0030 0.0093
+## Q14.5_agreement_score      0.87      0.87    0.88      0.43 6.9   0.0032 0.0118
 ##                       med.r
-## Q13.1_agreement_score  0.50
-## Q13.2_agreement_score  0.54
+## Q13.1_agreement_score  0.42
+## Q13.2_agreement_score  0.44
 ## Q13.3_agreement_score  0.43
-## Q13.4_agreement_score  0.46
-## Q13.5_agreement_score  0.41
+## Q13.4_agreement_score  0.44
+## Q13.5_agreement_score  0.42
+## Q14.1_agreement_score  0.44
+## Q14.2_agreement_score  0.43
+## Q14.3_agreement_score  0.43
+## Q14.4_agreement_score  0.44
+## Q14.5_agreement_score  0.44
 ## 
 ##  Item statistics 
 ##                          n raw.r std.r r.cor r.drop mean   sd
-## Q13.1_agreement_score 3491  0.72  0.74  0.64   0.57  4.5 0.82
-## Q13.2_agreement_score 3416  0.68  0.67  0.54   0.47  3.9 0.96
-## Q13.3_agreement_score 3389  0.82  0.82  0.77   0.70  3.8 1.04
-## Q13.4_agreement_score 2910  0.76  0.75  0.67   0.61  3.7 1.05
-## Q13.5_agreement_score 3251  0.83  0.83  0.79   0.72  4.0 1.00
+## Q13.1_agreement_score 3491  0.75  0.75  0.72   0.67  4.5 0.82
+## Q13.2_agreement_score 3416  0.64  0.64  0.59   0.54  3.9 0.96
+## Q13.3_agreement_score 3389  0.76  0.75  0.72   0.68  3.8 1.04
+## Q13.4_agreement_score 2910  0.69  0.69  0.65   0.61  3.7 1.05
+## Q13.5_agreement_score 3251  0.78  0.77  0.76   0.71  4.0 1.00
+## Q14.1_agreement_score 3421  0.65  0.66  0.60   0.57  4.4 0.78
+## Q14.2_agreement_score 3219  0.70  0.71  0.67   0.62  3.8 0.97
+## Q14.3_agreement_score 3423  0.74  0.75  0.72   0.67  4.2 0.84
+## Q14.4_agreement_score 3262  0.61  0.59  0.52   0.49  4.1 1.06
+## Q14.5_agreement_score 3418  0.69  0.70  0.66   0.61  4.4 0.88
 ## 
 ## Non missing response frequency for each item
 ##                          1    2    3    4    5 miss
@@ -605,45 +676,7 @@ final_data %&gt;%
 ## Q13.2_agreement_score 0.02 0.04 0.28 0.34 0.32 0.03
 ## Q13.3_agreement_score 0.04 0.06 0.26 0.38 0.26 0.04
 ## Q13.4_agreement_score 0.04 0.09 0.28 0.36 0.24 0.18
-## Q13.5_agreement_score 0.03 0.05 0.18 0.41 0.33 0.08</code></pre>
-<pre class="r"><code># Question 14 attitudes
-final_data %&gt;%
-  select(., starts_with(&quot;Q14&quot;) &amp;  ends_with('score')) %&gt;%
-  psych::alpha(title = &quot;Attitudes&quot;)</code></pre>
-<pre><code>## 
-## Reliability analysis  Attitudes  
-## Call: psych::alpha(x = ., title = &quot;Attitudes&quot;)
-## 
-##   raw_alpha std.alpha G6(smc) average_r S/N    ase mean   sd median_r
-##       0.77      0.77    0.76      0.41 3.4 0.0063  4.2 0.66      0.4
-## 
-##  lower alpha upper     95% confidence boundaries
-## 0.75 0.77 0.78 
-## 
-##  Reliability if an item is dropped:
-##                       raw_alpha std.alpha G6(smc) average_r S/N alpha se  var.r
-## Q14.1_agreement_score      0.73      0.74    0.70      0.42 2.9   0.0077 0.0218
-## Q14.2_agreement_score      0.72      0.73    0.69      0.41 2.7   0.0077 0.0093
-## Q14.3_agreement_score      0.69      0.70    0.65      0.37 2.4   0.0085 0.0078
-## Q14.4_agreement_score      0.77      0.77    0.73      0.46 3.4   0.0062 0.0117
-## Q14.5_agreement_score      0.70      0.71    0.68      0.38 2.5   0.0083 0.0163
-##                       med.r
-## Q14.1_agreement_score  0.39
-## Q14.2_agreement_score  0.40
-## Q14.3_agreement_score  0.37
-## Q14.4_agreement_score  0.44
-## Q14.5_agreement_score  0.35
-## 
-##  Item statistics 
-##                          n raw.r std.r r.cor r.drop mean   sd
-## Q14.1_agreement_score 3421  0.70  0.71  0.60   0.53  4.4 0.78
-## Q14.2_agreement_score 3219  0.73  0.73  0.64   0.54  3.8 0.97
-## Q14.3_agreement_score 3423  0.77  0.78  0.73   0.63  4.2 0.84
-## Q14.4_agreement_score 3262  0.68  0.64  0.49   0.42  4.1 1.06
-## Q14.5_agreement_score 3418  0.76  0.76  0.68   0.60  4.4 0.88
-## 
-## Non missing response frequency for each item
-##                          1    2    3    4    5 miss
+## Q13.5_agreement_score 0.03 0.05 0.18 0.41 0.33 0.08
 ## Q14.1_agreement_score 0.01 0.02 0.08 0.32 0.58 0.03
 ## Q14.2_agreement_score 0.02 0.05 0.27 0.38 0.27 0.09
 ## Q14.3_agreement_score 0.01 0.02 0.14 0.45 0.38 0.03
