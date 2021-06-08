@@ -75,7 +75,8 @@ overall_score_colnames <- select(final_data, ends_with("overallscore"))
 Q4_knowledge_colnames <- select(final_data, starts_with("Q4"), -ends_with('score'))
 Q5_diet_colnames <- select(final_data, starts_with("Q5"))
 Q6_habitat_colnames <- select(final_data, starts_with("Q6"))
-Q8_nesting_colnames <- select(final_data, ends_with("nesting"))
+Q7_nesting_colnames <- select(final_data, ends_with("nesting"))
+
 Q8_seen_colnames <- select(final_data, starts_with("Q8_"))
 
 # Source of information (current and preferred)
@@ -106,24 +107,104 @@ Creating a table to calculate and display the sample sizes per column, per surve
 ```{r n per column, echo=TRUE, messages=FALSE}
 
 ### Calculate sample size per column/question and create a table 
-str(final_data$ReleaseSite)
+summary(final_data$ReleaseSite)
+final_data <- final_data %>% 
+            mutate(SiteProximity = if_else(ReleaseSite == "No", 'No', 'Yes'))
+final_data <- final_data %>% 
+          sjmisc::move_columns(SiteProximity, .after = "ReleaseSite")
+summary(final_data$SiteProximity)
 
 # All numeric columns
 vars <- names(final_data)[11:222]
-final_data %>%
+sample_sizes <- final_data %>%
+  dplyr::group_by(SurveyType, SiteProximity) %>% 
+  dplyr::summarise_if(is.numeric, mean, na.rm = TRUE)
+sample_sizes
+
+library(tidyverse)
+sample_sizes <- final_data %>%
   dplyr::group_by(SurveyType, SiteProximity) %>%
-  dplyr::summarise_at(vars, ~sum(!is.na(.)))
+  summarise(num_rows = n())
+sample_sizes
 
-# Just the score columns
-final_data %>%
-  dplyr::group_by(SurveyType) %>%
-  dplyr::summarise_at(vars(ends_with("score")), ~sum(!is.na(.)))
-
+# Count non-NA values per column
+apply(final_data, 2, function(x){ length(which(!is.na(x))) })
 
 ```
 
+```{r closed question overview, echo=TRUE, messages=FALSE}
+
+library(dplyr)
+# All knowledge questions table
+oldnames = c("Q4.1_migrate","Q4.2_wingspan","Q4.3_globallyrare","Q5a_amphibians_diet",
+         "Q5b_birdeggs.chicks_diet","Q5c_carrion_diet","Q5d_fish_diet",
+         "Q5e_foodwaste_diet","Q5f_fruit_diet","Q5g_inverts_diet","Q5h_reptiles_diet","Q5i_seeds_diet",
+         "Q5j_smallmammals_diet","Q5k_vegetation_diet","Q5l_Don.tKnow_diet","Q6a_farmland_habitat",
+         "Q6b_grassland_habitat","Q6c_wetlands_habitat","Q6d_woodland_habitat",
+          "Q6e_urban_habitat","Q6f_Don.tKnow_habitat","Q7a_chimneys_nesting","Q7b_ground_nesting","Q7c_roofs_nesting",
+         "Q7d_telegraphpoles_nesting","Q7e_trees_nesting","Q7f_Don.tKnow_nesting")
+newnames = c("Do WS migrate?","Size of wingspan?","Are WS globally rare?","Diet-amphibians",
+         "Diet-birdeggs.chicks","Diet-carrion","Diet-fish",
+         "Diet-foodwaste","Diet-fruit","Diet-invertebrates","Diet-reptiles","Diet-seeds",
+         "Diet-smallmammals","Diet-vegetation","Diet-DontKnow","Habitat-farmland",
+         "Habitat-grassland","Habitat-wetlands","Habitat-woodland",
+         "Habitat-urban","Habitat-DontKnow","Nests-chimneys","Nests-ground","Nests-roofs",
+         "Nests-telegraphpoles","Nests-trees","Nests-DontKnow")
+# Create new dataframe and rename variables
+knowledge_data <-  final_data %>% 
+    select(UniqueID_all,SurveyType, ReleaseSite,
+         Q4.1_migrate,Q4.2_wingspan,Q4.3_globallyrare,
+         Q5a_amphibians_diet, Q5b_birdeggs.chicks_diet,Q5c_carrion_diet,Q5d_fish_diet,
+         Q5e_foodwaste_diet,Q5f_fruit_diet,Q5g_inverts_diet,Q5h_reptiles_diet,Q5i_seeds_diet,
+         Q5j_smallmammals_diet,Q5k_vegetation_diet,Q5l_Don.tKnow_diet,Q6a_farmland_habitat,
+         Q6b_grassland_habitat,Q6c_wetlands_habitat,Q6d_woodland_habitat,Q6e_urban_habitat,
+         Q6f_Don.tKnow_habitat,Q7a_chimneys_nesting,Q7b_ground_nesting,Q7c_roofs_nesting,
+         Q7d_telegraphpoles_nesting,Q7e_trees_nesting,Q7f_Don.tKnow_nesting) %>% 
+   rename_at(vars(oldnames), ~ newnames)
+   
+
+factor_vec <- factor(c("0", "1"))
+# Create table as dataframe
+diet_table <- knowledge_data %>%
+  group_by(SurveyType, ReleaseSite) %>% 
+  gather("Diet-amphibians","Diet-birdeggs.chicks","Diet-carrion","Diet-fish",
+         "Diet-foodwaste","Diet-fruit","Diet-invertebrates","Diet-reptiles","Diet-seeds",
+         "Diet-smallmammals","Diet-vegetation","Diet-DontKnow", key = Question, value = Answer) %>% 
+    factor(Gender,levels=c(0,1),labels=c('Incorrect','Correct')) %>% 
+    group_by(Question,SurveyType, Answer) %>%
+    tally() %>%
+    # group_by(SurveyType, Question, Answer) %>%
+    mutate(Percentage = round(n/sum(n)*100, 2))
+diet_table
+# Create HTML table
+tab_df(diet_table, use.viewer = TRUE)
 
 
+
+# Create table as dataframe
+knowledge_table_all <- knowledge_data %>%
+  group_by(SurveyType, ReleaseSite) %>% 
+  gather("Do WS migrate?","Size of wingspan?","Are WS globally rare?","Diet-amphibians",
+         "Diet-birdeggs.chicks","Diet-carrion","Diet-fish",
+         "Diet-foodwaste","Diet-fruit","Diet-invertebrates","Diet-reptiles","Diet-seeds",
+         "Diet-smallmammals","Diet-vegetation","Diet-DontKnow","Habitat-farmland",
+         "Habitat-grassland","Habitat-wetlands","Habitat-woodland",
+         "Habitat-urban","Habitat-DontKnow","Nests-chimneys","Nests-ground","Nests-roofs",
+         "Nests-telegraphpoles","Nests-trees","Nests-DontKnow", key = Question, value = Answer) %>% 
+   group_by(Question,SurveyType, Answer) %>%
+    tally() %>%
+    # group_by(SurveyType, Question, Answer) %>%
+    mutate(Percentage = round(n/sum(n)*100, 2))
+knowledge_table_all
+# Create HTML table
+tab_df(knowledge_table_all, use.viewer = TRUE)
+
+
+# Make a long dataframe
+prop.table(table(knowledge_data$SurveyType, knowledge_data$Q4.1_migrate), margin = 1)
+
+
+```
 
 ## Sectioned analysis (in order found in questionnaire)
 
