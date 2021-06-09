@@ -22,25 +22,30 @@ This rMarkdown document will be periodically updated and uploaded to the OneDriv
 ```{r setup/packages, include=FALSE}
 # This code assumes that all packages are installed. If not, use 'install.packages' e.g. install.packages("likert")
 # install.packages("hms")
+
 # Key packages for data wrangling
 wrangling <- c("dplyr","tidyverse","purr","magrittr","lubridate","hms",
              "data.table","plyr","tidyr","tibble","reshape2")
 lapply(wrangling, require, character.only = TRUE) 
+
 # Useful survey analysis packages
 survey <- c("likert","careless")
 lapply(survey, require, character.only = TRUE) 
+
 # Useful packages for statistics
 stats <- c("stats","ggpubr","lme4","MASS","car","psych",
                    "MuMIn","glmmTMB","nlme","DHARMa")
 lapply(stats, require, character.only = TRUE) 
+
 # Useful packages for text analysis
 # text <- c("tm","tau","koRpus","lexicon","sylly","textir",
 #          "textmineR","MediaNews", "lsa","SemNeT","ngram","ngramrr",
 #          "corpustools","udpipe","textstem", "tidytext","text2vec")
 # lapply(text, require, character.only = TRUE) 
+
 # Favourite data visualisation packages
 vismap <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly","rnaturalearth",
-            "RColorBrewer", "sjPlot", "ggrepel", "rgdal", "maptools", "gpclib", "rcartocolor")
+            "RColorBrewer", "sjPlot", "ggrepel", "rgdal", "maptools", "gpclib", "rcartocolor", "leaflet")
 lapply(vismap, require, character.only = TRUE) 
 gpclibPermit()  # Gives maptool permission to use gpclib
 
@@ -199,7 +204,7 @@ occupation_bar
 The table below (created using the package "table1") outlines the demographic characteriscs of each of the two samples, and the overall demographics of all respondents across both samples. For each demographic variable the tables provides a breakdown of the number of respondents within each level/group and the percentage.
 
 
-```{r SHORT demographics table,echo=FALSE, message=FALSE, warning=FALSE}
+```{r SHORT demographics table, echo=FALSE, message=FALSE, warning=FALSE}
 # Demographics table for publication
 
 library("table1")
@@ -209,7 +214,7 @@ short_demo_data <- lapply(short_demo, function(x) x[sample(c(TRUE, NA),
 # Reanme variables
 levels(short_demo$SurveyType)[levels(short_demo$SurveyType)=="NatRep"] <- "Nationally rep."
 # Reorder education factor
-short_demo$Education <- factor(both_demo$Education, levels=c("Postgraduate degree",
+short_demo$Education <- factor(short_demo$Education_short, levels=c("Postgraduate degree",
          "Undergraduate degree","Further Education","Secondary school",
          "No formal qualifications", "Prefer not to answer", "Other"))
 # Format table
@@ -230,7 +235,7 @@ short_demo_table
 ```
 
 
-```{r LONG demographics table,echo=FALSE, message=FALSE, warning=FALSE}
+```{r LONG demographics table, echo=FALSE, message=FALSE, warning=FALSE}
 # Demographics table for publication
 
 
@@ -260,6 +265,14 @@ full_demo_table
 
 
 ```
+
+
+
+\newpage
+
+### Respondent postcode mapping 
+
+Maps of respondent location, seperating respondents according to survey type. The map indicates location using the first 4 digits of postcode (e.g., TN28), and points are colour-coded according to survey type.
 
 
 
@@ -350,88 +363,89 @@ postcode_4_map <- ggplot(data = world) +
 ggsave("Ch4.both_reservesmap.png", width = 10, height = 6, dpi = 300)
 ```
 
-\newpage
-
-### Respondent postcode mapping 
-
-Maps of respondent location, seperating respondents according to survey type. The map indicates location using the first 4 digits of postcode (e.g., TN28), and points are colour-coded according to survey type.
-
-
 ```{r postcode map 2, fig.cap = "Map of first 4 digits of postcode (e.g., ), colour = survey type", fig.dim = c(10, 7), message=FALSE, echo=FALSE, warning=FALSE}
 
 postcode_4_map
 ```
 
 
-### Mapping proximity to 
+### Mapping proximity to WSP release sites 
 
+Maps of each WSP release site and a 15km radius encompassing the 'local area' as referred to in the main manuscript. The following code creates an interactive map of each site on an Open Street Map base which can be explored like a Google map.
 
-```{r mapping proxmity as circle, include=FALSE}
+I have also created this map as an interactive Shiny object (hosted via Shiny.io in my personal account but this can be transferred over to a Project account later on). The map is accessible via this link: https://ljones42.shinyapps.io/WSP_site_map/ 
 
-library(ggplot2)
-library(ggmap)
+The code file for this is in the Shiny file called 'app.R', which can be updated, run and pushed to the server.
 
-#### Create daaframe of coordinates
-data = data.frame(
-    ID = as.numeric(c(1:3)),
-    name = as.factor(c("Knepp", "Wadhurst", "Wintershall")),
-    latitude = as.numeric(c(50.98341, 51.03579, 51.16605)),
-    longitude = as.numeric(c(-0.35485, 0.32769, -0.55289))
-)
-# create circles data frame from the centers data frame
-make_circles <- function(centers, radius, nPoints = 100){
-    # centers: the data frame of centers with ID
-    # radius: radius measured in kilometer
-    #
-    meanLat <- mean(centers$latitude)
-    # length per longitude changes with lattitude, so need correction
-    radiusLon <- radius /15 / cos(meanLat/57.3) 
-    radiusLat <- radius / 15
-    circleDF <- data.frame(ID = rep(centers$ID, each = nPoints))
-    angle <- seq(0,2*pi,length.out = nPoints)
-
-    circleDF$lon <- unlist(lapply(centers$longitude, function(x) x + radiusLon * cos(angle)))
-    circleDF$lat <- unlist(lapply(centers$latitude, function(x) x + radiusLat * sin(angle)))
-    return(circleDF)
-}
-# here is the data frame for all circles
-myCircles <- make_circles(data, 1.5)
-myCircles$Site <- recode_factor(as.factor(myCircles$ID),
-                      "1" = "Knepp", "2" = "Wadhurst", "3" = "Wintershall")
-# Plot reserves map (both surveys on one map)
-ggplot(data = GBR_sf) +
-  geom_sf(fill= "gray95") +
-  coord_sf(xlim = c(-1.5, 1.5), ylim = c(50.4, 51.75), expand = FALSE) +
-  geom_point(aes(x = longitude, y = latitude), data = data, color = "black")+
-  geom_polygon(data = myCircles, aes(lon, lat, group = Site, colour = as.factor(Site)), alpha = 0, size = 1.5) +
-  ggspatial::annotation_scale(location = "bl", width_hint = 0.2) +
-  labs(colour="Site") + 
-    xlab("Longitude") + ylab("Latitude") +
-  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.2),
-        panel.background = element_rect(fill = "#e6f7ff"))
-
-
-```
-
-```{r Site OpenStreetMap, include=FALSE}
-
+```{r Site OpenStreetMap, message=FALSE, warning=FALSE}
 
 # Define data frame of site names and coordinates
 marker_df <- read.csv(textConnection(
 "Name,Lat,Long
-Knepp,,50.98341,-0.35485
+Knepp,50.98341,-0.35485
 Wadhurst,51.03579,0.32769
 Wintershall,51.16605,-0.55289"))
 
-## Create map in RStudio
+## Create map iusing Leaflet
 uk_map <- leaflet(marker_df) %>% 
   addTiles() %>%
+  setView(lng=-0.35485, lat=50.98341, zoom = 9) %>%  # Set view to local area and zoom
   addMarkers(lng=~Long, lat=~Lat, popup = ~htmltools::htmlEscape(Name)) %>% 
   addCircles(lng=-0.35485, lat=50.98341, color = "red", radius = 15000) %>% 
   addCircles(lng=0.32769, lat=51.03579, color = "blue", radius = 15000) %>% 
   addCircles(lng=-0.55289, lat=51.16605, color = "green", radius = 15000) %>% 
-  addMeasure() %>%
-  addMiniMap()
+  addMeasure() %>% # Add scale and ability to manually measure distance between points
+  addMiniMap() # Add in a small minimap of wider area
 uk_map
 
 ```
+
+
+
+```{r mapping proxmity as circle, include=FALSE}
+
+#### Alternative mapping option matching the participant location map
+
+# 
+# #### Create daaframe of coordinates
+# data = data.frame(
+#     ID = as.numeric(c(1:3)),
+#     name = as.factor(c("Knepp", "Wadhurst", "Wintershall")),
+#     latitude = as.numeric(c(50.98341, 51.03579, 51.16605)),
+#     longitude = as.numeric(c(-0.35485, 0.32769, -0.55289))
+# )
+# # create circles data frame from the centers data frame
+# make_circles <- function(centers, radius, nPoints = 100){
+#     # centers: the data frame of centers with ID
+#     # radius: radius measured in kilometer
+#     #
+#     meanLat <- mean(centers$latitude)
+#     # length per longitude changes with lattitude, so need correction
+#     radiusLon <- radius /15 / cos(meanLat/57.3) 
+#     radiusLat <- radius / 15
+#     circleDF <- data.frame(ID = rep(centers$ID, each = nPoints))
+#     angle <- seq(0,2*pi,length.out = nPoints)
+# 
+#     circleDF$lon <- unlist(lapply(centers$longitude, function(x) x + radiusLon * cos(angle)))
+#     circleDF$lat <- unlist(lapply(centers$latitude, function(x) x + radiusLat * sin(angle)))
+#     return(circleDF)
+# }
+# # here is the data frame for all circles
+# myCircles <- make_circles(data, 1.5)
+# myCircles$Site <- recode_factor(as.factor(myCircles$ID),
+#                       "1" = "Knepp", "2" = "Wadhurst", "3" = "Wintershall")
+# # Plot reserves map (both surveys on one map)
+# ggplot(data = GBR_sf) +
+#   geom_sf(fill= "gray95") +
+#   coord_sf(xlim = c(-1.5, 1.5), ylim = c(50.4, 51.75), expand = FALSE) +
+#   geom_point(aes(x = longitude, y = latitude), data = data, color = "black")+
+#   geom_polygon(data = myCircles, aes(lon, lat, group = Site, colour = as.factor(Site)), alpha = 0, size = 1.5) +
+#   ggspatial::annotation_scale(location = "bl", width_hint = 0.2) +
+#   labs(colour="Site") + 
+#     xlab("Longitude") + ylab("Latitude") +
+#   theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.2),
+#         panel.background = element_rect(fill = "#e6f7ff"))
+# 
+
+```
+

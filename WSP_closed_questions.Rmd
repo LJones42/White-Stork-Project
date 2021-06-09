@@ -59,6 +59,15 @@ all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFacto
 final_data <- read.csv("WSP_R_cleaned_dataset_Final.csv", header = TRUE, stringsAsFactors=TRUE)
 # View cleaned dataset
 nrow(final_data)
+
+# Define ReleaseSite and SiteProximity columns
+summary(final_data$ReleaseSite)
+final_data <- final_data %>% 
+            mutate(SiteProximity = if_else(ReleaseSite == "No", 'No', 'Yes'))
+final_data <- final_data %>% 
+          sjmisc::move_columns(SiteProximity, .after = "ReleaseSite")
+summary(final_data$SiteProximity)
+
 ### Create two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
 proact_data <- final_data[which(final_data$SurveyType == "Proactive"),]
 natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
@@ -70,163 +79,91 @@ natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
 
 ### Grouping columns
 # Grouping Likert scale question columns by selecting Question numbers (and dropping scores or open questions)
-overall_score_colnames <- select(final_data, ends_with("overallscore"))
+overall_score_colnames <- dplyr::select(final_data, ends_with("overallscore"))
 
-Q4_knowledge_colnames <- select(final_data, starts_with("Q4"), -ends_with('score'))
-Q5_diet_colnames <- select(final_data, starts_with("Q5"))
-Q6_habitat_colnames <- select(final_data, starts_with("Q6"))
-Q7_nesting_colnames <- select(final_data, ends_with("nesting"))
+Q4_knowledge_colnames <- dplyr::select(final_data, starts_with("Q4"),
+                                       -ends_with('score'))
+Q5_diet_colnames <- dplyr::select(final_data, starts_with("Q5"))
+Q6_habitat_colnames <- dplyr::select(final_data, starts_with("Q6"))
+Q7_nesting_colnames <- dplyr::select(final_data, ends_with("nesting"))
 
-Q8_seen_colnames <- select(final_data, starts_with("Q8_"))
+Q8_seen_colnames <- dplyr::select(final_data, starts_with("Q8_"))
 
 # Source of information (current and preferred)
-Q10_cursource_colnames <- select(final_data, starts_with("Q10a"))
-Q10_prefsource_colnames <- select(final_data, starts_with("Q10b"))
+Q10_cursource_colnames <- dplyr::select(final_data, starts_with("Q10a"))
+Q10_prefsource_colnames <- dplyr::select(final_data, starts_with("Q10b"))
 
 # Q12-14 = attitudes to white storks
-all_attitude_colnames <- select(final_data, starts_with("Q13"), starts_with("Q13"), starts_with("Q14"), -ends_with('score'))
-Q12_attitude_colnames <- select(final_data, starts_with("Q12"), -ends_with('score'))
-Q13_attitude_colnames <- select(final_data, starts_with("Q13"), -ends_with('score'))
-Q14_attitude_colnames <- select(final_data, starts_with("Q14"), -ends_with('score'))
+all_attitude_colnames <- dplyr::select(final_data, starts_with("Q13"),
+                             starts_with("Q13"), starts_with("Q14"),
+                             -ends_with('score'))
+Q12_attitude_colnames <- dplyr::select(final_data, starts_with("Q12"),
+                                       -ends_with('score'))
+Q13_attitude_colnames <- dplyr::select(final_data, starts_with("Q13"),
+                                       -ends_with('score'))
+Q14_attitude_colnames <- dplyr::select(final_data, starts_with("Q14"),
+                                       -ends_with('score'))
 
 ## Q15 = WSP support
 ## Q16 = Views on current management
-Q17_management_colnames <- select(final_data, starts_with("Q17"), -ends_with('open'))
-Q18_exp_colnames <- select(final_data, starts_with("Q18_"), -ends_with('open')) # Frequency of
-Q19_NCI_colnames <- select(final_data, starts_with("Q19"), -ends_with('score')) # Q19 total score = NCI
-Q20_envconcern_colnames <- select(final_data, starts_with("Q20"), -ends_with('score')) # Q21 total score = Env.concern score
-Q21_ProCoBS_colnames <- select(final_data, starts_with("Q21"), -ends_with('score')) # Q21 total score = ProCoBS
-Q23_BIS_colnames <- select(final_data, starts_with("Q23"), -ends_with('score')) # Q23 total score = BirdInterestScore
+Q17_management_colnames <- dplyr::select(final_data, starts_with("Q17"),
+                                         -ends_with('open'))
+Q18_exp_colnames <- dplyr::select(final_data, starts_with("Q18_"),
+                                  -ends_with('open')) # Frequency of
+Q19_NCI_colnames <- dplyr::select(final_data, starts_with("Q19"),
+                                  -ends_with('score')) # Q19 total score = NCI
+Q20_envconcern_colnames <- dplyr::select(final_data, starts_with("Q20"),
+                                         -ends_with('score')) # Q21 total score = Env.concern score
+Q21_ProCoBS_colnames <- dplyr::select(final_data, starts_with("Q21"),
+                                      -ends_with('score')) # Q21 total score = ProCoBS
+Q23_BIS_colnames <- dplyr::select(final_data, starts_with("Q23"),
+                                  -ends_with('score')) # Q23 total score = BirdInterestScore
 
 ```
 
-### Question sample size per survey
-
-Creating a table to calculate and display the sample sizes per column, per survey type.
-
-```{r n per column, echo=TRUE, messages=FALSE}
-
-### Calculate sample size per column/question and create a table 
-summary(final_data$ReleaseSite)
-final_data <- final_data %>% 
-            mutate(SiteProximity = if_else(ReleaseSite == "No", 'No', 'Yes'))
-final_data <- final_data %>% 
-          sjmisc::move_columns(SiteProximity, .after = "ReleaseSite")
-summary(final_data$SiteProximity)
-
-# All numeric columns
-vars <- names(final_data)[11:222]
-sample_sizes <- final_data %>%
-  dplyr::group_by(SurveyType, SiteProximity) %>% 
-  dplyr::summarise_if(is.numeric, mean, na.rm = TRUE)
-sample_sizes
-
-library(tidyverse)
-sample_sizes <- final_data %>%
-  dplyr::group_by(SurveyType, SiteProximity) %>%
-  summarise(num_rows = n())
-sample_sizes
-
-# Count non-NA values per column
-apply(final_data, 2, function(x){ length(which(!is.na(x))) })
-
-```
-
-```{r closed question overview, echo=TRUE, messages=FALSE}
-
-library(dplyr)
-# All knowledge questions table
-oldnames = c("Q4.1_migrate","Q4.2_wingspan","Q4.3_globallyrare","Q5a_amphibians_diet",
-         "Q5b_birdeggs.chicks_diet","Q5c_carrion_diet","Q5d_fish_diet",
-         "Q5e_foodwaste_diet","Q5f_fruit_diet","Q5g_inverts_diet","Q5h_reptiles_diet","Q5i_seeds_diet",
-         "Q5j_smallmammals_diet","Q5k_vegetation_diet","Q5l_Don.tKnow_diet","Q6a_farmland_habitat",
-         "Q6b_grassland_habitat","Q6c_wetlands_habitat","Q6d_woodland_habitat",
-          "Q6e_urban_habitat","Q6f_Don.tKnow_habitat","Q7a_chimneys_nesting","Q7b_ground_nesting","Q7c_roofs_nesting",
-         "Q7d_telegraphpoles_nesting","Q7e_trees_nesting","Q7f_Don.tKnow_nesting")
-newnames = c("Do WS migrate?","Size of wingspan?","Are WS globally rare?","Diet-amphibians",
-         "Diet-birdeggs.chicks","Diet-carrion","Diet-fish",
-         "Diet-foodwaste","Diet-fruit","Diet-invertebrates","Diet-reptiles","Diet-seeds",
-         "Diet-smallmammals","Diet-vegetation","Diet-DontKnow","Habitat-farmland",
-         "Habitat-grassland","Habitat-wetlands","Habitat-woodland",
-         "Habitat-urban","Habitat-DontKnow","Nests-chimneys","Nests-ground","Nests-roofs",
-         "Nests-telegraphpoles","Nests-trees","Nests-DontKnow")
-# Create new dataframe and rename variables
-knowledge_data <-  final_data %>% 
-    select(UniqueID_all,SurveyType, ReleaseSite,
-         Q4.1_migrate,Q4.2_wingspan,Q4.3_globallyrare,
-         Q5a_amphibians_diet, Q5b_birdeggs.chicks_diet,Q5c_carrion_diet,Q5d_fish_diet,
-         Q5e_foodwaste_diet,Q5f_fruit_diet,Q5g_inverts_diet,Q5h_reptiles_diet,Q5i_seeds_diet,
-         Q5j_smallmammals_diet,Q5k_vegetation_diet,Q5l_Don.tKnow_diet,Q6a_farmland_habitat,
-         Q6b_grassland_habitat,Q6c_wetlands_habitat,Q6d_woodland_habitat,Q6e_urban_habitat,
-         Q6f_Don.tKnow_habitat,Q7a_chimneys_nesting,Q7b_ground_nesting,Q7c_roofs_nesting,
-         Q7d_telegraphpoles_nesting,Q7e_trees_nesting,Q7f_Don.tKnow_nesting) %>% 
-   rename_at(vars(oldnames), ~ newnames)
-   
-
-factor_vec <- factor(c("0", "1"))
-# Create table as dataframe
-diet_table <- knowledge_data %>%
-  group_by(SurveyType, ReleaseSite) %>% 
-  gather("Diet-amphibians","Diet-birdeggs.chicks","Diet-carrion","Diet-fish",
-         "Diet-foodwaste","Diet-fruit","Diet-invertebrates","Diet-reptiles","Diet-seeds",
-         "Diet-smallmammals","Diet-vegetation","Diet-DontKnow", key = Question, value = Answer) %>% 
-    factor(Gender,levels=c(0,1),labels=c('Incorrect','Correct')) %>% 
-    group_by(Question,SurveyType, Answer) %>%
-    tally() %>%
-    # group_by(SurveyType, Question, Answer) %>%
-    mutate(Percentage = round(n/sum(n)*100, 2))
-diet_table
-# Create HTML table
-tab_df(diet_table, use.viewer = TRUE)
-
-
-
-# Create table as dataframe
-knowledge_table_all <- knowledge_data %>%
-  group_by(SurveyType, ReleaseSite) %>% 
-  gather("Do WS migrate?","Size of wingspan?","Are WS globally rare?","Diet-amphibians",
-         "Diet-birdeggs.chicks","Diet-carrion","Diet-fish",
-         "Diet-foodwaste","Diet-fruit","Diet-invertebrates","Diet-reptiles","Diet-seeds",
-         "Diet-smallmammals","Diet-vegetation","Diet-DontKnow","Habitat-farmland",
-         "Habitat-grassland","Habitat-wetlands","Habitat-woodland",
-         "Habitat-urban","Habitat-DontKnow","Nests-chimneys","Nests-ground","Nests-roofs",
-         "Nests-telegraphpoles","Nests-trees","Nests-DontKnow", key = Question, value = Answer) %>% 
-   group_by(Question,SurveyType, Answer) %>%
-    tally() %>%
-    # group_by(SurveyType, Question, Answer) %>%
-    mutate(Percentage = round(n/sum(n)*100, 2))
-knowledge_table_all
-# Create HTML table
-tab_df(knowledge_table_all, use.viewer = TRUE)
-
-
-# Make a long dataframe
-prop.table(table(knowledge_data$SurveyType, knowledge_data$Q4.1_migrate), margin = 1)
-
-
-```
 
 ## Sectioned analysis (in order found in questionnaire)
 
 ### Respondent knowledge
 
-Respondent knowledge questions have yes/no/notsure or incorrect/correct answer formats, lending themselves to Likert sytle plots. Below I have created some initial plots (both samples together at the moment but will seperate according to sample next week). I have made the following plots uisng the Likert package.
+Respondent knowledge questions have yes/no/notsure or incorrect/correct answer formats, lending themselves to Likert or Stacked bar plot style plots. Below I have created some initial plots, seperated according to sample type and started calculating sample sizes per question to create a tableto display the sample sizes per column, per survey type.
 
 Some useful Likert plotting guides and packages:
 * https://cran.r-project.org/web/packages/sjPlot/vignettes/plot_likert_scales.html
 * https://towardsdatascience.com/how-to-plot-likert-scales-with-a-weighted-survey-in-a-dplyr-friendly-way-68df600881a 
 * https://www.r-graph-gallery.com/202-barplot-for-likert-type-items.html
 
-```{r Q3 Knowledge questions, echo=FALSE, messages=FALSE}
-# summary(final_data$Q3_is_native)
-final_data$Q3_is_native = factor(final_data$Q3_is_native, ordered = TRUE)
-# Select the columns and convert to Likert data using the 'Likert' package
-Q3_native_scores <- as.data.frame(final_data$Q3_is_native)
-Q3_native_results = likert(Q3_native_scores)
-# summary(Q3_native_results)
-plot(Q3_native_results, type="bar")
+
+```{r Q2 photo recog, echo=TRUE, messages=FALSE}
+
+### Calculating sample sizes for knowledge questions table
+
+# Selecting image of WS
+final_data %>%
+  dplyr::select(SurveyType, Q2_photo_recog_score, Q2_photo_recog) %>% 
+  dplyr::group_by(SurveyType, Q2_photo_recog) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
 
 ```
+
+
+
+```{r Q3 Knowledge questions, echo=FALSE, messages=FALSE}
+
+str(final_data$Q3_is_native)
+final_data$Q3_is_native = as.factor(final_data$Q3_is_native)
+
+# Sample sizes: Q3. Are WS native?
+final_data %>%
+  dplyr::select(SurveyType, Q3_is_native) %>% 
+  dplyr::group_by(SurveyType, Q3_is_native) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+
+```
+
 
 
 ```{r Q4 Knowledge questions, echo=FALSE, messages=FALSE}
@@ -239,123 +176,117 @@ Q4_knowledge_scores <- final_data[knowl_cols]
 Q4_knowledge_results = likert(Q4_knowledge_scores)
 # summary(Q4_knowledge_results)
 plot(Q4_knowledge_results, type="bar")
+
+# Migrate (yes/no)
+final_data %>%
+  dplyr::select(SurveyType, Q4.1_migrate_score, Q4.1_migrate) %>% 
+  dplyr::group_by(SurveyType, Q4.1_migrate) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+# Wingspan (yes/no)
+final_data %>%
+  dplyr::select(SurveyType, Q4.2_wingspan_score, Q4.2_wingspan) %>% 
+  dplyr::group_by(SurveyType, Q4.2_wingspan) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+# Globally rare (yes/no)
+final_data %>%
+  dplyr::select(SurveyType, Q4.3_globallyrare_score, Q4.3_globallyrare) %>% 
+  dplyr::group_by(SurveyType, Q4.3_globallyrare) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
 ```
+
+
+
 
 ```{r Q5 diet questions, echo=FALSE, messages=FALSE}
 
+colnames(final_data)
 # Create list of diet columns names for easier factorsation and labelling
 diet_cols <- c("Q5a_amphibians_diet","Q5b_birdeggs.chicks_diet","Q5c_carrion_diet","Q5d_fish_diet",
               "Q5e_foodwaste_diet","Q5f_fruit_diet","Q5g_inverts_diet","Q5h_reptiles_diet","Q5i_seeds_diet",
-              "Q5j_smallmammals_diet","Q5k_vegetation_diet","Q5l_diet_Don.tKnow")
-final_data %<>% mutate_at(diet_cols, funs(factor(.,
-                       levels = c("0", "1"), labels = c("Incorrect", "Correct"), ordered = TRUE)))
-# str(final_data[diet_cols])
-
+              "Q5j_smallmammals_diet","Q5k_vegetation_diet","Q5l_Don.tKnow_diet")
+final_data %<>% 
+  mutate_at(diet_cols, funs(factor(.,
+            levels = c("0", "1"), labels = c("Incorrect", "Correct"), ordered = TRUE)))
 # Select the columns and convert to Likert data using the 'Likert' package
 Q5_diet_colnames <- final_data[diet_cols]
-Q5_diet_results = likert(Q5_diet_colnames)
-# summary(Q5_diet_results)
-plot(Q5_diet_results, type="bar")
+Q5_diet_colnames$SurveyType <- final_data$SurveyType
+# GGplot example
+diet_counts = Q5_diet_colnames%>%
+    gather(key = Diet, value = Answer, -SurveyType) %>%
+    group_by(SurveyType, Diet, Answer) %>%
+    summarise(count = length(Answer)) %>% 
+    mutate(percent = count / sum(count) * 100) %>% 
+    filter(., Answer == "Correct")
+    # dplyr::select(-count)
+diet_counts
 ```
 
 ```{r Q6 habitat questions, echo=FALSE, messages=FALSE}
 head(final_data$Q6a_farmland_habitat)
 # Create list of diet columns names for easier factorsation and labelling
-habitat_cols <- c("Q6a_farmland_habitat", "Q6b_grassland_habitat","Q6c_wetlands_habitat","Q6d_woodland_habitat",                                                              "Q6e_urban_habitat","Q6f_habitat_Don.tKnow")
+habitat_cols <- c("Q6a_farmland_habitat", "Q6b_grassland_habitat","Q6c_wetlands_habitat","Q6d_woodland_habitat",                                                              "Q6e_urban_habitat","Q6f_Don.tKnow_habitat")
 final_data %<>% mutate_at(habitat_cols, funs(factor(.,
-                       levels = c("0", "1"), labels = c("Incorrect", "Correct"), ordered = TRUE)))
-# str(final_data[habitat_cols])
+                       levels = c("0", "1"), labels = c("No", "Yes"), ordered = TRUE)))
 # Select the columns and convert to Likert data using the 'Likert' package
-Q6_habitat_colnames <- final_data[habitat_cols]
-Q6_habitat_results = likert(Q6_habitat_colnames)
-# summary(Q6_habitat_results)
-plot(Q6_habitat_results, type="bar")
-# sjPlot::plot_likert(final_data[habitat_cols])
+Q6_habitat_cols <- final_data[habitat_cols]
+Q6_habitat_cols$SurveyType <- final_data$SurveyType
+# GGplot example
+Habitat_counts = Q6_habitat_cols %>%
+    gather(key = Habitat, value = Answer, -SurveyType) %>%
+    group_by(SurveyType, Habitat, Answer) %>%
+    summarise(count = length(Answer)) %>% 
+    mutate(percent = count / sum(count) * 100) %>% 
+    filter(., Answer == "Yes")
+    # dplyr::select(-count)
+Habitat_counts
 
 ```
-
-
 
 
 ```{r Q7 nesting questions, echo=FALSE, messages=FALSE}
 # head(final_data$Q7a_chimneys_nesting)
 # Create list of diet columns names for easier factorsation and labelling
 nest_cols <- c("Q7a_chimneys_nesting","Q7b_ground_nesting","Q7c_roofs_nesting",
-                  "Q7d_telegraphpoles_nesting","Q7e_trees_nesting","Q7f_nesting_Don.tKnow")
+                  "Q7d_telegraphpoles_nesting","Q7e_trees_nesting","Q7f_Don.tKnow_nesting")
 final_data %<>% mutate_at(nest_cols, funs(factor(.,
-                       levels = c("0", "1"), labels = c("Incorrect", "Correct"), ordered = TRUE)))
+                       levels = c("0", "1"), labels = c("No", "Yes"), ordered = TRUE)))
 # str(final_data[nest_cols])
 # Select the columns and convert to Likert data using the 'Likert' package
-Q7_nesting_colnames <- final_data[nest_cols]
-Q7_nesting_results = likert(Q7_nesting_colnames)
-# summary(Q7_nesting_results)
-plot(Q7_nesting_results, type="bar")
-```
-
-
-
-```{r stacked bar charts, include=FALSE}
-
-# ## Age
-# # Stacked barplot of gender per survey
-# all_habitat_df<- final_data  %>%
-#   group_by(SurveyType, Age_group_match) %>%
-#   summarise(counts = n()) %>%
-#   mutate(Percentage = round(counts/sum(counts)*100, 2))
-# age_bar <- ggplot(all_age_df, aes(x = SurveyType, y = Percentage, fill = Age_group_match)) +
-#   geom_col(position = position_stack(reverse = TRUE)) +
-#   geom_text(aes(label = paste0(Percentage, "%")),
-#             position = position_stack(vjust = 0.5, reverse = TRUE)) +
-#   scale_fill_brewer(palette = "Pastel1") +
-#   theme_minimal(base_size = 12) + xlab("Sample")
-# 
-# ## Gender
-# # Stacked barplot of gender per survey
-# all_gender_df<- all_demo  %>%
-#   group_by(SurveyType, Gender) %>%
-#   summarise(counts = n()) %>%
-#   mutate(Percentage = round(counts/sum(counts)*100, 2))
-# gender_bar <- ggplot(all_gender_df, aes(x = SurveyType, y = Percentage, fill = Gender)) +
-#   geom_col(position = position_stack(reverse = TRUE)) +
-#   geom_text(aes(label = paste0(Percentage, "%")),
-#             position = position_stack(vjust = 0.5, reverse = TRUE)) +
-#   scale_fill_brewer(palette = "Pastel1") +
-#   theme_minimal(base_size = 12) + xlab("Sample")
-# 
-# ## Education
-# # Stacked barplot of gender per survey
-# all_education_df <- all_demo  %>%
-#   group_by(SurveyType, Education) %>%
-#   summarise(counts = n()) %>%
-#   mutate(Percentage = round(counts/sum(counts)*100, 2))
-# levels(all_education_df$Education)[levels(all_education_df$Education)=="Secondary school (GCSEs, A Levels or equivalent)"] <- "Secondary school"
-# levels(all_education_df$Education)[levels(all_education_df$Education)=="Postgraduate degree (Masters; Doctorate)"] <- "Postgraduate degree"
-# education_bar <- ggplot(all_education_df, aes(x = SurveyType, y = Percentage,
-#          fill = factor(Education, levels=c("Postgraduate degree",
-#          "Undergraduate degree","Further Education","Secondary school",
-#          "No formal qualifications", "Prefer not to answer", "Other")))) +
-#   geom_col(position = position_stack(reverse = TRUE)) +
-#   geom_text(aes(label = paste0(Percentage, "%")),
-#             position = position_stack(vjust = 0.5, reverse = TRUE)) + # geom_text_repel
-#   scale_fill_brewer(palette = "Pastel1") + labs(fill = "Education", x = "Sample") +
-#   theme_minimal(base_size = 12)
-# 
-# ## Occupation
-# # Create percentages
-# all_occupation_df <- all_demo  %>%
-#   group_by(SurveyType, Occupation) %>%
-#   summarise(counts = n()) %>%
-#   mutate(Percentage = round(counts/sum(counts)*100, 2))
-```
-
-
-
-
-## Exploring score questions
-
-The respondent scores are explored and compared between samples using...
-
-```{r overall scores, echo=FALSE, warning=FALSE, message=FALSE}
-# Create seperate dataframe for all demographics
+Q7_nesting_cols <- final_data[nest_cols]
+Q7_nesting_cols$SurveyType <- final_data$SurveyType
+# GGplot example
+nest_counts = Q7_nesting_cols %>%
+    gather(key = Nest, value = Answer, -SurveyType) %>%
+    group_by(SurveyType, Nest, Answer) %>%
+    summarise(count = length(Answer)) %>% 
+    mutate(percent = count / sum(count) * 100) %>% 
+    filter(., Answer == "Yes")
+    # dplyr::select(-count)
+nest_counts
 
 ```
+
+
+## Exploring perceptions questions
+
+
+```{r Q3 where seen, echo=FALSE, messages=FALSE, warning=FALSE}
+
+str(final_data$Q8.WhereSeen)
+
+# Sample sizes: Q8. Where have you seen a WS?
+final_data %>%
+  dplyr::select(SurveyType, Q8.WhereSeen) %>% 
+  dplyr::group_by(SurveyType, Q8.WhereSeen) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+
+```
+

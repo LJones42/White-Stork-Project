@@ -3,9 +3,9 @@ title: "WSP R Open Question Analysis"
 author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
 date: "02/05/2021"
 output:
-  pdf_document:
-    number_sections: no
   html_document:
+    number_sections: no
+  pdf_document:
     number_sections: no
   word_document: default
 ---
@@ -86,7 +86,7 @@ Question options - "Seen in the UK", "Seen outside the UK". Respondents were the
 
 
 
-```{r Cleaning feelings wild}
+```{r Cleaning feelings wild, messages=FALSE, warning=FALSE}
 #Creating a non-local/local factor column for proximity to any WS release site
 final_data <- mutate(final_data, SiteProximity =
                        ifelse(ReleaseSite == "No", "Not local", "Local"))
@@ -132,18 +132,17 @@ corpus_seen_both_clean <- tm_map(corpus_seen_both_clean, removeWords,
                      "think", "one", "really", "bird", "see", "stork", "feel", "was"))
 
 ## Plot image and save as a PDF using the file viewer
-par(mfrow=c(1,3),xpd=NA)
+par(mfrow=c(1,3))
 wordcloud(corpus_seenUK_clean, max.words=20, random.order=FALSE, rot.per=0, 
           use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
-title(outer=outer,adj=adj,main="A.",cex.main=cex,col="black",font=2,line=-4)
+title(main="A.",col="black",font=2,line=-4)
 
 wordcloud(corpus_seen_nonUK_clean, max.words=20, random.order=FALSE, rot.per=0, 
           use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
-title(outer=outer,adj=adj,main="B.",cex.main=cex,col="black",font=2,line=-4)
-
+title(main="B.",col="black",font=2,line=-4)
 wordcloud(corpus_seen_both_clean, max.words=20, random.order=FALSE, rot.per=0, 
           use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
-title(outer=outer,adj=adj,main="C.",cex.main=cex,col="black",font=2,line=-4)
+title(main="C.",col="black",font=2,line=-4)
 
 
 ```
@@ -202,29 +201,29 @@ wordcloud(corpus_words, scale=c(5,0.5), max.words=50, random.order=FALSE, rot.pe
 
 ```{r Words combine synonyms, messages=FALSE, warning=FALSE}
 
-# Code to automatically detect, and combine synonyms (e.g., big and large) for clearer word clouds and frequency analysis
-library(dplyr)
-words_df %>% 
-  group_by(syn_group) %>%
-  mutate(sum_word_count = sum(word_count)) %>% 
-  filter(rank == 1)
-
-d <- data.frame(Term = row.names(m), word_count = m[,1])
-all_pos <- c("ADJECTIVE", "ADVERB", "NOUN","VERB")
-syns <- vector("list", length(all_pos))
-for(w in seq(nrow(d))){
-  # if sysns of (d$Term[w]) has been calculated skip over current w 
-  emf <- getTermFilter("ExactMatchFilter", d$Term[w], TRUE)  
-  for(i in seq_along(syns)){
-    terms <- getIndexTerms(all_pos[i], 1, emf)
-    if(is.null(terms)){
-      syns[i] <- NA
-    } else{
-      syns[[i]] <-  getSynonyms(terms[[1]])
-    }
-  }
-  # store the results of syns for current w 
-}
+# # Code to automatically detect, and combine synonyms (e.g., big and large) for clearer word clouds and frequency analysis
+# library(dplyr)
+# words_df %>% 
+#   group_by(syn_group) %>%
+#   mutate(sum_word_count = sum(word_count)) %>% 
+#   filter(rank == 1)
+# 
+# d <- data.frame(Term = row.names(m), word_count = m[,1])
+# all_pos <- c("ADJECTIVE", "ADVERB", "NOUN","VERB")
+# syns <- vector("list", length(all_pos))
+# for(w in seq(nrow(d))){
+#   # if sysns of (d$Term[w]) has been calculated skip over current w 
+#   emf <- getTermFilter("ExactMatchFilter", d$Term[w], TRUE)  
+#   for(i in seq_along(syns)){
+#     terms <- getIndexTerms(all_pos[i], 1, emf)
+#     if(is.null(terms)){
+#       syns[i] <- NA
+#     } else{
+#       syns[[i]] <-  getSynonyms(terms[[1]])
+#     }
+#   }
+#   # store the results of syns for current w 
+# }
 ```
 
 
@@ -278,8 +277,9 @@ Question = Do you support the reintroduction of white Storks to southern England
 ```{r Sentiment support WSP, messages=FALSE, warning=FALSE}
 
 ### Q15. Do you support the WSP?
+
 # Create words df to seperately clean, capitalise first letter etc
-support_df <- support_df %>%
+support_df <- final_data %>%
   dplyr::select(UniqueID_all, SurveyType, SiteProximity, Q15_WSP_support_open)
 
 # Clean the data
@@ -290,15 +290,20 @@ support_df$Q15_WSP_support_text <- gsub("'", "", support_df$Q15_WSP_support_open
 support_df$Q15_WSP_support_text <- gsub("^ ", "", support_df$Q15_WSP_support_text) # Remove blank spaces at the beginning
 support_df$Q15_WSP_support_text <- gsub(" $", "", support_df$Q15_WSP_support_text) # Remove blank spaces at the end
 
-#build a term-document matrix
-TDM_support = tm::TermDocumentMatrix(Corpus_support, control = list(minWordLength = 1))
-m_support = as.matrix(TDM_support)
-v_support = sort(rowSums(m_support), decreasing = TRUE)
-d_support = data.frame(word = names(v_support),freq=v_support)
-
-# Reasons for support/not support WSP
-class(support_df$Q15_WSP_support_text)
-sentiment(get_sentences(support_df$Q15_WSP_support_text))
+# # Create corpus, lemmatise and remove english stopwords
+# corpus_support <- Corpus(VectorSource(support_df$Q15_WSP_support_text))
+# corpus_support <- tm_map(corpus_support, lemmatize_words)
+# corpus_support <- tm_map(corpus_support, removeWords,stopwords("english")) #removes common english stopwords
+#                        
+# #build a term-document matrix
+# TDM_support = tm::TermDocumentMatrix(corpus_support, control = list(minWordLength = 1))
+# m_support = as.matrix(TDM_support)
+# v_support = sort(rowSums(m_support), decreasing = TRUE)
+# d_support = data.frame(word = names(v_support),freq=v_support)
+# 
+# # Reasons for support/not support WSP
+# class(support_df$Q15_WSP_support_text)
+# sentiment(get_sentences(support_df$Q15_WSP_support_text))
 
 ### Create two dataframes: one for each data collection for easier comparison
 proact_support <- support_df[which(support_df$SurveyType == "Proactive"),]
@@ -306,11 +311,11 @@ natrep_support <- support_df[which(support_df$SurveyType == "NatRep"),]
 
 # Proactive survey
 Corpus_pro_support <- Corpus(VectorSource(proact_support$Q15_WSP_support_text))
-
 Corpus_pro_support <- tm_map(Corpus_pro_support, removeNumbers)
 Corpus_pro_support <- tm_map(Corpus_pro_support, removeWords, stopwords("english")) #removes common english stopwords
 Corpus_pro_support <- tm_map(Corpus_pro_support, removeWords, c("they", "the", "also"))
-wordcloud_pro_support <- wordcloud(Corpus_pro_support, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0, 
+Corpus_pro_support <- tm_map(Corpus_pro_support, lemmatize_words)
+wordcloud_pro_support <- wordcloud(Corpus_pro_support,  max.words=50, random.order=FALSE, rot.per=0, 
           use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
 
 # Nat Rep survey
@@ -318,7 +323,8 @@ Corpus_nat_support <- Corpus(VectorSource(natrep_support$Q15_WSP_support_text))
 Corpus_nat_support <- tm_map(Corpus_nat_support, removeNumbers)
 Corpus_nat_support <- tm_map(Corpus_nat_support, removeWords, stopwords("english")) #removes common english stopwords
 Corpus_nat_support <- tm_map(Corpus_nat_support, removeWords, c("they", "the", "also"))
-wordcloud_nat_support <- wordcloud(Corpus_nat_support, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0, 
+Corpus_nat_support <- tm_map(Corpus_nat_support, lemmatize_words)
+wordcloud_nat_support <- wordcloud(Corpus_nat_support,  max.words=50, random.order=FALSE, rot.per=0, 
           use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
 
 
