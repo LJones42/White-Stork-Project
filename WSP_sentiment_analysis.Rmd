@@ -3,9 +3,9 @@ title: "WSP R Open Question Analysis"
 author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
 date: "02/05/2021"
 output:
-  pdf_document:
-    number_sections: no
   html_document:
+    number_sections: no
+  pdf_document:
     number_sections: no
   word_document: default
 ---
@@ -18,24 +18,26 @@ This rMarkdown explores and analyses the open questions using text, work frequen
 The key open-ended questions include:
 
 * Q8. How did you feel when you saw WS in the wild?
+* Q9a. [If respondent has heard of the white stork project and its efforts to reintroduce white storks to southern England], please briefly summarise what you have heard. 
 * Q11a-c. Three words used to describe white storks
 * Q15. Do you support the White Stork Project?
 * Q16. What are yours views on the management of White Storks?
+* Q17.1-17.13. Which (if any) methods of white stork project management would you support? 
 
 In this rMarkdown script I clean and explore each question in turn in the sections below, visualise the data and comment on any interesting findings.
 
 
-
-
 ```{r setup/packages, messages = FALSE, include=FALSE}
 # Assuming all packages are installed. If not use 'install.packages' e.g. install.packages("likert")
+
+
 # Key packages for data wrangling
 wrangling <- c("dplyr","tidyverse","purr","magrittr",
              "data.table","plyr","tidyr","tibble","reshape2")
 lapply(wrangling, require, character.only = TRUE) 
 
 # Useful survey analysis packages
-survey <- c("likert","careless")
+survey <- c("likert","careless", "survey")
 lapply(survey, require, character.only = TRUE) 
 
 # Useful packages for statistics
@@ -45,7 +47,7 @@ lapply(stats, require, character.only = TRUE)
 
 # Useful packages for text analysis
 text <- c("tm","koRpus","textstem", "tidytext","text2vec","lexicon","SentimentAnalysis","SnowballC",
-          "qdap", "wordcloud", "sentimentr") # "textmineR","MediaNews","tau", "lsa","SemNeT","ngram","sylly","textir","ngramrr","corpustools","udpipe")
+           "wordcloud", "sentimentr", "udpipe", "wordnet") # "qdap")
 lapply(text, require, character.only = TRUE)
 
 # Favourite data visualisation packages
@@ -73,63 +75,172 @@ natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
 
 \newpage
 
+### Q8. How did you feel when you saw white stork in the wild?
+
+Respondents were first asked if they had every seen a White Stork in the wild (Responses = Yes/No/)
+Investigating the question "How did you feel when you saw a white stork in the wild?" (N = 1123)
+Notes from codebook - No need for NVivo thematic analysis? Run some form of sentiment analysis
+
+Question options - "Seen in the UK", "Seen outside the UK". Respondents were then asked if they wanted to explain/elaborate on their answer using an open-ended question. 
+
+
+
+
+```{r Cleaning feelings wild, messages=FALSE, warning=FALSE}
+#Creating a non-local/local factor column for proximity to any WS release site
+final_data <- mutate(final_data, SiteProximity =
+                       ifelse(ReleaseSite == "No", "Not local", "Local"))
+### Q8. How did you feel when you saw WS in the wild?
+# Create words df to seperately clean, capitalise first letter etc
+feel_df <- final_data %>%
+  dplyr::select(UniqueID_all, SurveyType, Q8.WhereSeen, Q8.2_feelings)
+
+# feel_syns <- qdap::synonyms(feel_df$Q8.2_feelings)
+
+### Create two dataframes: one for each data collection for easier comparison
+feelings_UK <- feel_df[which(feel_df$Q8.WhereSeen == "UK"),]
+feelings_nonUK <- feel_df[which(feel_df$Q8.WhereSeen == "OutsideUK"),]
+feelings_both <- feel_df[which(feel_df$Q8.WhereSeen == "Both"),]
+
+# Create the custom function that will be used to clean the corpus: clean_coupus
+clean_corpus_feel <- function(corpus){
+  corpus <- tm_map(corpus, stripWhitespace)
+  corpus <- tm_map(corpus, removePunctuation)
+  corpus <- tm_map(corpus, content_transformer(tolower))
+  corpus <- tm_map(corpus, removeWords, stopwords("en"))
+  corpus <- tm_map(corpus, lemmatize_words)
+    return(corpus)
+}
+
+# Seen in the wild within the UK (n=472)
+corpus_seenUK <- Corpus(VectorSource(feelings_UK$Q8.2_feelings))
+corpus_seenUK_clean <- clean_corpus_feel(corpus_seenUK)
+corpus_seenUK_clean <- tm_map(corpus_seenUK_clean, removeWords,
+                   c("they", "the", "the ", "its", "also", "I'm", "don't"," see", "can","see ","white",
+                     "think", "one", "really", "bird", "see", "stork", "feel", "was"))
+# Seen in the wild outside the UK (n=671)
+corpus_seen_nonUK <- Corpus(VectorSource(feelings_nonUK$Q8.2_feelings))
+corpus_seen_nonUK_clean <- clean_corpus_feel(corpus_seen_nonUK)
+corpus_seen_nonUK_clean <- tm_map(corpus_seen_nonUK_clean, removeWords,
+                   c("they", "the", "the ", "its", "also", "I'm", "don't"," see", "can","see ","white",
+                     "think", "one", "really", "bird", "see", "stork", "feel", "was"))
+# Seen in the wild in the UK and outside the UK (n=299)
+corpus_seen_both <- Corpus(VectorSource(feelings_both$Q8.2_feelings))
+corpus_seen_both_clean <- clean_corpus_feel(corpus_seen_both)
+corpus_seen_both_clean <- tm_map(corpus_seen_both_clean, removeWords,
+                   c("they", "the", "the ", "its", "also", "I'm", "don't"," see", "can","see ","white",
+                     "think", "one", "really", "bird", "see", "stork", "feel", "was"))
+
+## Plot image and save as a PDF using the file viewer
+par(mfrow=c(1,3))
+wordcloud(corpus_seenUK_clean, max.words=20, random.order=FALSE, rot.per=0, 
+          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
+title(main="A.",col="black",font=2,line=-4)
+
+wordcloud(corpus_seen_nonUK_clean, max.words=20, random.order=FALSE, rot.per=0, 
+          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
+title(main="B.",col="black",font=2,line=-4)
+wordcloud(corpus_seen_both_clean, max.words=20, random.order=FALSE, rot.per=0, 
+          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
+title(main="C.",col="black",font=2,line=-4)
+
+
+```
+
+
+
+\newpage
+
 ### Q11. What descriptive words do you associate with white storks?
 
 For this question I have taken the 3 'words to describe' columns and combined the words to create a new 'long-format' dataset to conduct preliminary word frequency analysis, word clouds etc. and also added SurveyType and ReleaseSite as possible grouping vairables. I then clean this dataframe ('words_df') by removing common English stop words, punctuation, blank spaces and convert all text to lower case. The word cloud is created using the 'wordcloud' package.
 
 
-```{r create Corpus and wordcloud, messages=FALSE, warning=FALSE}
+```{r Words Corpus and wordcloud, messages=FALSE, warning=FALSE}
 
 # Words used to describe WS - will probably combine into one column, labelled by Respondent ID and SurveyType
 summary(final_data$Q11_word1)
 summary(final_data$Q11_word2)
 summary(final_data$Q11_word3)
 
-# Create words df to seperately clean, capitalise first letter etc
+### Investigating relationships between 2 words
+# https://uc-r.github.io/word_relationships
+
+#### Investigating individual-word frequency
+# Create a long-format words df (max 3 rows per responseID) to seperately clean, capitalise first letter etc
 words_df <- final_data %>%
   dplyr::select(UniqueID_short, SurveyType, Q11_word1, Q11_word2, Q11_word3) %>% 
   pivot_longer(
    cols = starts_with("Q11_"),
    names_to = "Word_num",
    values_to = "Words",
-   values_drop_na = TRUE
- )
+   values_drop_na = TRUE)
 
-#Clean text
-head(words_df, 3)
+# Clean text
+words_df$Words <- tolower(words_df$Words)#convert all text to lower case
 words_df$Words <- gsub("[^[:graph:]]", " ", words_df$Words) #get rid of non graphical characters
-words_df$Words <- gsub("rt", "", words_df$Words)# Replace blank space ("rt")
+words_df$Words <- gsub("a ", "", words_df$Words)# Remove single 'a' words
+words_df$Words <- gsub("one", "", words_df$Words)# Remove one words
 words_df$Words <- gsub("[[:punct:]]", "", words_df$Words)# Remove punctuation
-words_df$Words <- gsub("[ |\t]{2,}", "", words_df$Words)# Remove tabs
 words_df$Words <- gsub("^ ", "", words_df$Words)# Remove blank spaces at the beginning
 words_df$Words <- gsub(" $", "", words_df$Words)# Remove blank spaces at the end
-words_df$Words <- tolower(words_df$Words)#convert all text to lower case
+words_df$Words <- gsub("[ |\t]{2,}", "", words_df$Words)# Remove tabs
+# words_df$Words <- gsub(" ", "", words_df$Words)# Replace blank spaces with _
+head(words_df, 50)
 
-Corpus_words <- Corpus(VectorSource(words_df$Words))
-Corpus_words <- tm_map(Corpus_words, removeNumbers)
-Corpus_words <- tm_map(Corpus_words, removeWords, stopwords("english")) #removes common english stopwords
-# Corpus_words <- tm_map(Corpus_words, removeWords, c("muffin"))  #You can specify words to remove
-# Corpus_words <- tm_map(Corpus_words, PlainTextDocument)
+# Create corpus, lemmatise and remove english stopwords
+corpus_words <- Corpus(VectorSource(words_df$Words))
+corpus_words <- tm_map(corpus_words, lemmatize_words)
+corpus_words <- tm_map(corpus_words, removeWords, stopwords("english")) #removes common english stopwords
 
+# Create a wordcloud
+wordcloud(corpus_words, scale=c(5,0.5), max.words=50, random.order=FALSE, rot.per=0.25, 
+          use.r.layout=FALSE, colors=brewer.pal(10,"Dark2"))
+
+```
+
+```{r Words combine synonyms, messages=FALSE, warning=FALSE}
+
+# # Code to automatically detect, and combine synonyms (e.g., big and large) for clearer word clouds and frequency analysis
+# library(dplyr)
+# words_df %>% 
+#   group_by(syn_group) %>%
+#   mutate(sum_word_count = sum(word_count)) %>% 
+#   filter(rank == 1)
+# 
+# d <- data.frame(Term = row.names(m), word_count = m[,1])
+# all_pos <- c("ADJECTIVE", "ADVERB", "NOUN","VERB")
+# syns <- vector("list", length(all_pos))
+# for(w in seq(nrow(d))){
+#   # if sysns of (d$Term[w]) has been calculated skip over current w 
+#   emf <- getTermFilter("ExactMatchFilter", d$Term[w], TRUE)  
+#   for(i in seq_along(syns)){
+#     terms <- getIndexTerms(all_pos[i], 1, emf)
+#     if(is.null(terms)){
+#       syns[i] <- NA
+#     } else{
+#       syns[[i]] <-  getSynonyms(terms[[1]])
+#     }
+#   }
+#   # store the results of syns for current w 
+# }
+```
+
+
+
+#### Word frequency analysis (Words used to describe White Storks)
+
+
+
+```{r Word frequency analysis, messages=FALSE, warning=FALSE}
+# Frequent word analysis
 #build a term-document matrix
 library("tm")
-TDM_words = tm::TermDocumentMatrix(Corpus_words, control = list(minWordLength = 1))
+TDM_words = tm::TermDocumentMatrix(corpus_words, control = list(minWordLength = 1))
 m = as.matrix(TDM_words)
 v = sort(rowSums(m), decreasing = TRUE)
 d = data.frame(word = names(v),freq=v)
 
-# Create a wordcloud
-wordcloud(Corpus_words, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0.25, 
-          use.r.layout=FALSE, colors=brewer.pal(10,"Spectral"))
-
-
-
-```
-
-#### Word frequency analysis (Words used to describe White Storks)
-
-```{r Word frequency analysis, messages=FALSE, warning=FALSE}
-# Frequent word analysis
 # We can find the words that appear at least 100 times by calling the findFreqTerms() function on the term.doc.matrix
 HiFreq_words <- findFreqTerms(TDM_words, 100)
 HiFreq_words
@@ -139,75 +250,22 @@ findAssocs(TDM_words, HiFreq_words, 0.4)
 # or, just compute word strength associations
 findAssocs(TDM_words, "long", 0.5) # Looks like the word “long” and “legs” are very frequently associated (51% of the time)
 
-barplot(d[1:15,]$freq, las = 2, names.arg = d[1:15,]$word,
-        col ="lightblue", main ="Most frequent words used to describe White Storks",
+barplot(d[1:30,]$freq, las = 2, names.arg = d[1:30,]$word,
+        col ="black", main ="Most frequent words used to describe White Storks",
         ylab = "Word frequencies")
-```
 
-### Q8. How did you feel when you saw white stork in the wild?
-
-
-
-
-```{r Cleaning feelings wild, include=FALSE}
-
-#Creating a non-local/local factor column for rpoximity to any WS release site
-final_data <- mutate(final_data, SiteProximity =
-                       ifelse(ReleaseSite == "No", "Not local", "Local"))
-
-### Q8. How did you feel when you saw WS in the wild?
-# Create words df to seperately clean, capitalise first letter etc
-feel_df <- final_data %>%
-  dplyr::select(UniqueID_all, SurveyType, SiteProximity, Q8.2_feelings_text)
-
-# Clean the data
-feel_df$Q8.2_feelings_text <- gsub("[^[:graph:]]", " ", feel_df$Q8.2_feelings) #get rid of non graphical characters
-feel_df$Q8.2_feelings_text <- gsub("^ ", "", feel_df$Q8.2_feelings_text)# Remove blank spaces at the beginning
-feel_df$Q8.2_feelings_text <- gsub("rt", "", feel_df$Q8.2_feelings_text)# Replace blank space ("rt")
-feel_df$Q8.2_feelings_text <- gsub("[[:punct:]]", "", feel_df$Q8.2_feelings_text)# Remove punctuation
-feel_df$Q8.2_feelings_text <- gsub("[ |\t]{2,}", "", feel_df$Q8.2_feelings_text)# Remove tabs
-feel_df$Q8.2_feelings_text <- gsub(" $", "", feel_df$Q8.2_feelings_text)# Remove blank spaces at the end
-feel_df$Q8.2_feelings_text <- tolower(feel_df$Q8.2_feelings_text)#convert all text to lower case
-
-#build a term-document matrix
-TDM_feelings = tm::TermDocumentMatrix(feel_df, control = list(minWordLength = 1))
-m_feelings = as.matrix(TDM_feelings)
-v_feelings = sort(rowSums(m_feelings), decreasing = TRUE)
-d_feelings = data.frame(word = names(v_feelings),freq=v_feelings)
+### Sentiment: Words to describe WS
+# regular sentiment score using get_sentiment() function and method of your choice
+# please note that different methods may have different scales
+words_sentiment <- syuzhet::get_sentiment(corpus_words, method="syuzhet")
+# see the first row of the vector
+head(words_sentiment)
+# see summary statistics of the vector
+summary(words_sentiment)
 
 ```
 
 
-```{r wordclouds feelings wild, messages=FALSE, warning=FALSE}
-
-### Create two dataframes: one for each data collection for easier comparison
-proact_feel <- feel_df[which(feel_df$SurveyType == "Proactive"),]
-natrep_feel <- feel_df[which(feel_df$SurveyType == "NatRep"),]
-
-# Comparing sentiment
-sentiment(get_sentences(proact_feel$Q8.2_feelings_text))
-sentiment(get_sentences(natrep_feel$Q8.2_feelings_text))
-
-# Proactive survey
-Corpus_feeling_pro <- Corpus(VectorSource(proact_feel$Q8.2_feelings_text))
-Corpus_feeling_pro <- tm_map(Corpus_feeling_pro, removeNumbers)
-Corpus_feeling_pro <- tm_map(Corpus_feeling_pro, removeWords, stopwords("english")) #removes common english stopwords
-Corpus_feeling_pro <- tm_map(Corpus_feeling_pro, removeWords, c("they", "the", "the ", "its", "also", "I'm", "don't", "can"))
-# Create a wordcloud
-Feelings_pro_wordcloud <- wordcloud(Corpus_feeling_pro, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0, 
-          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
-
-# Nationally representative survey
-Corpus_feeling_nat <- Corpus(VectorSource(natrep_feel$Q8.2_feelings_text))
-Corpus_feeling_nat <- tm_map(Corpus_feeling_nat, removeNumbers)
-Corpus_feeling_nat <- tm_map(Corpus_feeling_nat, removeWords, stopwords("english")) #removes common english stopwords
-Corpus_feeling_nat <- tm_map(Corpus_feeling_nat, removeWords, c("they", "the", "the ", "its", "also", "I'm", "don't", "can"))
-# Create a wordcloud
-Feelings_natrep_wordcloud <- wordcloud(Corpus_feeling_nat, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0, 
-          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
-
-# ggarrange(Feelings_natrep_wordcloud, Feelings_natrep_wordcloud, nrow=1)
-```
 
 \newpage
 
@@ -219,8 +277,9 @@ Question = Do you support the reintroduction of white Storks to southern England
 ```{r Sentiment support WSP, messages=FALSE, warning=FALSE}
 
 ### Q15. Do you support the WSP?
+
 # Create words df to seperately clean, capitalise first letter etc
-support_df <- support_df %>%
+support_df <- final_data %>%
   dplyr::select(UniqueID_all, SurveyType, SiteProximity, Q15_WSP_support_open)
 
 # Clean the data
@@ -231,17 +290,20 @@ support_df$Q15_WSP_support_text <- gsub("'", "", support_df$Q15_WSP_support_open
 support_df$Q15_WSP_support_text <- gsub("^ ", "", support_df$Q15_WSP_support_text) # Remove blank spaces at the beginning
 support_df$Q15_WSP_support_text <- gsub(" $", "", support_df$Q15_WSP_support_text) # Remove blank spaces at the end
 
-#build a term-document matrix
-TDM_support = tm::TermDocumentMatrix(Corpus_support, control = list(minWordLength = 1))
-m_support = as.matrix(TDM_support)
-v_support = sort(rowSums(m_support), decreasing = TRUE)
-d_support = data.frame(word = names(v_support),freq=v_support)
-
-
-
-# Reasons for support/not support WSP
-class(support_df$Q15_WSP_support_text)
-sentiment(get_sentences(support_df$Q15_WSP_support_text))
+# # Create corpus, lemmatise and remove english stopwords
+# corpus_support <- Corpus(VectorSource(support_df$Q15_WSP_support_text))
+# corpus_support <- tm_map(corpus_support, lemmatize_words)
+# corpus_support <- tm_map(corpus_support, removeWords,stopwords("english")) #removes common english stopwords
+#                        
+# #build a term-document matrix
+# TDM_support = tm::TermDocumentMatrix(corpus_support, control = list(minWordLength = 1))
+# m_support = as.matrix(TDM_support)
+# v_support = sort(rowSums(m_support), decreasing = TRUE)
+# d_support = data.frame(word = names(v_support),freq=v_support)
+# 
+# # Reasons for support/not support WSP
+# class(support_df$Q15_WSP_support_text)
+# sentiment(get_sentences(support_df$Q15_WSP_support_text))
 
 ### Create two dataframes: one for each data collection for easier comparison
 proact_support <- support_df[which(support_df$SurveyType == "Proactive"),]
@@ -252,7 +314,8 @@ Corpus_pro_support <- Corpus(VectorSource(proact_support$Q15_WSP_support_text))
 Corpus_pro_support <- tm_map(Corpus_pro_support, removeNumbers)
 Corpus_pro_support <- tm_map(Corpus_pro_support, removeWords, stopwords("english")) #removes common english stopwords
 Corpus_pro_support <- tm_map(Corpus_pro_support, removeWords, c("they", "the", "also"))
-wordcloud_pro_support <- wordcloud(Corpus_pro_support, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0, 
+Corpus_pro_support <- tm_map(Corpus_pro_support, lemmatize_words)
+wordcloud_pro_support <- wordcloud(Corpus_pro_support,  max.words=50, random.order=FALSE, rot.per=0, 
           use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
 
 # Nat Rep survey
@@ -260,8 +323,10 @@ Corpus_nat_support <- Corpus(VectorSource(natrep_support$Q15_WSP_support_text))
 Corpus_nat_support <- tm_map(Corpus_nat_support, removeNumbers)
 Corpus_nat_support <- tm_map(Corpus_nat_support, removeWords, stopwords("english")) #removes common english stopwords
 Corpus_nat_support <- tm_map(Corpus_nat_support, removeWords, c("they", "the", "also"))
-wordcloud_nat_support <- wordcloud(Corpus_nat_support, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0, 
+Corpus_nat_support <- tm_map(Corpus_nat_support, lemmatize_words)
+wordcloud_nat_support <- wordcloud(Corpus_nat_support,  max.words=50, random.order=FALSE, rot.per=0, 
           use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
+
 
 
 ```
@@ -304,5 +369,65 @@ d_management = data.frame(word = names(v_management),freq=v_management)
 wordcloud(Corpus_management, scale=c(5,0.5), max.words=80, random.order=FALSE, rot.per=0, 
           use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
 ```
+
+
+
+### Q17. Support for methods of WSP management? 
+
+Question = Q17.1-17.13. Which (if any) methods of white stork project management would you support? 
+
+```{r Sentiment management methods, messages=FALSE, warning=FALSE}
+# Polarity / Sentiment Analysis
+
+### Q17. Support for methods of WSP management? 
+summary(final_data$Q17.13a_other_open)
+
+# Clean the data
+final_data$Q17.13a_other_open <- gsub("[^[:graph:]]", " ", final_data$Q17.13a_other_open)
+final_data$Q17.13a_other_open <- gsub("[[:punct:]]", "", final_data$Q17.13a_other_open)# Remove punctuation
+final_data$Q17.13a_other_open <- gsub("^ ", "", final_data$Q17.13a_other_open)
+final_data$Q17.13a_other_open <- gsub(" $", "", final_data$Q17.13a_other_open)
+
+# Reasons for support/not support WSP
+class(final_data$Q17.13a_other_open)
+sentiment(get_sentences(final_data$Q17.13a_other_open))
+
+# Word frequencies
+Corpus_methods <- Corpus(VectorSource(final_data$Q17.13a_other_open))
+Corpus_methods <- tm_map(Corpus_methods, removeNumbers)
+Corpus_methods <- tm_map(Corpus_methods, lemmatize_strings)
+Corpus_methods <- tm_map(Corpus_methods, removeWords, stopwords("english")) #removes common english stopwords
+Corpus_methods <- tm_map(Corpus_methods, removeWords, c("they", "the", "also"))  #You can specify words to remove
+
+#build a term-document matrix
+TDM_methods = tm::TermDocumentMatrix(Corpus_methods, control = list(minWordLength = 1))
+m_methods = as.matrix(TDM_methods)
+v_methods = sort(rowSums(m_methods), decreasing = TRUE)
+d_methods = data.frame(word = names(v_methods),freq=v_methods)
+
+# Create a wordcloud
+wordcloud(Corpus_methods, scale=c(5,0.5), max.words=80, random.order=FALSE, rot.per=0, 
+          use.r.layout=FALSE, colors=brewer.pal(8, "Dark2"))
+
+# We can find the words that appear at least 100 times by calling the findFreqTerms() function on the term.doc.matrix
+HiFreq_methods <- findFreqTerms(TDM_methods, 100)
+HiFreq_methods
+
+# Now you also see how associated a word is to another word or a list of words.
+findAssocs(TDM_methods, HiFreq_methods, 0.4)
+# or, just compute word strength associations
+findAssocs(TDM_methods, "long", 0.5) # Looks like the word “long” and “legs” are very frequently associated (51% of the time)
+
+# Increase margin size
+par(mar=c(8,6,4,4))
+barplot(d_methods[1:30,]$freq, las = 2, names.arg = d_methods[1:30,]$word,
+        col ="black", main ="Most frequent words (preferred methods to manage WS)",
+        ylab = "Word frequencies")
+
+
+```
+
+
+
 
 
