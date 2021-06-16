@@ -14,6 +14,7 @@
 library(shiny)
 library(leaflet)
 library(htmltools)
+library(shinydashboard)
 library(shiny)
 
 # Define data frame of site names and coordinates
@@ -24,8 +25,8 @@ Wadhurst,51.03579,0.32769
 Wintershall,51.16605,-0.55289"))
 
 # Define the UI for the Shiny app
-ui <- fluidPage(
-    leafletOutput("mymap"),
+ui <- fillPage(
+    leafletOutput("mymap", height = "100%"),
     p(),
     actionButton("recalc", "New points")
 )
@@ -35,8 +36,9 @@ server <- function(input, output, session) {
     
     output$mymap <- renderLeaflet({
         leaflet(marker_df) %>% 
+            
             addTiles() %>%
-            setView(lng=-0.35485, lat=50.98341, zoom = 9) %>% 
+            setView(lng=-0.35485, lat=50.98341, zoom = 10) %>% 
             addMarkers(lng=~Long, lat=~Lat, popup = ~htmltools::htmlEscape(Name)) %>%
             addCircles(lng=-0.35485, lat=50.98341, color = "red", radius = 15000) %>% 
             addCircles(lng=0.32769, lat=51.03579, color = "blue", radius = 15000) %>% 

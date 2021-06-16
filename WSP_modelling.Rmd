@@ -1,0 +1,133 @@
+---
+title: "WSP modelling"
+author: "Lizzie Jones"
+date: "16/06/2021"
+output: html_document
+---
+
+
+## Quantitative analysis/modelling 
+
+**Quantitative data analysis:** 
+Descriptive and statistical - to understand variation in respondent’s awareness, knowledge and attitudes towards white storks and their reintroduction.  
+
+**Methods plan**
+
+* GLM approach + model selection and averaging
+    + Anderson, D. and Burnham, K., 2004. Model selection and multi-model inference. Second. NY: Springer-Verlag, 63(2020), p.10.
+    + Burnham, K.P., Anderson, D.R. and Huyvaert, K.P., 2011. AIC model selection and multimodel inference in behavioral ecology: some background, observations, and comparisons. Behavioral ecology and sociobiology, 65(1), pp.23-35.    
+* PCA/Clustering? 
+
+
+```{r setup/packages, messages = FALSE, include=FALSE}
+# Assuming all packages are installed. If not use 'install.packages' e.g. install.packages("likert")
+
+
+# Key packages for data wrangling
+wrangling <- c("dplyr","tidyverse","purr","magrittr", "Hmisc",
+             "data.table","plyr","tidyr","tibble","reshape2")
+lapply(wrangling, require, character.only = TRUE) 
+
+# Useful survey analysis packages
+survey <- c("likert","careless", "survey")
+lapply(survey, require, character.only = TRUE) 
+
+# Useful packages for statistics
+stats <- c("stats","ggpubr","lme4","MASS","car","psych","corrplot",
+                   "MuMIn","glmmTMB","nlme","DHARMa")
+lapply(stats, require, character.only = TRUE) 
+
+# Useful packages for text analysis
+text <- c("tm","koRpus","textstem", "tidytext","text2vec","lexicon","SentimentAnalysis","SnowballC",
+           "wordcloud", "sentimentr", "udpipe", "wordnet") # "qdap")
+lapply(text, require, character.only = TRUE)
+
+# Favourite data visualisation packages
+vis <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly",
+            "RColorBrewer", "sjPlot", "ggrepel")
+lapply(vis, require, character.only = TRUE) 
+
+
+# Load in working  directory and datasets
+setwd("~/Documents/White-Stork-Project")
+# Load in the data
+original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
+all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
+
+# Load in cleaned dataset
+final_data <- read.csv("WSP_R_FINAL_dataset.csv", header = TRUE, stringsAsFactors=TRUE)
+nrow(final_data)
+
+### Create two dataframes: one for each data collection for easier comparison
+proact_data <- final_data[which(final_data$SurveyType == "Proactive"),]
+natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
+
+```
+
+
+### Exploring the response variable
+
+**Response variable = Attitudes to WS reintroduction (Composite score)**
+
+
+```{r format response, messages = FALSE, warning=FALSE}
+
+str(final_data$OverallAttitudeScore) # check it's a numeric column
+
+final_data %>%
+     group_by(SurveyType) %>%
+     summarise(sum(!is.na(OverallAttitudeScore))) ## Couting NON-NA values per survey type
+
+```
+
+
+### Possible predictor variables
+
+#### Factor variables
+
+* Age (collapse further?) 
+* Gender (female / male) 
+* Urban / suburban / rural 
+* Highest education (collapse – e.g. degree; below degree) 
+* Occupation (use? If so, would need to collapse! unemployed; retired; potentially pool responses except for those who answered “environment, nature & wildlife”) 
+* Visited Knepp (yes / no) 
+* Time spent in nature 
+* Member of conservation/environmental organisation (quite a few people listed RSPB) 
+* Awareness 
+* Heard of white stork before taking this survey?  
+* Heard of white stork project / reintroduction effort? 
+
+
+#### Numeric variables
+
+* Contact and connection with nature; general environmental attitudes and behaviour 
+* Nature Connection Index (composite score) 
+* Environmental concern (composite score) 
+* General attitude towards birds (composite score) 
+
+```{r correlation matrix, messages = FALSE, warning=FALSE}
+
+# Select all possible predictor vars
+model_data <- final_data %>% 
+  select(UniqueID_all, OverallAttitudeScore, SiteProximity, SurveyType,
+         Age_short, Gender, Area_type, Education_short, Occupation_short,
+         Q27_Knepp_visit, Q18_exp_nature, Q1_aware_stork, Q9_heard, KnowledgeScore,
+         Q22....Are.you.a.member.of.any.environmental..wildlife.or.conservation.organisations.,
+         NCI, ProCoBS, BirdInterestScore, EnvConcern.score)
+
+# Select numeric variables
+model_numeric <- model_data %>% 
+  dplyr::select_if(., is.numeric) %>% 
+  dplyr::select(., -UniqueID_all) %>% 
+  drop_na()
+nrow(model_numeric)
+
+# Create corrlation matrix
+model.cor = cor(model_numeric, method = c("spearman"))
+res1 <- cor.mtest(model_numeric, conf.level = .95)
+corrplot::corrplot(model.cor, p.mat = res1$p, method = "circle", type = "lower", insig='blank',
+         addCoef.col ='black', order = "AOE", diag=FALSE) 
+### All variables moderately correlated but non significant
+```
+
+
