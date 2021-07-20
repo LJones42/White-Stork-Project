@@ -1,7 +1,7 @@
 ---
 title: "WSP setup and demographics code"
 author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
-date: "02/05/2021"
+date: "06/07/2021"
 output:
   html_document:
     number_sections: no
@@ -63,74 +63,101 @@ setwd("~/Documents/White-Stork-Project")
 original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
 all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
 
-# Load in cleaned dataset
+# # Load in cleaned dataset
 final_data <- read.csv("WSP_R_cleaned_dataset_Final.csv", header = TRUE, stringsAsFactors=TRUE)
 
 
-# Create new  group columns for graph/tables
-# PROXIMITY to any WS release site
-final_data <- mutate(final_data, SiteProximity =
-                       ifelse(ReleaseSite == "No", "Not local", "Local"))
-## GENDER
-# Collapse levels of Gender that have very low sample size to N/A
-levels(final_data$Gender)[levels(final_data$Gender)%in%c("Prefer not to answer","Prefer to self-describe")] <- "N/A"
+### Hashing out the rows below as these columns are saved in the finalised dataset
 
-## AGE
-# Age recode groups.
-young = c("18-24", "25-34", "35-44")
-mid = c("45-54", "55-64")
-older = c("65+")
-# add another column.
-final_data$Age_short <- ifelse(final_data$Age_group_match %in% young, "18-44", 
-                        ifelse(final_data$Age_group_match %in% mid, "45-64",
-                              ifelse(final_data$Age_group_match %in% older, "65+", "N/A")))
+# # Create new  group columns for graph/tables
+# # PROXIMITY to any WS release site
+# final_data <- mutate(final_data, SiteProximity =
+#                        ifelse(ReleaseSite == 
+#                                 "No", "Not local", "Local"))
+# ## GENDER
+# # Collapse levels of Gender that have very low sample size to N/A
+# levels(final_data$Gender)[levels(final_data$Gender)%in%c("Prefer not to answer","Prefer to self-describe")] <- "N/A"
+# ## AGE
+# # Age recode groups.
+# young = c("18-24", "25-34", "35-44")
+# mid = c("45-54", "55-64")
+# older = c("65+")
+# # add another column.
+# final_data$Age_short <- ifelse(final_data$Age_group_match %in% young, "18-44",
+#                         ifelse(final_data$Age_group_match %in% mid, "45-64",
+#                               ifelse(final_data$Age_group_match %in% older, "65+", "N/A")))
 ## EDUCATION
-# Recode groups.
-degree = c("Postgraduate degree (Masters; Doctorate)", "Undergraduate degree")
-high = c( "Secondary school (GCSEs, A Levels or equivalent)", "Further Education")
-noformal = c("No formal qualifications")
-# add another column.
-final_data$Education_short <- ifelse(final_data$Education %in% degree, "University graduate", 
-                              ifelse(final_data$Education %in% high, "High school/College",
-                              ifelse(final_data$Education %in% noformal, "No formal quals.", "Other")))
-## OCCUPATION
-# View others
-levels(final_data$Occupation_other)
-# Recode groups.
-unemployed = c("Unemployed", "Retired")
-education = c("Education")
-environmental = c( "Environment, Nature & Wildlife", "Farming & Agriculture", "Horticulture/Gardening/Landscaping",
-                   "Fisheries & Aquaculture")
-student = c("Student")
-prefer_not = c("Prefer not to answer")
-other = c("Other")
-# add another column and define factor levels
-final_data$Occupation_short <- ifelse(final_data$Occupation %in% unemployed, "Unemployed/Retired", 
-                              ifelse(final_data$Occupation  %in% education, "Education",
-                              ifelse(final_data$Occupation  %in% environmental, "Environment/Nature",
-                              ifelse(final_data$Occupation %in% student, "Student", 
-                              ifelse(final_data$Occupation  %in% prefer_not, "Prefer not to say",
-                              ifelse(final_data$Occupation  %in% other, "Other","Non-environmental"))))))
+## Recode groups.
+# degree = c("Postgraduate degree (Masters; Doctorate)", "Undergraduate degree")
+# high = c( "Secondary school (GCSEs, A Levels or equivalent)", "Further Education")
+# noformal = c("No formal qualifications")
+# # add another column.
+# final_data$Education_short <- ifelse(final_data$Education %in% degree, "University graduate",
+#                               ifelse(final_data$Education %in% high, "Secondary school/College",
+#                               ifelse(final_data$Education %in% noformal, "No formal quals.", "Other")))
+# ## OCCUPATION
+# # View others
+# summary(final_data$Occupation)
+# 
+# # Recode groups.
+# unemployed = c("Unemployed")
+# retired = c(("Retired"))
+# environmental = c("Environment, Nature & Wildlife")
+# natres_management = c("Farming & Agriculture", "Horticulture/Gardening/Landscaping",
+#                    "Fisheries & Aquaculture", "Forestry & Woodland Management")
+# prefer_not = c("Prefer not to answer")
+# 
+# # add another column and define factor levels
+# final_data$Occupation_short <-as.factor(ifelse(final_data$Occupation %in% unemployed, "Unemployed",
+#                               ifelse(final_data$Occupation  %in% retired, "Retired",
+#                               ifelse(final_data$Occupation  %in% environmental, "Environment/Nature",
+#                               ifelse(final_data$Occupation %in% natres_management, "Natural resource management",
+#                               ifelse(final_data$Occupation  %in% prefer_not, "Prefer not to say",
+#                               ifelse(final_data$Occupation  %in% other, "Other","Other")))))))
+# summary(final_data$Occupation_short)
+# 
+
+
+# # Define ReleaseSite and SiteProximity columns
+# final_data <- final_data %>%
+#             mutate(SiteProximity = if_else(ReleaseSite == "No", 'No', 'Yes'))
+# final_data$SiteLocal <- dplyr::recode_factor(final_data$SiteProximity, 'Yes' = "Local", 'No' = "Not local")
+# # Move columns together
+# final_data <- final_data %>%
+#           sjmisc::move_columns(SiteProximity, .after = "ReleaseSite") %>% 
+#           sjmisc::move_columns(SiteLocal, .after = "SiteProximity") 
+
+# ### Write new 
+# write.csv(final_data, "WSP_R_FINAL_dataset1.csv")
 
 
 
-write.csv(final_data, "WSP_R_FINAL_dataset.csv")
 
+
+########################### LOAD IN FORMATTED DATA #############################
+
+# Load in cleaned dataset
+final_data <- read.csv("WSP_R_FINAL_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
+nrow(final_data)
 ### Create two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
 proact_data <- final_data[which(final_data$SurveyType == "Proactive"),]
 natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
 
 ```
 
+
+\newpage
+
+
 ## Exploring respondent demographics
 
-The distribution of gender and education is explored and compared between samples using stacked bar plots.
+The distributions of age, gender, occupation and education are explored and compared between samples using stacked bar plots.
 
 ```{r demographics, echo=FALSE, warning=FALSE, message=FALSE}
 
 # Create seperate dataframe for all demographics
 demo_columns <- c("SurveyType", "Age_group_match","Age_short", "Gender", "Education", "Education_short",
-                                "Occupation", "Occupation_short", "Region", "Area_type", "Postcode", "ReleaseSite", "SiteProximity")
+                                "Occupation", "Occupation_short","Occupation_short_clean", "Region", "Area_type", "Postcode", "ReleaseSite", "SiteProximity", "SiteLocal")
 # Create seperate dataframe for All data, Nationally representative and Proactive demographics
 all_demo <- final_data %>% select(demo_columns)
 natrep_demo <- natrep_data %>% select(demo_columns)
@@ -166,7 +193,7 @@ all_education_df <- all_demo  %>%
   summarise(counts = n()) %>%
   mutate(Percentage = round(counts/sum(counts)*100, 2))
 all_education_df$Education_short <- ordered(all_education_df$Education_short, 
-            levels = c("University graduate","High school/College","No formal quals.","Other"))
+            levels = c("University graduate","Secondary school/College","No formal quals.","Other"))
 education_bar <- ggplot(all_education_df, aes(x = SurveyType, y = Percentage,
          fill = factor(Education_short))) +
   geom_col(position = position_stack(reverse = TRUE)) +
@@ -178,23 +205,21 @@ education_bar <- ggplot(all_education_df, aes(x = SurveyType, y = Percentage,
 ## Occupation
 # Create percentages
 all_occupation_df <- all_demo  %>%
-  group_by(SurveyType, Occupation_short) %>%
+  group_by(SurveyType, Occupation_short_clean) %>%
   summarise(counts = n()) %>%
   mutate(Percentage = round(counts/sum(counts)*100, 2))
-all_occupation_df$Occupation_short <- ordered(all_occupation_df$Occupation_short, levels = c("Non-environmental","Environment/Nature",
-               "Unemployed/Retired","Education","Student","Other","Prefer not to say"))
+all_occupation_df$Occupation_short_clean <- ordered(all_occupation_df$Occupation_short_clean, levels = c("Environment/Nature","Natural resource management","Retired","Unemployed","Other","Prefer not to say"))
 occupation_bar <- ggplot(all_occupation_df, aes(x = SurveyType, y = Percentage,
-         fill = factor(Occupation_short))) +
-  geom_col(position = position_stack(reverse = TRUE)) +
+         fill = factor(Occupation_short_clean))) +
+  geom_col(position = position_stack(reverse = FALSE)) +
   geom_text(aes(label = paste0(Percentage, "%")),
-            position = position_stack(vjust = 0.5, reverse = TRUE)) + # geom_text_repel
+            position = position_stack(vjust = 0.5, reverse = FALSE)) + # geom_text_repel
   scale_fill_brewer(palette = "Pastel1") + labs(fill = "Occupation group", x = "Sample") +
   theme_minimal(base_size = 12)
 ```
 
 ```{r age bar, echo=FALSE, message=FALSE, warning=FALSE}
 age_bar
-
 ```
 ```{r gender bar, echo=FALSE, message=FALSE, warning=FALSE}
 gender_bar
@@ -216,37 +241,64 @@ occupation_bar
 
 The table below (created using the package "table1") outlines the demographic characteriscs of each of the two samples, and the overall demographics of all respondents across both samples. For each demographic variable the tables provides a breakdown of the number of respondents within each level/group and the percentage.
 
+#### Short demographics table (simplified strata plus interaction of Local and Survey type)
 
 ```{r SHORT demographics table, echo=FALSE, message=FALSE, warning=FALSE}
 # Demographics table for publication
 
 library("table1")
+all_demo$Education_short <- ordered(all_demo$Education_short, 
+            levels = c("University graduate","Secondary school/College",
+                       "No formal quals.", "Other"))
+all_demo$Occupation_short_clean <- ordered(all_demo$Occupation_short_clean, 
+            levels = c("Environment/Nature","Natural resource management",
+                       "Retired","Unemployed","Other","Prefer not to say"))
+
 short_demo <- as.data.frame(all_demo)
 short_demo_data <- lapply(short_demo, function(x) x[sample(c(TRUE, NA),
                                                          prob = c(0.99999, 0.00001),size = length(x), replace = TRUE)])
-# Reanme variables
+# Rename and reorder variables
 levels(short_demo$SurveyType)[levels(short_demo$SurveyType)=="NatRep"] <- "Nationally rep."
-# Reorder education factor
-short_demo$Education <- factor(short_demo$Education_short, levels=c("Postgraduate degree",
-         "Undergraduate degree","Further Education","Secondary school",
-         "No formal qualifications", "Prefer not to answer", "Other"))
 # Format table
 table1::label(short_demo$Age_short) <- "Age group"
 table1::label(short_demo$Area_type) <- "Area type"
-table1::label(short_demo$Occupation_short) <- "Occupation"
+table1::label(short_demo$Occupation_short_clean) <- "Occupation"
 table1::label(short_demo$Education_short) <- "Education"
 
 # Create demo table
-library(htmlTable)
-library(kableExtra)
-library(magick)
-
-short_demo_table <- table1::table1(~Age_short + Gender + Education_short + Occupation_short + Area_type | SurveyType + SiteProximity, data = short_demo)
+short_demo_table <- table1::table1(~Age_short + Gender + Education_short +
+                                     Occupation_short_clean + Area_type | SurveyType + SiteLocal,
+                                   data = short_demo)
 short_demo_table
 
 
 ```
 
+
+\newpage
+
+
+#### Simple demographics table (no interaction of Local and Survey type)
+
+
+```{r simple short demographics table, echo=FALSE, message=FALSE, warning=FALSE}
+# Demographics table for publication
+
+simp_demo_table <- table1::table1(~Age_short + Gender + Education_short +
+                                     Occupation_short_clean + Area_type | SiteLocal,
+                                   data = short_demo)
+simp_demo_table
+
+```
+
+
+
+\newpage
+
+
+#### Long demographics table (all strata plus interaction of Local and Survey type)
+
+Original format of the demographics table with all variables, strata and sample interations.
 
 ```{r LONG demographics table, echo=FALSE, message=FALSE, warning=FALSE}
 # Demographics table for publication
@@ -260,10 +312,7 @@ both_demo_data <- lapply(both_demo, function(x) x[sample(c(TRUE, NA),
 levels(both_demo$SurveyType)[levels(both_demo$SurveyType)=="NatRep"] <- "Nationally rep."
 levels(both_demo$Education)[levels(both_demo$Education)=="Secondary school (GCSEs, A Levels or equivalent)"] <- "Secondary school"
 levels(both_demo$Education)[levels(both_demo$Education)=="Postgraduate degree (Masters; Doctorate)"] <- "Postgraduate degree"
-# Reorder education factor
-both_demo$Education <- factor(both_demo$Education, levels=c("Postgraduate degree",
-         "Undergraduate degree","Further Education","Secondary school",
-         "No formal qualifications", "Prefer not to answer", "Other"))
+
 # Format table
 table1::label(both_demo$Age_group_match) <- "Age group"
 table1::label(both_demo$Area_type) <- "Area type"
@@ -273,7 +322,8 @@ library(htmlTable)
 library(kableExtra)
 library(magick)
 
-full_demo_table <- table1::table1(~Age_group_match + Gender + Education + Occupation + Area_type | SurveyType + SiteProximity, data = both_demo)
+full_demo_table <- table1::table1(~Age_group_match + Gender + Education +
+                                    Occupation + Area_type | SurveyType + SiteLocal, data = both_demo)
 full_demo_table
 
 

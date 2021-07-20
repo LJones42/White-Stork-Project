@@ -6,20 +6,7 @@ output: html_document
 ---
 
 
-## Quantitative analysis/modelling 
-
-**Quantitative data analysis:** 
-Descriptive and statistical - to understand variation in respondent’s awareness, knowledge and attitudes towards white storks and their reintroduction.  
-
-**Methods plan**
-
-* GLM approach + model selection and averaging
-    + Anderson, D. and Burnham, K., 2004. Model selection and multi-model inference. Second. NY: Springer-Verlag, 63(2020), p.10.
-    + Burnham, K.P., Anderson, D.R. and Huyvaert, K.P., 2011. AIC model selection and multimodel inference in behavioral ecology: some background, observations, and comparisons. Behavioral ecology and sociobiology, 65(1), pp.23-35.    
-* PCA/Clustering? 
-
-
-```{r setup/packages, messages = FALSE, include=FALSE}
+```{r packages, messages = FALSE, include=FALSE}
 # Assuming all packages are installed. If not use 'install.packages' e.g. install.packages("likert")
 
 
@@ -34,7 +21,7 @@ lapply(survey, require, character.only = TRUE)
 
 # Useful packages for statistics
 stats <- c("stats","ggpubr","lme4","MASS","car","psych","corrplot",
-                   "MuMIn","glmmTMB","nlme","DHARMa")
+                   "MuMIn","glmmTMB","nlme","DHARMa", "glmmTMB")
 lapply(stats, require, character.only = TRUE) 
 
 # Useful packages for text analysis
@@ -44,9 +31,13 @@ lapply(text, require, character.only = TRUE)
 
 # Favourite data visualisation packages
 vis <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly",
-            "RColorBrewer", "sjPlot", "ggrepel")
+            "RColorBrewer", "sjPlot", "ggrepel", "stargazer")
 lapply(vis, require, character.only = TRUE) 
 
+
+```
+
+```{r setup, messages = FALSE, include=FALSE}
 
 # Load in working  directory and datasets
 setwd("~/Documents/White-Stork-Project")
@@ -55,7 +46,7 @@ original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFacto
 all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
 
 # Load in cleaned dataset
-final_data <- read.csv("WSP_R_FINAL_dataset.csv", header = TRUE, stringsAsFactors=TRUE)
+final_data <- read.csv("WSP_R_FINAL_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
 nrow(final_data)
 
 ### Create two dataframes: one for each data collection for easier comparison
@@ -65,20 +56,19 @@ natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
 ```
 
 
-### Exploring the response variable
-
-**Response variable = Attitudes to WS reintroduction (Composite score)**
 
 
-```{r format response, messages = FALSE, warning=FALSE}
+## Quantitative analysis/modelling 
 
-str(final_data$OverallAttitudeScore) # check it's a numeric column
+**Quantitative data analysis:** 
+Descriptive and statistical - to understand variation in respondent’s awareness, knowledge and attitudes towards white storks and their reintroduction.  
 
-final_data %>%
-     group_by(SurveyType) %>%
-     summarise(sum(!is.na(OverallAttitudeScore))) ## Couting NON-NA values per survey type
+**Methods plan**
 
-```
+* GLM approach + model selection and averaging
+    + Anderson, D. and Burnham, K., 2004. Model selection and multi-model inference. Second. NY: Springer-Verlag, 63(2020), p.10.
+    + Burnham, K.P., Anderson, D.R. and Huyvaert, K.P., 2011. AIC model selection and multimodel inference in behavioral ecology: some background, observations, and comparisons. Behavioral ecology and sociobiology, 65(1), pp.23-35.    
+* Compare OverallAttitudeScore to "Q15. Do you support WS reintro (yes/no)"
 
 
 ### Possible predictor variables
@@ -97,7 +87,6 @@ final_data %>%
 * Heard of white stork before taking this survey?  
 * Heard of white stork project / reintroduction effort? 
 
-
 #### Numeric variables
 
 * Contact and connection with nature; general environmental attitudes and behaviour 
@@ -105,18 +94,155 @@ final_data %>%
 * Environmental concern (composite score) 
 * General attitude towards birds (composite score) 
 
-```{r correlation matrix, messages = FALSE, warning=FALSE}
+
+
+```{r create model data, messages = FALSE, warning=FALSE}
+
+# First, rename that REALLY long column (Q22)
+names(final_data)[names(final_data) == "Q22....Are.you.a.member.of.any.environmental..wildlife.or.conservation.organisations."] <- "Q22_env_org_member"
+
+final_data <- final_data %>% mutate(Q8_Seen =
+                     case_when(Q8_wild_seen == 1L ~ "Wild", 
+                               Q8_wild_seen == 1L & Q8_captivity_seen == 1L ~ "Wild", 
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L ~ "Captivity",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_pictures_video == 1L ~ "Captivity",
+                               Q8_wild_seen == 1L & Q8_captivity_seen == 1L & Q8_No == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_No == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 1L & Q8_captivity_seen == 1L & Q8_NotSure == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_NotSure == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_NotSure == 1L & Q8_NotSure == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 0L & Q8_pictures_video == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 0L & Q8_pictures_video == 0L ~ "No/Not sure"))
 
 # Select all possible predictor vars
 model_data <- final_data %>% 
-  select(UniqueID_all, OverallAttitudeScore, SiteProximity, SurveyType,
-         Age_short, Gender, Area_type, Education_short, Occupation_short,
-         Q27_Knepp_visit, Q18_exp_nature, Q1_aware_stork, Q9_heard, KnowledgeScore,
-         Q22....Are.you.a.member.of.any.environmental..wildlife.or.conservation.organisations.,
+  dplyr::select(UniqueID_all, OverallAttitudeScore, SiteLocal, SurveyType,
+         Age_short, Gender, Area_type, Education_short, Occupation_short_clean,
+         Q14.5_agreement_score, Q8_Seen,
+         Q27_Knepp_visit, Q18_exp_nature,
+         Q1_aware_stork, Q9_heard, KnowledgeScore, Q22_env_org_member, 
          NCI, ProCoBS, BirdInterestScore, EnvConcern.score)
+nrow(model_data)
+model_clean <- model_data[!is.na(model_data$OverallAttitudeScore), ]
+nrow(model_clean) ## Dropped ~1100 rows due to NA in AttitudeScore
 
 # Select numeric variables
-model_numeric <- model_data %>% 
+model_clean1 <- model_clean %>% 
+  drop_na()
+nrow(model_clean1)
+
+```
+
+
+
+```{r clean predictor factors, messages = FALSE, warning=FALSE}
+
+# Check that empties have been dropped
+summary(model_clean1$Education_short)
+
+### Clean factor predictors for modelling
+# Gender
+model_clean2 <- model_clean1[model_clean1$Gender!= "N/A", ]
+# Age
+model_clean2 <- model_clean2[model_clean2$Age_short!= "N/A", ]
+# Occupation
+model_clean2 <- model_clean2[model_clean2$Occupation_short!= "Prefer not to say", ]
+
+# Education
+model_clean2 <- model_clean2[model_clean2$Education_short!= "Other", ]
+
+# Drop empty factor levels
+model_clean2 <- droplevels(model_clean2)
+# Check n
+nrow(model_clean2)
+# Check that empties have been dropped
+summary(model_clean2$Occupation_short)
+### Mnaually categorised Occupation here to form new column = Occupation_short_clean
+
+#### Also need to rename/ shorten some variable names
+model_clean2 <- model_clean2 %>% 
+  dplyr::rename(Age = Age_short, 
+                Occupation = Occupation_short_clean,
+                Education = Education_short,
+                Aware_stork = Q1_aware_stork,
+                HeardOfWSP = Q9_heard,
+                Support_reintroductions = Q14.5_agreement_score,
+                SeenWildCaptivity = Q8_Seen,
+                Freq_exp_nature = Q18_exp_nature,
+                Knepp_visit = Q27_Knepp_visit,
+                Env_org_member = Q22_env_org_member)
+colnames(model_clean2)
+
+### Relevel Occupation factor 
+model_clean2$Occupation <- relevel(model_clean2$Occupation,"Environment/Nature")
+### Relevel Education factor 
+model_clean2$Education <- relevel(model_clean2$Education,"No formal quals.")
+### Relevel Seen(Wild/Captivity) factor 
+model_clean2$SeenWildCaptivity <- factor(model_clean2$SeenWildCaptivity, levels = c("Wild", "Captivity", "No/Not sure"))
+### Relevel Freq_exp_nature factor 
+model_clean2$Freq_exp_nature <- relevel(model_clean2$Freq_exp_nature, "None") 
+
+```
+
+
+
+### Exploring the response variable
+
+**Response variable = Attitudes to WS reintroduction (Composite score)**
+
+Now that the data has been cleaned we can explore the distribution of the response variable. We can see from the histogram (density plot) that the data is left-skewed as the reponses are geenrally towards the upper end of the response scale (0-5). A Shpiro test indicates that the distribution of non-normal, and QQ plots show that Squaring the response variable does the best job of normalising the distribution, but it's still non-normal.
+
+
+
+```{r investigate response distribution, messages = FALSE, warning=FALSE}
+
+str(model_clean2$OverallAttitudeScore) # check it's a numeric column
+model_clean2 %>%
+     group_by(SurveyType) %>%
+     summarise(sum(!is.na(OverallAttitudeScore))) ## Counting sample size (Non-NA) values per survey type
+  
+## UNTRANSFORMED DATA
+# QQ plot shows non-normality with skew towards the right
+qqPlot(model_clean2$OverallAttitudeScore)
+# Also seen ina  density plot
+ggdensity(model_clean2$OverallAttitudeScore, 
+          main = "Density plot of Attitude scores",
+          xlab = "Overall Attitude Score")
+mean(model_clean2$OverallAttitudeScore)
+median(model_clean2$OverallAttitudeScore)
+# Select variables
+model_clean2 %>% 
+  dplyr::select(SurveyType, SiteLocal, OverallAttitudeScore) %>% 
+  group_by()
+
+
+# Running a Shapiro test to make sure
+shapiro.test(model_clean2$OverallAttitudeScore)
+
+### TRANSFORMATIONS
+# Square
+qqPlot(model_clean2$OverallAttitudeScore^2)
+shapiro.test((model_clean2$OverallAttitudeScore)^2)
+
+# Exponential
+qqPlot(exp(model_clean2$OverallAttitudeScore))
+# Inverse transformation for severse skew
+qqPlot(1/(max(model_clean2$OverallAttitudeScore+1) - model_clean2$OverallAttitudeScore))
+
+```
+
+
+
+
+### Predictor correlation matrix of numeric variables
+
+Moderate but insignificant correlation seen between all of the numeric score-based variables/predictors. BirdInterestScore tends to show strongest correlation with other predictors so this might be the most effective to remove from the model if the VIF score is also high.
+
+
+```{r correlation matrix, messages = FALSE, warning=FALSE}
+
+# Select numeric variables
+model_numeric <- model_clean2 %>% 
   dplyr::select_if(., is.numeric) %>% 
   dplyr::select(., -UniqueID_all) %>% 
   drop_na()
@@ -126,8 +252,165 @@ nrow(model_numeric)
 model.cor = cor(model_numeric, method = c("spearman"))
 res1 <- cor.mtest(model_numeric, conf.level = .95)
 corrplot::corrplot(model.cor, p.mat = res1$p, method = "circle", type = "lower", insig='blank',
-         addCoef.col ='black', order = "AOE", diag=FALSE) 
-### All variables moderately correlated but non significant
+         addCoef.col ='white', order = "AOE", diag=FALSE) 
+### All variables moderately correlated but not significant
+
+```
+
+
+
+### Global model generation
+
+We now generate the global model. This is a saturated model with all of the fixed effects and their interesting interactions. There are no random effects in this model so we use a linear model.
+
+```{r global glm model, messages = FALSE, warning=FALSE}
+
+# Create saturated model (potentially SurveyType or locality as a random effect?)
+global_model <- glm(OverallAttitudeScore ~ SiteLocal + SurveyType + 
+         Age + Gender + Area_type + Education + Occupation + Aware_stork + 
+         Support_reintroductions + SeenWildCaptivity +
+         Knepp_visit + # Have you visited Knepp?
+         Freq_exp_nature + # Likert - experience of nature
+         HeardOfWSP + # Had you ever heard of the WSP and reintroduction of WS to southern England?
+         Env_org_member + 
+         KnowledgeScore + NCI + ProCoBS + BirdInterestScore + EnvConcern.score,
+         data = model_clean2)
+
+summary(global_model)        
+par(mfrow = c(2, 2))
+plot(global_model)
+# http://www.sthda.com/english/articles/39-regression-model-diagnostics/161-linear-regression-assumptions-and-diagnostics-in-r-essentials/
+
+# Check for variance inflation factors (VIF > 2 is worth removing and rechecking)
+vif(global_model)
+with(summary(global_model), 1 - deviance/null.deviance)
+```
+
+```{r new glm model, messages = FALSE, warning=FALSE}
+
+### Create new model
+global_model1 <- glm(OverallAttitudeScore ~ SiteLocal + SurveyType + 
+         Age + Gender + Area_type + Education + Occupation + Aware_stork + 
+          Support_reintroductions + SeenWildCaptivity + Knepp_visit +
+         Freq_exp_nature + Env_org_member + 
+         KnowledgeScore + NCI + ProCoBS + EnvConcern.score, data = model_clean2)
+# Models summaries
+summary(global_model1)
+vif(global_model1)
+# Check model residuals
+par(mfrow = c(2, 2))
+plot(global_model1) 
+
+# Calculate r2
+with(summary(global_model1), 1 - deviance/null.deviance)
+
+
+## Sample sizes for the global model/dataset
+c(table(model_clean2$SurveyType))
+c(table(model_clean2$SiteLocal))
+
+
+### Not in the model averaging = Freq.expeirence, SeenWildCaptivity, Heard of WSP, KnowledgeScore and BIS
+
+
+
+```  
+
+
+
+### Model selection
+
+**Caveats to model selection**
+
+* Depends on the models included in the candidate set.
+* The parameter estimates and predictions arising from the “best” model or set of best models should be biologically meaningful.
+* Need to decide whether to use model selection or common inferential statistics (e.g. based on P-values). Techniques that rely on both approaches are possible (e.g. backward variable selection followed by averaging of top models), such as the example provided above.
+
+
+```{r top global model dredge, messages = FALSE, warning=FALSE}
+
+#### MODEL SELECTION USING MUMIN PACKAGE
+options(na.action = na.fail)
+
+# Check VIF assumptions 
+vif(global_model1)
+# Dredge all possible models (model selection step)
+attitude_dredge <- dredge(global_model1)
+# Summarise the top model
+summary(get.models(attitude_dredge, 1)[[1]])
+
+#### Use a all-subsets model subsetting approach find a confidence set of models, recalculating weights each time:
+attitude_del <- subset(attitude_dredge, delta <= 2, recalc.weights = TRUE) # delta(AIC) cutoff
+# Save results table as a CSV file
+write.csv(as.data.frame(attitude_del), "Attitude_model_selection.csv")
+
+```
+
+
+
+### Model averaging
+
+As we have so many predictors in the global model it’s unlikely that only one model explains all the variation in the data. From the dredge output we can see there is little difference in the AIC and weights of the first few models.
+
+But how do we decide which model(s) to interpret? It's agreed that models with delta AIC (or other criterion) less than 2 are considered to be just as good as the top model, so therefore shouldn't be discounted. Additionally, we could use the weights: if a model has weight greater or equal to 95% then it is likely to be the top model. Otherwise we can generate a “credibility” set consisting of all models whose cumulative sum of AIC weights is 0.95. 
+
+In any case, the point is that we have no good reason to exclude models other than the top one when the next models after it are likely to be just as good. Therefore, model averaging (AKA multi-model inference), is used to average the parameter estimates across multiple models and avoids the issue of model uncertainty. See below for the code and results of model averaging on this dataset for all models with a delta AIC <= 2.
+
+
+**Key references**
+
+* Harrison XA, Donaldson L, Correa-Cano ME, Evans J, Fisher DN, Goodwin CED, Robinson BS, Hodgson DJ, Inger R. 2018. A brief introduction to mixed effects modelling and multi-model inference in ecology. PeerJ 6:e4794 https://doi.org/10.7717/peerj.4794
+
+
+
+```{r model averaging, messages = FALSE, warning=FALSE}
+
+### Model averaging the top 10 models according to the delta AIC value
+attitude_aves <- model.avg(get.models(attitude_del, subset = delta < 2))
+summary(attitude_aves)
+# View the model estimates
+sjPlot::plot_model(attitude_aves, type = "est",
+                   show.values = TRUE, value.offset = .3, title = "Model averaged results") #  + ylim(-.05, 0.05)
+ggplot2::ggsave(filename = "Attitude_averaging_table.png", width = 9, height = 15, dpi = 300)
+
+
+# Print coefficients in table
+attitude_confint <-as.table(round(confint(attitude_aves), 3))
+attitude_exp <- as.table(exp(coefficients(attitude_aves)))
+attitude_ave <- round(summary(attitude_aves)$coefmat.subset, 3)
+stargazer(attitude_ave, digits=3, title="Model averaged results", type = "html",
+          out="Attitude_averages_table.doc")
+
+# Create tab_df table of model averaged estimates
+attitude_ave1 <- tibble::rownames_to_column(as.data.frame(attitude_ave), "Predictor")
+sjPlot::tab_df(attitude_ave1, title = "Model averaged results", alternate.rows = TRUE, digits=3, use.viewer = TRUE)
+
+
+```
+
+
+
+\newpage
+
+#### Exploring the relationship between attitudes and Q15. "Do you support the reintroduction of WS to southern England?"
+
+
+
+
+```{r lm attitudes Q15, messages = FALSE, warning=FALSE}
+
+colnames(final_data)
+
+# Select variables
+final_data %>% 
+  dplyr::select(SurveyType, SiteProximity, OverallAttitudeScore, Q15_WSP_support) %>% 
+  drop_na() %>% 
+  lm(OverallAttitudeScore ~ Q15_WSP_support*SiteProximity, data = .) %>%
+        summary()
+nrow(model_support)
+
+
+
 ```
 
 
