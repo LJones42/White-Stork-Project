@@ -43,7 +43,7 @@ lapply(stats, require, character.only = TRUE)
 vismap <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly","rnaturalearth",
             "RColorBrewer", "sjPlot", "ggrepel", "rgdal", "maptools", "gpclib")
 lapply(vismap, require, character.only = TRUE) 
-gpclibPermit()  # Gives maptool permission to use gpclib
+# gpclibPermit()  # Gives maptool permission to use gpclib
 ```
 
 ```{r working directories and data upload, include=FALSE}
@@ -86,6 +86,7 @@ Q19_NCI_colnames <- select(all_data, starts_with("Q19"), -ends_with('score')) # 
 Q20_envconcern_colnames <- select(all_data, starts_with("Q20"), -ends_with('score')) # Q21 total score = Env.concern score
 Q21_ProCoBS_colnames <- select(all_data, starts_with("Q21"), -ends_with('score')) # Q21 total score = ProCoBS
 Q23_BIS_colnames <- select(all_data, starts_with("Q23"), -ends_with('score')) # Q23 total score = BirdInterestScore
+
 ```
 
 
@@ -113,10 +114,27 @@ I have created a new age column to create matching age groups for both surveys (
 I converted the 'TimeTaken' column to a total number of seconds (SecsTaken) for easier to more easily investigate means and quantiles. 
 
 
+
+
 ```{r data formatting main dataset}
 
 ## Create a composite columns of where respondents had seen White Storks (UK, Outside UK, or Both)
 # colnames(all_data)
+all_data <- all_data %>% mutate(Q8_Seen =
+                     case_when(Q8_wild_seen == 1L ~ "Wild", 
+                               Q8_wild_seen == 1L & Q8_captivity_seen == 1L ~ "Wild", 
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L ~ "Captivity",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_pictures_video == 1L ~ "Captivity",
+                               Q8_wild_seen == 1L & Q8_captivity_seen == 1L & Q8_No == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_No == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 1L & Q8_captivity_seen == 1L & Q8_NotSure == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_NotSure == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_NotSure == 1L & Q8_NotSure == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 0L & Q8_pictures_video == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 0L & Q8_pictures_video == 0L ~ "No/Not sure"))
+all_Q8_colnames <- select(all_data, starts_with("Q8_"))
+all_Q8_colnames
+
 # Multiple conditions when adding new column to dataframe:
 str(all_data$Q8.1_UK) # Column is integer so need to format case_when accordingly
 all_data <- all_data %>% mutate(Q8.WhereSeen =
@@ -127,6 +145,7 @@ all_data <- all_data %>% mutate(Q8.WhereSeen =
                                Q8.1_UK == 1L & Q8.1_OutsideUK == 1L ~ "Both",
                                Q8.1_UK == 0L & Q8.1_OutsideUK == 0L ~ "Neither",
                                Q8.1_UK == NA_integer_ & Q8.1_OutsideUK == NA_integer_ ~ "NA",))
+
 # Move new column next to existing Q8 columns and view new column
 all_data %>% 
   sjmisc::move_columns(Q8.WhereSeen, .after = "Q8.1_OutsideUK") %>%
@@ -147,6 +166,7 @@ all_data$CompletionDate <- as.Date(all_data$CompletionDate, format = "%d/%m/%Y")
 
 
 ```
+
 
 After the WSP group meeting on 17/05/21 I removed the 3 Northern Irish respondents from the Proactive sample and merged the respondents thta selected Wadhurst and Wadhurst Park as the nearest release site.
 
@@ -310,7 +330,7 @@ data_clean <- data_clean[!data_clean$UniqueID_all %in% manualcheckID_to_remove,]
 # write.csv(final_data, "WSP_R_cleaned_dataset.csv")
 
 # Load in manually cleaned dataset
-final_data <- read.csv("WSP_R_cleaned_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
+# final_data <- read.csv("WSP_R_cleaned_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
 
 ```
 
@@ -371,7 +391,7 @@ final_data <- read.csv("WSP_R_cleaned_dataset2.csv", header = TRUE, stringsAsFac
 # # overall_score_colnames
 
 # View and save the FINAL cleaned dataframe as a CSV file for use in other r scripts
-write.csv(final_data, "WSP_R_cleaned_dataset3.csv")
+# write.csv(final_data, "WSP_R_cleaned_dataset3.csv")
 
 ```
 
@@ -387,16 +407,24 @@ Based on the 0.7 threshold, all groups have an acceptable Cronbach's alpha score
 
 ```{r cronbachs alpha, warning=FALSE, message=FALSE}
 
+# Load in the FINAL dataset for publication 
+final_data <- read.csv("WSP_R_FINAL_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
+
 ### Reminding myself of the column names again!
-# colnames(final_data)
+colnames(final_data)
 library("psych")
 
 # Using Cronbach's alpha on the score columns using the psych package (alpha::psych)
 # Questions 13 & 14 attitudes
 final_data %>%
-  select(., starts_with("Q13"), starts_with("Q14")) %>%
+  select(., starts_with("Q12"), starts_with("Q13"), starts_with("Q14")) %>%
   select(., ends_with('score')) %>%
   psych::alpha(title = "Attitudes")
+
+# Question 19 NCI
+final_data %>%
+  select(., starts_with("Q19") & ends_with('score')) %>%
+  psych::alpha(title = "NCI")
 
 # Question 21 ProCoBS
 final_data %>%
