@@ -1,0 +1,1260 @@
+---
+title: "Thoughts on Storks - closed question analysis"
+author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
+date: "26/07/2021"
+output:
+  html_document:
+    number_sections: no
+  pdf_document:
+    number_sections: no
+  word_document: default
+---
+
+
+## WSP - Analysis, stats and visualisations for closed questions
+
+
+This rMarkdown explores and analyses the closed-ended questions
+
+### About rMarkdowns
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. To generate the document of all content, click the **Knit** button. 
+
+This rMarkdown document will be periodically updated and uploaded to the OneDrive folder and pushed to the WSP GitHub code repository. The primary format of this document is HTML, but this can be easily changed by changing the output (e.g. PDF, GitHub) using the 'output' section at the top of the document. The possible output formats are listed here: https://rmarkdown.rstudio.com/lesson-9.html.
+
+
+```{r setup/packages, warning = FALSE, messages = FALSE, include=FALSE}
+# This code assumes that all packages are installed. If not, use 'install.packages' e.g. install.packages("likert")
+library(dplyr, warn.conflicts = FALSE)
+# Suppress summarise info
+options(dplyr.summarise.inform = FALSE)
+
+# Key packages for data wrangling
+wrangling <- c("tidyverse","purr","magrittr","lubridate","hms",
+             "data.table","plyr","tidyr","tibble","reshape2")
+lapply(wrangling, require, character.only = TRUE) 
+
+# Useful survey analysis packages
+survey <- c("likert","careless", "cowplot", "sjPlot","ggplot2","plotly",
+            "RColorBrewer", "viridis")
+lapply(survey, require, character.only = TRUE) 
+
+# Useful packages for statistics
+stats <- c("stats","ggpubr","lme4","MASS","car","psych", "rstatix",
+                   "MuMIn","glmmTMB","nlme","DHARMa")
+lapply(stats, require, character.only = TRUE) 
+
+# # Favourite data visualisation packages
+# vismap <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","rnaturalearth",
+#              "ggrepel", "rgdal", "maptools", "gpclib")
+# lapply(vismap, require, character.only = TRUE) 
+# gpclibPermit()  # Gives maptool permission to use gpclib
+
+```
+
+```{r setwd and dataframes, include=FALSE}
+# Load in working  directory and datasets
+setwd("~/Documents/Thoughts_on_Storks/Working_directory")
+# Load in the data
+original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
+all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
+
+# Load in cleaned dataset
+final_data <- read.csv("WSP_R_FINAL_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
+# View cleaned dataset
+nrow(final_data)
+
+### Create two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
+proact_data <- final_data[which(final_data$SurveyType == "Proactive"),]
+natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
+
+# Check time taken to complete surveys
+mean(final_data$SecsTaken)/60
+mean(proact_data$SecsTaken)/60
+mean(natrep_data$SecsTaken)/60
+
+```
+
+
+
+
+
+
+### Creating our own 'WSP' colour palette
+
+The following code creates a custom colour palette to be called into GGPLOT objects (similar to rColourBrewer palettes). The colour scheme is based on the colours used for the Likert package for continuity in the manuscript.
+
+
+
+```{r create palette, warning = FALSE, messages = FALSE}
+## Creating a custom colour palette
+theme_set(theme_minimal())
+wsp_colors <- c(
+  `turquoise`  = "#5ab4ac",
+  `light_tur`  = "#acd9d5",
+  `grey`       = "#e5e5e5",
+  `light_gold` = "#ebd9b2",
+  `gold`       = "#d8b365")
+
+wsp_cols <- function(...) {
+  cols <- c(...)
+
+  if (is.null(cols))
+    return (wsp_colors)
+
+  wsp_colors[cols]
+}
+
+# Test the code and see the colours
+wsp_cols()
+
+# Create two custom palettes using the wsp_cols()called 'likert' and 'light'
+wsp_palettes <- list(
+
+  `likert`  = wsp_cols("turquoise", "light_tur", "grey", "light_gold", "gold"),
+  
+  `light`  = wsp_cols("light_tur", "grey", "light_gold")
+)
+
+# A function to access and interpolate 
+wsp_pal <- function(palette = "likert", reverse = FALSE, ...) {
+  pal <- wsp_palettes[[palette]]
+
+  if (reverse) pal <- rev(pal)
+
+  colorRampPalette(pal, ...)
+}
+# Check the 5-colour palette
+wsp_pal("light")(10)
+
+
+### Scales for ggplot2 plots - either fill (for geom_bar etc.) or colour (for geom_point etc.)
+## COLOUR
+scale_color_wsp <- function(palette = "likert", discrete = TRUE, reverse = FALSE, ...) {
+  pal <- wsp_pal(palette = palette, reverse = reverse)
+
+  if (discrete) {
+    discrete_scale("colour", paste0("wsp_", palette), palette = pal, ...)
+  } else {
+    scale_color_gradientn(colours = pal(256), ...)
+  }
+}
+
+## FILL
+scale_fill_wsp <- function(palette = "likert", discrete = TRUE, reverse = FALSE, ...) {
+  pal <- wsp_pal(palette = palette, reverse = reverse)
+
+  if (discrete) {
+    discrete_scale("fill", paste0("wsp_", palette), palette = pal, ...)
+  } else {
+    scale_fill_gradientn(colours = pal(256), ...)
+  }
+}
+
+
+
+
+```
+
+
+
+\newpage
+
+
+## Sectioned analysis (in order found in questionnaire)
+
+### Respondent knowledge
+
+Respondent knowledge questions have yes/no/notsure or incorrect/correct answer formats, lending themselves to Likert or Stacked bar plot style plots. Below I have created summary statistics and plots, seperated according to locality for this rMarkdown (using the Proactive sample only) but the code is also there to seperate according to survey type, but is hashed out for brevity using #. The summary statistics calculate sample sizes per question to create a table to display the sample sizes per column, per survey type.
+
+Some useful Likert plotting guides and packages:
+* https://cran.r-project.org/web/packages/sjPlot/vignettes/plot_likert_scales.html
+* https://towardsdatascience.com/how-to-plot-likert-scales-with-a-weighted-survey-in-a-dplyr-friendly-way-68df600881a 
+* https://www.r-graph-gallery.com/202-barplot-for-likert-type-items.html
+
+
+
+### Q1) Had you heard of a white stork before taking this survey?
+
+
+```{r Q1 heard of WS before survey, echo=TRUE, messages=FALSE, warning = FALSE}
+
+
+# # By Survey type
+# final_data %>%
+#   dplyr::select(SurveyType, Q1_aware_stork) %>%
+#   dplyr::group_by(SurveyType, Q1_aware_stork) %>%
+#   summarise(n = n()) %>%
+#   mutate(Percent = (n / sum(n)*100))
+
+
+# By locality within Proactive
+proact_data %>%
+  dplyr::select(SiteLocal, Q1_aware_stork) %>% 
+  dplyr::group_by(SiteLocal, Q1_aware_stork) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+```
+
+
+### Q2) Which of the following animals is a white stork?
+
+```{r Q2 photo recog, echo=TRUE, messages=FALSE, warning = FALSE}
+
+# # By sample
+# final_data %>%
+#   dplyr::select(SurveyType, Q2_photo_recog_score, Q2_photo_recog) %>% 
+#   dplyr::group_by(SurveyType, Q2_photo_recog) %>% 
+#   summarise(n = n()) %>%
+#   mutate(Percent = (n / sum(n)*100)) 
+
+
+# By locality within PROACTIVE
+proact_data %>%
+  dplyr::select(SiteLocal, Q2_photo_recog_score, Q2_photo_recog) %>% 
+  dplyr::group_by(SiteLocal, Q2_photo_recog) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+```
+
+### Q3) Is the white stork native to England? 
+
+```{r Q3 Knowledge questions, echo=FALSE, messages=FALSE}
+
+###  Q3. Are WS native?
+# # Sample sizes:
+# final_data %>%
+#   dplyr::select(SurveyType, Q3_is_native) %>% 
+#   dplyr::group_by(SurveyType, Q3_is_native) %>% 
+#   summarise(n = n()) %>%
+#   mutate(Percent = (n / sum(n)*100)) 
+
+
+# Sample sizes by LOCALITY (ONLY PRACTIVE):
+proact_data %>%
+  dplyr::select(SiteLocal, Q3_is_native) %>% 
+  dplyr::group_by(SiteLocal, Q3_is_native) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+
+```
+
+
+### Q4) Are the following statements true or false? 
+
+1. Most European white storks migrate south to Africa in the winter 
+2. A white stork’s wingspan can exceed 2 meters (6 feet 7 inches)
+3. White storks are globally rare 
+
+```{r Q4 Knowledge questions, echo=FALSE, messages=FALSE}
+
+knowl_cols <- c("Q4.1_migrate_score", "Q4.2_wingspan_score", "Q4.3_globallyrare_score")
+### White stork knowledge
+final_data <- final_data %<>% mutate_at(knowl_cols, funs(factor(.)))
+
+# ### BOTH SAMPLES
+# # Migrate (yes/no)
+# final_data %>%
+#   dplyr::select(SurveyType, Q4.1_migrate_score, Q4.1_migrate) %>% 
+#   dplyr::group_by(SurveyType, Q4.1_migrate) %>% 
+#   dplyr::summarise(n = n()) %>%
+#   mutate(Percent = (n / sum(n)*100)) 
+# 
+# # Wingspan (yes/no)
+# final_data %>%
+#   dplyr::select(SurveyType, Q4.2_wingspan_score, Q4.2_wingspan) %>% 
+#   dplyr::group_by(SurveyType, Q4.2_wingspan) %>% 
+#   dplyr::summarise(n = n()) %>%
+#   mutate(Percent = (n / sum(n)*100)) 
+# 
+# # Globally rare (yes/no)
+# final_data %>%
+#   dplyr::select(SurveyType, Q4.3_globallyrare_score, Q4.3_globallyrare) %>% 
+#   dplyr::group_by(SurveyType, Q4.3_globallyrare) %>% 
+#   dplyr::summarise(n = n()) %>%
+#   mutate(Percent = (n / sum(n)*100)) 
+
+
+
+### ONLY PROACTIVE SAMPLE FOR LOCAL-NON LOCAL
+# Migrate (yes/no)
+proact_data %>%
+  dplyr::select(SiteLocal, Q4.1_migrate_score, Q4.1_migrate) %>% 
+  dplyr::group_by(SiteLocal, Q4.1_migrate) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+# Wingspan (yes/no)
+proact_data %>%
+  dplyr::select(SiteLocal, Q4.2_wingspan_score, Q4.2_wingspan) %>% 
+  dplyr::group_by(SiteLocal, Q4.2_wingspan) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+# Globally rare (yes/no)
+proact_data %>%
+  dplyr::select(SiteLocal, Q4.3_globallyrare_score, Q4.3_globallyrare) %>% 
+  dplyr::group_by(SiteLocal, Q4.3_globallyrare) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+```
+
+
+
+### Q5) What do white storks typically eat? 
+
+[multi-select] Amphibians; Fish; Invertebrates; Reptiles; Small mammals; Bird eggs/chicks; Carrion; Food waste; Vegetation; Seeds; Fruit; Don’t know 
+
+
+
+```{r Q5 diet questions, echo=FALSE, messages=FALSE}
+
+# Create list of diet columns names for easier factorsation and labelling
+diet_col_names <- c("Q5a_amphibians_diet","Q5b_birdeggs.chicks_diet","Q5c_carrion_diet","Q5d_fish_diet",
+              "Q5e_foodwaste_diet","Q5f_fruit_diet","Q5g_inverts_diet","Q5h_reptiles_diet","Q5i_seeds_diet",
+              "Q5j_smallmammals_diet","Q5k_vegetation_diet", "Q5l_Don.tKnow_diet")
+
+# # Use mutate_at to set: if "don't know" = 1 then all other columns must = 0
+# # Then transform 0 and 1 to incorrect and correct
+# library(dplyr)
+# final_data <- final_data %>% 
+#   mutate_at(.vars = c("Q5a_amphibians_diet","Q5b_birdeggs.chicks_diet","Q5c_carrion_diet","Q5d_fish_diet",
+#               "Q5e_foodwaste_diet","Q5f_fruit_diet","Q5g_inverts_diet","Q5h_reptiles_diet","Q5i_seeds_diet",
+#               "Q5j_smallmammals_diet","Q5k_vegetation_diet"), ~ ifelse(Q5l_Don.tKnow_diet == 1, 0, .)) %>% 
+#   mutate_at(diet_col_names, funs(factor(.,
+#             levels = c("0", "1"), labels = c("Incorrect", "Correct"), ordered = TRUE)))
+# 
+# head(final_data[diet_col_names])
+# 
+# # Select the columns and convert to Likert data using the 'Likert' package
+# final_diet_cols <- final_data[diet_col_names]
+# final_diet_cols$SurveyType <- final_data$SurveyType
+# final_diet_cols$SiteLocal <- final_data$SiteLocal
+# 
+# # GGplot example
+# final_diet_cols %>%
+#     gather(key = Diet, value = Answer, -SiteLocal) %>%
+#     group_by(SiteLocal, Diet, Answer) %>%
+#     dplyr::summarise(count = length(Answer)) %>% 
+#     mutate(percent = count / sum(count) * 100) %>% 
+#     filter(., Answer == "Correct")
+
+
+### SAME WITH THE PROACTIVE (LOCAL vs NON-LOCAL)
+proact_data <- proact_data %>% 
+  mutate_at(.vars = c("Q5a_amphibians_diet","Q5b_birdeggs.chicks_diet","Q5c_carrion_diet","Q5d_fish_diet",
+              "Q5e_foodwaste_diet","Q5f_fruit_diet","Q5g_inverts_diet","Q5h_reptiles_diet","Q5i_seeds_diet",
+              "Q5j_smallmammals_diet","Q5k_vegetation_diet"), ~ ifelse(Q5l_Don.tKnow_diet == 1, 0, .)) %>% 
+  mutate_at(diet_col_names, funs(factor(.,
+            levels = c("0", "1"), labels = c("Incorrect", "Correct"), ordered = TRUE)))
+
+head(proact_data[diet_col_names])
+
+# Select the columns and convert to Likert data using the 'Likert' package
+proact_diet_cols <- proact_data[diet_col_names]
+proact_diet_cols$SurveyType <- proact_data$SurveyType
+proact_diet_cols$SiteLocal <- proact_data$SiteLocal
+
+# GGplot example
+proact_diet_cols %>%
+    gather(key = Diet, value = Answer, -SiteLocal) %>%
+    group_by(SiteLocal, Diet, Answer) %>%
+    dplyr::summarise(count = length(Answer)) %>% 
+    mutate(percent = count / sum(count) * 100) %>% 
+    filter(., Answer == "Correct")
+
+```
+
+
+### Q6) What are white storks preferred feeding habitat? 
+
+[multi-select] Shallow wetlands; Grassland; Farmland; Woodland; Urban; Don’t know 
+
+
+```{r Q6 habitat questions, echo=FALSE, messages=FALSE}
+
+# Create list of diet columns names for easier factorsation and labelling
+habitat_cols <- c("Q6a_farmland_habitat", "Q6b_grassland_habitat","Q6c_wetlands_habitat","Q6d_woodland_habitat",                                                              "Q6e_urban_habitat","Q6f_Don.tKnow_habitat")
+
+# # Use mutate_at to set: if "don't know" = 1 then all other columns must = 0
+# # Then transform 0 and 1 to incorrect and correct
+# final_data <- final_data %>%
+#   mutate_at(.vars = c("Q6a_farmland_habitat", "Q6b_grassland_habitat","Q6c_wetlands_habitat",
+#                       "Q6d_woodland_habitat","Q6e_urban_habitat"), ~ ifelse(Q6f_Don.tKnow_habitat == 1, 0, .)) %>% 
+#   mutate_at(habitat_cols, funs(factor(.,
+#                        levels = c("0", "1"), labels = c("No", "Yes"), ordered = TRUE)))
+# 
+# # Select the columns and convert to Likert data using the 'Likert' package
+# Q6_habitat_cols <- final_data[habitat_cols]
+# Q6_habitat_cols$SurveyType <- final_data$SurveyType
+# Q6_habitat_cols$SiteLocal <- final_data$SiteLocal
+# 
+# # GGplot example
+# Q6_habitat_cols %>%
+#     gather(key = Habitat, value = Answer, -SiteLocal) %>%
+#     group_by(SiteLocal, Habitat, Answer) %>%
+#     summarise(count = length(Answer)) %>% 
+#     mutate(percent = count / sum(count) * 100) %>% 
+#     filter(., Answer == "Yes") 
+#   
+# nrow(Q6_habitat_cols)
+# 
+
+
+### SAME WITH THE PROACTIVE (LOCAL vs NON-LOCAL)
+proact_data <- proact_data %>%
+  mutate_at(.vars = c("Q6a_farmland_habitat", "Q6b_grassland_habitat","Q6c_wetlands_habitat",
+                      "Q6d_woodland_habitat","Q6e_urban_habitat"), ~ ifelse(Q6f_Don.tKnow_habitat == 1, 0, .)) %>% 
+  mutate_at(habitat_cols, funs(factor(.,
+                       levels = c("0", "1"), labels = c("No", "Yes"), ordered = TRUE)))
+
+# Select the columns and convert to Likert data using the 'Likert' package
+proact_habitat_cols <- proact_data[habitat_cols]
+proact_habitat_cols$SurveyType <- proact_data$SurveyType
+proact_habitat_cols$SiteLocal <- proact_data$SiteLocal
+
+# GGplot example
+proact_habitat_cols %>%
+    gather(key = Habitat, value = Answer, -SiteLocal) %>%
+    group_by(SiteLocal, Habitat, Answer) %>%
+    dplyr::summarise(count = length(Answer)) %>% 
+    mutate(percent = count / sum(count) * 100) %>% 
+    filter(., Answer == "Yes") 
+
+
+```
+
+
+### Q7) Where do white storks typically nest?  
+
+[multi-select] Trees; Roofs of buildings; Chimneys; Telegraph poles; Ground; Don’t know 
+
+
+
+```{r Q7 nesting questions, echo=FALSE, messages=FALSE}
+
+# Create list of diet columns names for easier factorsation and labelling
+nest_cols <- c("Q7a_chimneys_nesting","Q7b_ground_nesting","Q7c_roofs_nesting",
+                  "Q7d_telegraphpoles_nesting","Q7e_trees_nesting","Q7f_Don.tKnow_nesting")
+
+# # Use mutate_at to set: if "don't know" = 1 then all other columns must = 0
+# # Then transform 0 and 1 to incorrect and correct
+# final_data <- final_data %>%
+#   mutate_at(.vars = c("Q7a_chimneys_nesting","Q7b_ground_nesting","Q7c_roofs_nesting",
+#                   "Q7d_telegraphpoles_nesting","Q7e_trees_nesting"), ~ ifelse(Q7f_Don.tKnow_nesting == 1, 0, .)) %>% 
+#   mutate_at(nest_cols, funs(factor(.,
+#                        levels = c("0", "1"), labels = c("No", "Yes"), ordered = TRUE)))
+# # str(final_data[nest_cols])
+# # Select the columns and convert to Likert data using the 'Likert' package
+# Q7_nesting_cols <- final_data[nest_cols]
+# Q7_nesting_cols$SurveyType <- final_data$SurveyType
+# Q7_nesting_cols$SiteLocal <- final_data$SiteLocal
+# 
+# # GGplot example
+# Q7_nesting_cols %>%
+#     gather(key = Nest, value = Answer, -SiteLocal) %>%
+#     group_by(SiteLocal, Nest, Answer) %>%
+#     dplyr::summarise(count = length(Answer)) %>% 
+#     mutate(percent = count / sum(count) * 100) %>% 
+#     filter(., Answer == "Yes")
+
+
+
+### SAME WITH THE PROACTIVE (LOCAL vs NON-LOCAL)
+proact_data <- proact_data %>%
+  mutate_at(.vars = c("Q7a_chimneys_nesting","Q7b_ground_nesting","Q7c_roofs_nesting",
+                  "Q7d_telegraphpoles_nesting","Q7e_trees_nesting"), ~ ifelse(Q7f_Don.tKnow_nesting == 1, 0, .)) %>% 
+  mutate_at(nest_cols, funs(factor(.,
+                       levels = c("0", "1"), labels = c("No", "Yes"), ordered = TRUE)))
+# str(final_data[nest_cols])
+# Select the columns and convert to Likert data using the 'Likert' package
+proact_nesting_cols <- proact_data[nest_cols]
+proact_nesting_cols$SurveyType <- proact_data$SurveyType
+proact_nesting_cols$SiteLocal <- proact_data$SiteLocal
+
+# GGplot example
+proact_nesting_cols %>%
+    gather(key = Nest, value = Answer, -SiteLocal) %>%
+    group_by(SiteLocal, Nest, Answer) %>%
+    dplyr::summarise(count = length(Answer)) %>% 
+    mutate(percent = count / sum(count) * 100) %>% 
+    filter(., Answer == "Yes")
+
+```
+
+## If/where seen a white stork
+
+### Q8) Before taking this survey, had you ever seen a white stork? 
+
+[multi-select] Yes, in the wild; Yes, in captivity; Yes, in pictures/videos; No; Not sure 
+
+
+
+```{r Seen a WS in the wild table, echo=FALSE, messages=FALSE, warning=FALSE}
+
+### Q8) Before taking this survey, had you ever seen a white stork
+# Q8_seen_colnames <- dplyr::select(final_data, starts_with("Q8_"))
+# Q8_seen_colnames$SurveyType <- final_data$SurveyType
+# Q8_seen_colnames$UniqueID_all <- final_data$UniqueID_all
+# # Calculate sample sizes and %
+# Q8_seen_colnames %>%
+#   tidyr::gather("Q8_option", "Answer", -SurveyType) %>% 
+#   dplyr::group_by(SurveyType, Q8_option, Answer) %>% 
+#   dplyr::summarise(n = n()) %>%
+#   mutate(Percent = (n / sum(n)*100)) %>% 
+#   filter(., Answer == "1")
+
+
+#### PROACTIVE DATA
+proact_seen_colnames <- dplyr::select(proact_data, starts_with("Q8_"))
+proact_seen_colnames$SiteLocal <- proact_data$SiteLocal
+proact_seen_colnames$UniqueID_all <- proact_data$UniqueID_all
+
+# Calculate sample sizes and %
+proact_seen_colnames %>%
+  tidyr::gather("Q8_option", "Answer", -SiteLocal) %>% 
+  dplyr::group_by(SiteLocal, Q8_option, Answer) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) %>% 
+  filter(., Answer == "1")
+
+
+
+```
+
+```{r Where seen table, echo=FALSE, messages=FALSE, warning=FALSE}
+
+### Q8a) [if selected “Yes, in the wild”] Where did you see the white stork(s)?  
+# Calculate sample sizes and %
+# final_data %>%
+#   dplyr::select(SurveyType, Q8.WhereSeen) %>% 
+#   dplyr::group_by(SurveyType, Q8.WhereSeen) %>% 
+#   dplyr::summarise(n = n()) %>%
+#   mutate(Percent = (n / sum(n)*100)) 
+
+# Calculate sample sizes and %
+proact_data %>%
+  dplyr::select(SiteLocal, Q8.WhereSeen) %>% 
+  dplyr::group_by(SiteLocal, Q8.WhereSeen) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+
+```
+
+
+
+### Q9) Before taking this survey, had you ever heard of the White Stork Project and its efforts to reintroduce white storks to southern England? 
+
+[options] Yes, No, Not sure 
+
+```{r Q9 heard of ws, echo=FALSE, messages=FALSE, warning=FALSE}
+
+### Q9) Before taking this survey, had you ever heard of the White Stork Project
+# and its efforts to reintroduce white storks to southern England
+
+# # Calculate sample sizes and %
+# final_data %>%
+#   dplyr::group_by(SurveyType, Q9_heard) %>% 
+#   dplyr::summarise(n = n()) %>%
+#   mutate(Percent = (n / sum(n)*100))
+
+
+# Calculate sample sizes and %
+proact_data %>%
+  dplyr::group_by(SiteLocal, Q9_heard) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100))
+
+```
+
+
+### Q10) How much do you feel you know about the white stork reintroduction currently taking place in southern England?  
+
+Nothing; I have heard something but don’t know much; I know something about it; I know a lot about it; I am involved in the effort 
+
+
+```{r Q10 communication options, echo=FALSE, messages=FALSE, warning=FALSE}
+
+### Q10) How much do you feel you know about the white stork
+# reintroduction currently taking place in southern England? 
+# head(final_data$Q10_project_knowledge)
+
+# # Calculate sample sizes and %
+# final_data %>%
+#   dplyr::group_by(SurveyType, Q10_project_knowledge) %>% 
+#   dplyr::summarise(n = n()) %>%
+#   mutate(Percent = (n / sum(n)*100))
+
+# Calculate sample sizes and %
+proact_data %>%
+  dplyr::group_by(SiteLocal, Q10_project_knowledge) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100))
+
+```
+
+### Q10a) [if selected any option apart from “Nothing”] Where have you heard about the white stork reintroduction project? 
+
+[multi-select] White Stork Project website; Social media; TV/Radio; Newspaper; Email; Magazine; Leaflet; Talk by a project spokesperson; Visiting Knepp Estate; Word of mouth; Other 
+
+
+```{r Q10a current comms, echo=FALSE, messages=FALSE, warning=FALSE}
+
+## ALL RESPONDENTS
+
+# Source of information (current and preferred)
+Q10_cursource_colnames <- dplyr::select(final_data, starts_with("Q10a"))
+
+# 10a) [if selected any option apart from “Nothing”] 
+# Where have you heard about the white stork reintroduction project? 
+Q10_cursource_colnames$SurveyType <- final_data$SurveyType
+Q10_cursource_colnames$UniqueID_all <- final_data$UniqueID_all
+
+# Calculate sample sizes and %
+Q10_cursource_colnames %>%
+  tidyr::gather("Q10_cursource", "Answer", -SurveyType) %>% 
+  dplyr::group_by(SurveyType, Q10_cursource, Answer) %>%                        
+  na.omit %>% # Apply na.omit
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) %>% 
+  filter(., Answer == "1")
+
+
+```
+
+### Q10b) How would you like information about the ongoing reintroduction to be communicated to you? 
+
+[multi-select] White Stork Project website; Social media; TV/Radio; Newspaper; Email; Magazine; Leaflet; Talk by a project spokesperson; Not interested; Other 
+
+
+```{r Q10b preferred comms, echo=FALSE, messages=FALSE, warning=FALSE}
+
+## ALL RESPONDENTS
+
+# Source of information (preferred)
+pref_comms <- dplyr::select(final_data, starts_with("Q10b"))
+# Remove the first 5 characters (Q10b_)
+names(pref_comms) <- substring(names(pref_comms), 6)
+
+# 10b) How would you like information about the ongoing
+# reintroduction to be communicated to you?
+pref_comms$SurveyType <- final_data$SurveyType
+pref_comms$SiteLocal <- final_data$SiteLocal
+pref_comms$UniqueID_all <- final_data$UniqueID_all
+# Rename columns
+pref_comms <- pref_comms %>%
+  rename("WSP website" = "WSPwebsite",
+         "Social media" = "Socialmedia",
+         "Spokesperson" = "spokesperson",
+         "TV or radio" = "TV.Radio",
+         "Not interested" = "NotInterested")
+         
+# Calculate sample sizes and %
+pref_comms_summary <- pref_comms %>%
+  tidyr::gather("Q10_pref", "Answer", -SurveyType, -UniqueID_all, -SiteLocal) %>% 
+  dplyr::group_by(Q10_pref, Answer) %>% 
+  na.omit %>% # Apply na.omit
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) %>% 
+  filter(., Answer == "1")
+pref_comms_summary
+
+# Plot the data
+ggplot(pref_comms_summary, 
+  aes(x = reorder(Q10_pref, Percent), y = Percent, fill = SiteLocal)) +
+    geom_bar(position="stack", stat="identity") +
+    labs(x = "Preferred communication media", y="Percentage of responses", fill = "Locality") +
+  scale_fill_wsp(discrete = TRUE, palette = "light", reverse = TRUE) +
+  theme_minimal( base_size = 12) + 
+  coord_flip()
+# ggsave("Q10_pref_communication.png", width = 20, height = 15, units = "cm")
+
+  
+```
+
+
+
+### Q12-14) How much do you agree or disagree with the following statements? 
+
+* White storks symbolise the beauty of nature.  
+* White storks play an important role in their environment.  
+* Reintroduced white storks may have a negative impact on my life.  
+* I do not want white storks living near me.  
+* White storks in England could benefit the tourism industry where they’re found. 
+* I would find it exciting to see white storks in the wild in England.  
+* White storks symbolise hope, rebirth and new life.  
+* Money spent reintroducing white storks would be better spent elsewhere.  
+* White storks might be detrimental to local wildlife.  
+* There is no need to reintroduce the white stork to England as it is common throughout mainland Europe 
+* I think white storks are useless birds. 
+* White storks are part of our cultural and natural heritage  
+* The reintroduced white stork can help people (re)connect with the natural world.  
+* The countryside will be worse off with white storks around. 
+
+15. Overall, I support efforts that aim to reintroduce the UK’s lost species and restore its natural systems.  
+
+
+```{r Attitude score summary, echo=FALSE, messages=FALSE, warning=FALSE}
+# Does locality impact Attitude scores? (PROACTIVE SAMPLE ONLY)
+# Calculate sample sizes and %
+proact_data %>%
+  dplyr::select(OverallAttitudeScore, SiteLocal, SurveyType) %>% 
+  dplyr::group_by(SiteLocal) %>% 
+  dplyr::summarise(
+        n = n(),
+        mean_score = mean(OverallAttitudeScore, na.rm=T),
+        sd_score = sd(OverallAttitudeScore, na.rm=T))
+
+```
+
+```{r Q12-14 attitude likert, echo=FALSE, messages=FALSE, warning=FALSE}
+# Q12-14 Attitude to white storks columns (Likert style data)
+all_attitude_colnames <- dplyr::select(final_data, starts_with("Q12"),
+                             starts_with("Q13"), starts_with("Q14"), -ends_with('score'),  -starts_with('Q14.5.'))
+# How much do you agree or disagree with the following statements 
+all_attitude_colnames$SurveyType <- final_data$SurveyType
+all_attitude_colnames$UniqueID_all <- final_data$UniqueID_all
+
+# Calculate sample sizes and %
+all_attitude_colnames %>%
+  tidyr::gather("Attitude_questions", "Answer", -SurveyType) %>% 
+  dplyr::group_by(SurveyType, Attitude_questions, Answer) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+
+### LIKERT PLOT
+# Create as new dataframe
+likert_attitudes <- as.data.frame(all_attitude_colnames)
+# Keep first 6 characters of columns names
+names(likert_attitudes) <- substring(names(likert_attitudes), 7)
+# Convert 'Don't know' to NA, then drop
+likert_attitudes[ likert_attitudes == "Don't know" ] <- NA
+likert_attitudes <- droplevels(likert_attitudes)
+# Create grouping columns
+likert_attitudes$SurveyType <- final_data$SurveyType
+likert_attitudes$SiteLocal <- final_data$SiteLocal
+# Rename columns
+likert_attitudes <- likert_attitudes %>%
+  dplyr::rename("White storks symbolise the beauty of nature" = ".White.storks.symbolise.the.beauty.of.nature.",
+         "White storks play an important role in their environment " = ".White.storks.play.an.important.role.in.their.environment.",
+         "Reintroduced white storks may have a negative impact on my life" = ".Reintroduced.white.storks.may.have.a.negative.impact.on.my.life.",
+         "I do not want white storks living near me" = ".I.do.not.want.white.storks.living.near.me.",
+         "White storks in England could benefit the tourism industry where they're found" = ".White.storks.in.England.could.benefit.the.tourism.industry.where.they.re.found.",
+    "I would find it exciting to see white storks in the wild in England" = ".I.would.find.it.exciting.to.see.white.storks.in.the.wild.in.England." ,
+         "White storks symbolise, hope, rebirth and new life" = ".White.storks.symbolise.hope..rebirth.and.new.life.",
+         "Money spent reintroducing white storks would be better spent else where" = ".Money.spent.reintroducing.white.storks.would.be.better.spent.elsewhere.",
+         "White storks might be detrimental to local wildlife" = ".White.storks.might.be.detrimental.to.local.wildlife.",
+         "There is no need to reintroduce the white stork to England as it is a common species throughout mainland Europe" =
+                    ".There.is.no.need.to.reintroduce.the.white.stork.to.England.as.it.is.a.common.species.throughout.mainland.Europe.",
+         "I think white storks are useless birds" = ".I.think.white.storks.are.useless.birds.",
+         "White storks are part of our cultural and natural heritage" = ".White.storks.are.part.of.our.cultural.and.natural.heritage.",
+         "The reintroduced white stork can help people re-connect with the natural world" = 
+                    ".The.reintroduced.white.stork.can.help.people..re.connect.with.the.natural.world.", 
+         "The countryside will be worse off with white storks around"  = ".The.countryside.will.be.worse.off.with.white.storks.around.")
+
+# Set likert levels
+likert_att_levels <- c("Group","Item","Strongly agree", "Agree", "Neutral",
+                  "Disagree", "Strongly disagree")
+
+# Seperate out the negative and positive likert objects (7 of each)
+library(likert)
+## POSITIVE
+likert_positive <- likert(items=likert_attitudes[, c(1,2,5,6,7,12,13)], grouping=likert_attitudes[,17])
+likert_positive$results <- likert_positive$results[, likert_att_levels]
+# Likert plot
+likert_positive_plot <- plot(likert_positive, type="bar", text.size = 4, include.histogram = TRUE)
+likert_positive_plot
+ggsave("Likert_attitudes_positive.png", width = 20, height = 25, units = "cm")
+
+### NEGATIVE
+likert_negative <- likert(items=likert_attitudes[, c(3,4,8,9,10,11,14)], grouping=likert_attitudes[,17])
+likert_negative$results <- likert_negative$results[, likert_att_levels]
+# Likert plot
+plot(likert_negative, type="bar", text.size = 4, include.histogram = TRUE)
+# ggsave("Likert_attitudes_negative.png", width = 20, height = 25, units = "cm")
+ggsave("Likert_attitudes_negative_histogram.png", width = 30, height = 25, units = "cm")
+
+
+
+
+```
+
+
+
+
+### Q15. Do you support the reintroduction of white storks to southern England?
+
+[single-option] Yes; No; Not sure
+
+
+```{r Q15 support for WS reintroduction, echo=FALSE, messages=FALSE, warning=FALSE}
+
+Q15_support <- dplyr::select(final_data, starts_with("Q15"),-ends_with('open'))
+
+# Inspect data and create new df
+Q15_support <-  as.data.frame(Q15_support)
+# Add Survey type as colour/fill
+Q15_support$SurveyType <- final_data$SurveyType
+Q15_support$SiteLocal <- final_data$SiteLocal
+# Calculate sample sizes and %
+Q15_summary <- Q15_support %>%
+  tidyr::gather("Support", "Answer", -SurveyType, -SiteLocal) %>% 
+  dplyr::group_by(SurveyType, Support, Answer) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100))
+Q15_summary
+
+
+```
+
+
+
+### Q16a. Expressing views on WS management
+
+[single-option] Yes; No; Not sure; Not interested
+
+```{r Q16 views management, echo=FALSE, messages=FALSE, warning=FALSE}
+
+Q16_views_management <- dplyr::select(final_data, starts_with("Q16"),
+                                         -ends_with('open'))
+# Inspect data and create new df
+head(Q16_views_management)
+Q16_views_management <-  as.data.frame(Q16_views_management)
+# Add Survey type as colour/fill
+Q16_views_management$SurveyType <- final_data$SurveyType
+Q16_views_management$SiteLocal <- final_data$SiteLocal
+# Calculate sample sizes and %
+Q16_summary <- Q16_views_management %>%
+  tidyr::gather("Management_view", "Answer", -SurveyType) %>% 
+  dplyr::group_by(SurveyType, Management_view, Answer) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100))
+Q16_summary
+
+
+```
+
+
+
+
+### Q17) Which (if any) methods of white stork project management would you support?  
+
+[multi-select] Monitoring nests; Providing places for storks to nest; Discouraging nest building; Nest removal; Tracking movements of individual storks;Public engagement and outreach; Providing supplementary food; Compensation for damage caused by stork activity; Population management by moving storks to other locations; Population management by culling; No management will be necessary; Don't know; Other 
+
+
+
+```{r Q17 management options, echo=FALSE, messages=FALSE, warning=FALSE}
+
+Q17_management_colnames <- dplyr::select(final_data, starts_with("Q17"),
+                                         -ends_with('open'))
+# Inspect data and create new df
+head(Q17_management_colnames)
+Q17_management <-  as.data.frame(Q17_management_colnames)
+# Add Survey type as colour/fill
+Q17_management$SurveyType <- final_data$SurveyType
+Q17_management$SiteLocal <- final_data$SiteLocal
+Q17_management$WSP_support <- final_data$Q15_WSP_support
+# Q17_management$County <- final_data$County
+
+nrow(Q17_management)
+# Calculate sample sizes and %
+Q17_management_summary <- Q17_management %>%
+  tidyr::gather("Management_options", "Answer",
+                -SiteLocal, -SurveyType, -WSP_support) %>% # -County) %>% 
+  dplyr::group_by(WSP_support, Management_options, Answer) %>% 
+  dplyr::summarise(n = n()) %>%
+  mutate(Percent = (n /3531)*100) %>% 
+  filter(., Answer == "1")
+Q17_management_summary
+
+# Rename columns for pretty plot
+Q17_management_summary$Management_options <- mapvalues(Q17_management_summary$Management_options,
+          from = c("Q17.1_Nest_monitoring","Q17.2_Nesting_platforms", "Q17.3_Discouragenestbuilding",
+                   "Q17.4_Nest_removal","Q17.5_Tracking","Q17.6_Public_engagement",
+                   "Q17.7_Supplementary_food",
+                   "Q17.8_compensation_storkdamage","Q17.9_Stork_relocation","Q17.10_Culling",
+                   "Q17_11.management.not.needed","Q17.12_Don.tknow","Q17.13_other"),
+          to = c("Nest monitoring","Nesting platform", "Discourage nests",
+                   "Nest removal","Tracking","Public engagement","Supplementary food",
+                   "Damage compensation","Stork relocation","Culling",
+                 "Not needed","Don't know", "Other"))
+
+# Plot the data
+ggplot(Q17_management_summary, 
+  aes(x = reorder(Management_options, Percent), y = Percent, fill = WSP_support)) +
+    geom_bar(position="stack", stat="identity") +
+    labs(x = "Management options", y="Percentage of responses",
+         fill = "Support for white \nstork reintroduction") +
+    # geom_text(aes(Management_options, Percent, label = sprintf("%2.1f", Percent)), 
+    #         position = position_dodge(width = 1)) + 
+  scale_fill_wsp(discrete = TRUE, palette = "light", reverse = TRUE) +
+  theme_minimal( base_size = 12) + 
+  coord_flip()
+# Original plot by WSP_support
+ggsave("Q17_management options.png", width = 20, height = 15, units = "cm")
+```
+
+
+
+### Q18) In an average week, how many days do you spend more than 1 hour outside in green and natural spaces?  
+
+[options] None; 1-2 days; 3-4 days; 5-6 days; Every day - 7 days 
+
+
+
+```{r Q18 experience, echo=FALSE, messages=FALSE, warning=FALSE}
+
+Q18_exp_colnames <- dplyr::select(final_data, starts_with("Q18_"), -ends_with('open'))
+
+# Q18) In an average week, how many days do you spend more than 1 hour outside in green and natural spaces?  
+Q18_exp <- as.data.frame(Q18_exp_colnames)
+Q18_exp <- rename(Q18_exp, "Frequency of nature experience" = Q18_exp_nature)
+Q18_exp$SurveyType <- final_data$SurveyType
+
+# # Create likert object and plot
+# likert_exp <- likert(items=Q18_exp[,1], grouping=Q18_exp[,2])
+
+# Calculate sample sizes and %
+Q18_exp %>%
+  tidyr::gather("Frequency", "Answer", -SurveyType) %>% 
+  dplyr::group_by(SurveyType, Frequency, Answer) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100))
+
+
+```
+
+
+### Q18a) Which of these recreation activities do you do while you are outside in green and natural spaces?  
+
+[multi-select] Walking (with dog); Walking (without dog); Running/cycling; Golf; Picnic; Horse riding; Bird/wildlife watching; Photography; Camping; Fishing; Shooting/hunting; Water sports/swimming; Gardening; I don’t spend my free time in green and natural spaces; Other 
+
+
+```{r Q18 activities, echo=FALSE, messages=FALSE, warning=FALSE}
+
+# Q18a) Which of these recreation activities do you do while you are outside in green and natural spaces?  
+
+Q18_activity_cols <- dplyr::select(final_data, starts_with("Q18a."),
+                                  -ends_with('open')) # Nature-based activities
+# Inspect data and create new df
+head(Q18_activity_cols)
+Q18_activity <-  as.data.frame(Q18_activity_cols)
+# Add Survey type as colour/fill
+Q18_activity$SurveyType <- final_data$SurveyType
+Q18_activity$SurveyType <- final_data$SurveyType
+
+# Calculate sample sizes and %
+Q18_activity_summary <- Q18_activity %>%
+  tidyr::gather("Activities", "Answer", -SurveyType) %>% 
+  dplyr::group_by(SurveyType, Activities, Answer) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100))%>% 
+  filter(., Answer == "1")
+# Rename columns
+Q18_activity_summary$Activities <- mapvalues(Q18_activity_summary$Activities,
+          from = c( "Q18a.bird.wildlife.watching","Q18a.camping",
+                    "Q18a.don.t.spend.free.time.in.green.natural.spaces", "Q18a.fishing",                     
+                    "Q18a.gardening","Q18a.golf", "Q18a.horse.riding","Q18a.photography",
+                    "Q18a.picnic","Q18a.shooting.hunting","Q18a.water.sports.swimming"),
+          to = c("Wildlife watching","Camping","I don't", "Fishing",                     
+                    "Gardening","Golf", "Horse riding","Photography",
+                    "Picnic","Shooting/hunting","Water sports/swimming"))
+Q18_activity_summary
+
+ # Plot the data
+ggplot(Q18_activity_summary, 
+  aes(x = reorder(Activities, Percent), y = Percent, fill = SurveyType)) +
+    geom_bar(position="dodge", stat="identity") +
+    labs(x = "Activities", y="Percentage of responses", fill = "Survey type") +
+    geom_text(aes(Activities, Percent, label = sprintf("%2.1f", Percent)), 
+            position = position_dodge(width = 1)) + 
+  scale_fill_wsp(discrete = TRUE, palette = "light", reverse = TRUE) +
+  theme_minimal( base_size = 12) + 
+  coord_flip()
+ggsave("Q18_Experience_Activities.png", width = 20, height = 15, units = "cm")
+```
+
+
+### Q19) How much do you agree or disagree with the following statements? 
+
+* I find being in nature really amazing	 
+* Spending time in nature is very important to me 
+* Being in nature makes me very happy
+* I always find beauty in nature
+* I always treat nature with respect
+* I feel part of nature 
+
+[options] Completely disagree = 1, Strongly disagree = 2, Disagree = 3, Neither agree or disagree = 4, Agree = 5, Strongly agree = 6, Completely agree = 7 
+
+
+
+
+```{r Q19 NCI, echo=FALSE, messages=FALSE, warning=FALSE}
+
+# Q19) How much do you agree or disagree with the following statements?
+Q19_NCI_colnames <- dplyr::select(final_data, starts_with("Q19"),
+                                  -ends_with('score')) 
+
+# How much do you agree or disagree with the following statements 
+Q19_NCI_colnames$SurveyType <- final_data$SurveyType
+Q19_NCI_colnames$SiteLocal <- final_data$SiteLocal
+Q19_NCI_colnames$UniqueID_all <- final_data$UniqueID_all
+head(Q19_NCI_colnames)
+# Calculate sample sizes and %
+Q19_NCI_colnames %>%
+  tidyr::gather("NCI_questions", "Answer", -SurveyType) %>% 
+  dplyr::group_by(SurveyType, NCI_questions, Answer) %>% 
+  summarise(n = n()) %>%
+  mutate(Percent = (n / sum(n)*100)) 
+
+
+### CREATE LIKERT PLOT
+# Create new dataframe
+likert_NCI <- as.data.frame(Q19_NCI_colnames)
+# Convert 'Don't know' to NA, then drop
+likert_NCI[ likert_NCI == "Don't know" ] <- NA
+likert_NCI <- droplevels(likert_NCI)
+# Rename columns
+likert_NCI <- likert_NCI %>%
+  rename("I find being in nature really amazing" = "Q19.1..I.find.being.in.nature.really.amazing" ,
+         "Spending time in nature is very important to me" = "Q19.2..Spending.time.in.nature.is.very.important.to.me",
+         "Being in nature makes me very happy" = "Q19.3..Being.in.nature.makes.me.very.happy",
+         "I always find beauty in nature" = "Q19.4..I.always.find.beauty.in.nature",
+         "I always treat nature with respect" = "Q19.5..I.always.treat.nature.with.respect",
+         "I feel part of nature" = "Q19.6..I.feel.part.of.nature")
+# Create likert object and plot
+likert_nci <- likert(items=likert_NCI[,1:6], grouping=likert_NCI[,8])
+# Rename items/questions
+likert_nci_levels <- c("Group","Item","Completely agree","Strongly agree", "Agree",
+                   "Neither agree or disagree","Disagree",
+                   "Strongly disagree","Completely disagree")
+likert_nci$results <- likert_nci$results[, likert_nci_levels]
+# Plot using the plot function
+plot(likert_nci, type="bar", text.size = 4, title = "Q19) How much do you agree or disagree with the following statements?")
+ggsave("Likert_NCI.png", width = 15, height = 20, units = "cm")
+
+
+```
+
+
+### Q20) In relation to the UK, how concerned are you about: 
+
+* Damage to the natural environment 
+* The consequences of a loss of variety of wildlife 
+
+[options] Not at all concerned = 1, Not very concerned = 2, Neither concerned or unconcerned = 3, Concerned = 4, Extremely concerned = 5 
+
+
+
+
+```{r Q20 envconcern, echo=FALSE, messages=FALSE, warning=FALSE}
+# Q20) In relation to the UK, how concerned are you about:
+Q20_envconcern_colnames <- dplyr::select(final_data, starts_with("Q20"),
+                                         -ends_with('score')) # Q21 total score = Env.concern score
+# Create as new dataframe
+likert_env <- as.data.frame(Q20_envconcern_colnames)
+likert_env$SurveyType <- final_data$SurveyType
+likert_env$SiteLocal <- final_data$SiteLocal
+# Rename question columns
+likert_env <- likert_env %>%
+  rename("Damage to the natural environment" = "Q20.1..Damage.to.the.natural.environment" ,
+         "The consequences of a loss of variety of wildlife" = "Q20.2..The.consequences.of.a.loss.of.variety.of.wildlife")
+# Create likert object and plot
+likert_envconcern <- likert(items=likert_env[,1:2], grouping=likert_env[,4])
+# Set likert levels
+likert_envconcern_levels <- c("Group","Item", "Extremely concerned","Concerned",
+                              "Neither concerned or unconcerned", "Not very concerned",
+                              "Not at all concerned" )
+likert_envconcern$results <- likert_envconcern$results[, likert_envconcern_levels]
+
+# Create Likert plot
+plot(likert_envconcern, type="bar", text.size = 5)
+ggsave("Likert_EnvCon.png", width = 20, height = 10, units = "cm")
+```
+
+
+### Q21) How often do you do the actions below when you have the opportunity? 
+
+* When I see litter, I pick it up.
+* I vote for nature or wildlife conservation friendly legislation in local or national referendums/votes/etc.      
+* I get in touch with local authorities on nature conservation issues.
+* I vote for parties/ candidates with strong pro-nature conservation policies in elections. 
+
+[Options] Never = 1, Rarely = 2, Occasionally = 3, Sometimes = 4, Frequently = 5, Very frequently = 6, Always = 7 
+
+
+```{r Q21_ProCoBS, echo=FALSE, messages=FALSE, warning=FALSE}
+# Q21) How often do you do the actions below when you have the opportunity? 
+Q21_ProCoBS_colnames <- dplyr::select(final_data, starts_with("Q21"),
+                                      -ends_with('score')) # Q21 total score = ProCoBS
+# Create as new dataframe
+likert_pro <- as.data.frame(Q21_ProCoBS_colnames)
+# Add SurveyType and SiteLocal as qualifiers
+likert_pro$SurveyType <- final_data$SurveyType
+likert_pro$SiteLocal <- final_data$SiteLocal
+
+# Rename question columns
+likert_pro <- likert_pro %>%
+  rename("When I see litter, I pick it up" = "Q21.1..When.I.see.litter..I.pick.it.up" ,
+         "I vote for nature or wildlife conservation friendly legislation in local or national referendums votesetc." = "Q21.2..I.vote.for.nature.or.wildlife.conservation.friendly.legislation.in.local.or.national.referendums.votes.etc.",
+         "I get in touch with local authorities on nature conservation issues" = "Q21.3..I.get.in.touch.with.local.authorities.on.nature.conservation.issues" ,
+         "I vote for parties/candidates with strong pro-nature conservation policies in elections" = "Q21.4..I.vote.for.parties..candidates.with.strong.pro.nature.conservation.policies.in.elections" ,)
+
+# Create likert object and plot
+likert_procobs <- likert(items=likert_pro[,1:4], grouping=likert_pro[,6])
+# Set likert levels
+likert_pro_levels <- c("Group","Item","Always","Very Frequently",
+                              "Frequently","Sometimes","Occasionally","Rarely","Never")
+likert_procobs$results <- likert_procobs$results[, likert_pro_levels]
+
+# Create Likert plot
+plot(likert_procobs, type="bar", text.size = 4)
+ggsave("Likert_ProCoBS.png", width = 15, height = 20, units = "cm")
+
+```
+
+
+### Q23) Thinking about your daily life, how much do you agree or disagree with the following statements?  
+
+* I pay attention to birds wherever I go.
+* I can identify common birds in my area.
+* Seeing a new bird fills me with excitement. 	 
+* I am not interested in birds. 
+
+[Options] Strongly Disagree = 1, Disagree = 2, Neutral = 3, Agree = 4, Strongly Agree = 5. [†reverse scored] 
+
+
+```{r Q23 Bird interest score, echo=FALSE, messages=FALSE, warning=FALSE}
+# Q23) Thinking about your daily life, how much do you agree or disagree with the following statements? 
+Q23_BIS_colnames <- dplyr::select(final_data, starts_with("Q23"),
+                                  -ends_with('score')) # Q23 total score = BirdInterestScore
+# Create as new dataframe
+likert_BIS <- as.data.frame(Q23_BIS_colnames)
+likert_BIS$SurveyType <- final_data$SurveyType
+likert_BIS$SiteLocal <- final_data$SiteLocal
+
+# Rename question columns
+colnames(likert_BIS)
+likert_BIS <- likert_BIS %>%
+  rename("I pay attention to birds wherever I go" = "Q23.1..I.pay.attention.to.birds.wherever.I.go." ,
+         "I can identify common birds in my area" = "Q23.2..I.can.identify.common.birds.in.my.area.",
+         "Seeing a new bird fills me with excitement" = "Q23.3..Seeing.a.new.bird.fills.me.with.excitement.",
+         "I am not interested in birds" = "Q23.4..I.am.not.interested.in.birds." ,)
+
+# Create likert object and plot
+likert_bis <- likert(items=likert_BIS[,1:4], grouping=likert_BIS[,6])
+likert_levels <- c("Group","Item","Strongly agree", "Agree", "Neither agree or disagree",
+                  "Disagree", "Strongly disagree")
+# Set likert levels
+likert_bis$results <- likert_bis$results[, likert_levels]
+# Create Likert plot
+plot(likert_bis,type="bar", text.size = 4)
+ggsave("Likert_BIS.png", width = 15, height = 20, units = "cm")
+```
+
+
+
+### Respondent scores
+
+Creating summaries (mean values and sample size) for each of the scored questions (e.g. Attitude score, NCI etc.) which are then grouped by Survey Type and Proximity to release sites (SiteProximity). 
+
+```{r scores, echo=TRUE, messages=FALSE, warning = FALSE}
+
+### Calculating mean values per group for each of the score columns
+score_data <- final_data %>% 
+  select(UniqueID_all, SiteProximity, SurveyType, 
+         OverallAttitudeScore, KnowledgeScore, NCI,
+         ProCoBS, BirdInterestScore, EnvConcern.score)
+# Select all score vars
+score_data %>% 
+  dplyr::group_by(SiteProximity, SurveyType) %>% 
+  summarise_at(vars(-UniqueID_all), funs(mean(., na.rm=TRUE))) 
+# Count number of Non-NA values per column
+score_data %>% 
+  dplyr::group_by(SiteProximity, SurveyType) %>% 
+    summarise_all(funs(count = sum(!is.na(.))))
+```
+
+
+#### Two-way ANOVA tests
+
+Two-way ANOVA test is used to evaluate simultaneously the effect of two grouping variables (A and B) on a response variable.
+
+**Two-way ANOVA test hypotheses**
+
+* There is no difference in the means of factor A
+* There is no difference in means of factor B
+* There is no interaction between factors A and B
+* The alternative hypothesis for cases 1 and 2 is: the means are not equal.
+
+The alternative hypothesis for case 3 is: there is an interaction between A and B.
+
+**Assumptions of two-way ANOVA test**
+Two-way ANOVA, like all ANOVA tests, assumes that the observations within each cell are normally distributed and have equal variances.
+
+
+```{r score ANOVA prep, echo=TRUE, messages=FALSE, warning = FALSE}
+
+### Testing for a significant difference in scores between groups
+score_df <- final_data %>% 
+  select(UniqueID_all, SiteProximity, SurveyType, 
+         OverallAttitudeScore, KnowledgeScore, NCI,
+         ProCoBS, BirdInterestScore, EnvConcern.score) %>% 
+  drop_na() 
+# Generate frequency tables (sample size per group):
+table(score_df$SurveyType, score_df$SiteProximity)
+
+### Check assumptions
+## Normality using Shapiro
+score_data %>% 
+  dplyr::group_by(SiteProximity, SurveyType) %>%
+  rstatix::shapiro_test(OverallAttitudeScore, KnowledgeScore, NCI,
+         ProCoBS, BirdInterestScore, EnvConcern.score)
+ 
+# Checking for factor columns
+# str(score_df) # Need to convert site proximity from char to Factor and rename levels
+score_df$SiteProximity <- as.factor(score_df$SiteProximity)
+score_df$SiteProximity <- dplyr::recode_factor(score_df$SiteProximity, 'Yes' = "Local", 'No' = "NotLocal")
+
+```
+
+
+
+```{r score ANOVA models, echo=TRUE, messages=FALSE, warning = FALSE}
+
+# Box plot with two factor variables
+boxplot(OverallAttitudeScore ~ SurveyType * SiteProximity, data=score_df, frame = FALSE, 
+        col = c("#00AFBB", "#E7B800"), ylab="Tooth Length")
+# Two-way interaction plot
+interaction.plot(x.factor = score_df$SiteProximity, trace.factor = score_df$SurveyType, 
+                 response = score_df$OverallAttitudeScore, fun = mean, 
+                 type = "b", legend = TRUE, 
+                 xlab = "Site Proximity", ylab="Score",
+                 pch=c(1,19), col = c("#00AFBB", "#E7B800"))
+
+### Compute 2-way ANOVAs per score variable (interaction)
+# OverallAttitudeScore
+attitude.aov2 <- aov(OverallAttitudeScore ~ SurveyType * SiteProximity, data = score_df)
+summary(attitude.aov2)
+# KnowledgeScore
+knowl.aov2 <- aov(KnowledgeScore ~ SurveyType * SiteProximity, data = score_df)
+summary(knowl.aov2)
+# NCI
+nci.aov2 <- aov(NCI ~ SurveyType * SiteProximity, data = score_df)
+summary(nci.aov2)
+# ProCoBS
+ProCoBS.aov2 <- aov(ProCoBS ~ SurveyType * SiteProximity, data = score_df)
+summary(ProCoBS.aov2)
+# BirdInterestScore
+bis.aov2 <- aov(BirdInterestScore ~ SurveyType * SiteProximity, data = score_df)
+summary(bis.aov2)
+# EnvConcern.score
+env.aov2 <- aov(EnvConcern.score ~ SurveyType * SiteProximity, data = score_df)
+summary(env.aov2)
+```

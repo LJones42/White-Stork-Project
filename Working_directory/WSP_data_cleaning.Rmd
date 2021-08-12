@@ -1,0 +1,435 @@
+---
+title: "Thoughts on Storks - setup and cleaning code"
+author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
+date: "26/07/2021"
+output:
+  html_document:
+    number_sections: no
+  pdf_document:
+    number_sections: no
+  word_document: default
+---
+
+
+## WSP Data cleaning
+
+
+#### About this rMarkdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. To generate the document of all content, click the **Knit** button. 
+
+This rMarkdown document will be periodically updated and uploaded to the OneDrive folder and pushed to the WSP GitHub code repository. The primary format of this document is HTML, but this can be easily changed by changing the output (e.g. PDF, GitHub) using the 'output' section at the top of the document. The possible output formats are listed here: https://rmarkdown.rstudio.com/lesson-9.html.
+
+```{r setup/packages, include=FALSE, warning=FALSE}
+# This code assumes that all packages are installed. If not, use 'install.packages' e.g. install.packages("likert")
+# install.packages("hms")
+# Key packages for data wrangling
+wrangling <- c("dplyr","tidyverse","purr","magrittr","lubridate","hms",
+             "data.table","plyr","tidyr","tibble","reshape2")
+lapply(wrangling, require, character.only = TRUE) 
+# Useful survey analysis packages
+survey <- c("likert","careless")
+lapply(survey, require, character.only = TRUE) 
+# Useful packages for statistics
+stats <- c("stats","ggpubr","lme4","MASS","car","psych",
+                   "MuMIn","glmmTMB","nlme","DHARMa")
+lapply(stats, require, character.only = TRUE) 
+# Useful packages for text analysis
+# text <- c("tm","tau","koRpus","lexicon","sylly","textir",
+#          "textmineR","MediaNews", "lsa","SemNeT","ngram","ngramrr",
+#          "corpustools","udpipe","textstem", "tidytext","text2vec")
+# lapply(text, require, character.only = TRUE) 
+# Favourite data visualisation packages
+vismap <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly","rnaturalearth",
+            "RColorBrewer", "sjPlot", "ggrepel", "rgdal", "maptools", "gpclib")
+lapply(vismap, require, character.only = TRUE) 
+# gpclibPermit()  # Gives maptool permission to use gpclib
+```
+
+```{r working directories and data upload, include=FALSE}
+# Load in working  directory and datasets
+setwd("~/Documents/Thoughts_on_Storks/Working_directory")
+# Load in the data
+original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
+all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
+# I have created a new column called 'UniqueID_all' to allow me to remove inidividual participants 
+
+```
+
+```{r column groups, include=FALSE}
+
+### Grouping columns
+# Grouping Likert scale question columns by selecting Question numbers (and dropping scores or open questions)
+overall_score_colnames <- select(all_data, ends_with("overallscore"))
+
+Q4_knowledge_colnames <- select(all_data, starts_with("Q4"), -ends_with('score'))
+Q5_diet_colnames <- select(all_data, starts_with("Q5"))
+Q6_habitat_colnames <- select(all_data, starts_with("Q6"))
+Q8_nesting_colnames <- select(all_data, ends_with("nesting"))
+Q8_seen_colnames <- select(all_data, starts_with("Q8_"))
+
+# Source of information (current and preferred)
+Q10_cursource_colnames <- select(all_data, starts_with("Q10a"))
+Q10_prefsource_colnames <- select(all_data, starts_with("Q10b"))
+
+# Q12-14 = attitudes to white storks
+all_attitude_colnames <- select(all_data, starts_with("Q13"), starts_with("Q13"), starts_with("Q14"), -ends_with('score'))
+Q12_attitude_colnames <- select(all_data, starts_with("Q12"), -ends_with('score'))
+Q13_attitude_colnames <- select(all_data, starts_with("Q13"), -ends_with('score'))
+Q14_attitude_colnames <- select(all_data, starts_with("Q14"), -ends_with('score'))
+
+## Q15 = WSP support
+## Q16 = Views on current management
+Q17_management_colnames <- select(all_data, starts_with("Q17"), -ends_with('open'))
+Q18_exp_colnames <- select(all_data, starts_with("Q18_"), -ends_with('open')) # Frequency of
+Q19_NCI_colnames <- select(all_data, starts_with("Q19"), -ends_with('score')) # Q19 total score = NCI
+Q20_envconcern_colnames <- select(all_data, starts_with("Q20"), -ends_with('score')) # Q21 total score = Env.concern score
+Q21_ProCoBS_colnames <- select(all_data, starts_with("Q21"), -ends_with('score')) # Q21 total score = ProCoBS
+Q23_BIS_colnames <- select(all_data, starts_with("Q23"), -ends_with('score')) # Q23 total score = BirdInterestScore
+
+```
+
+
+
+
+### Data cleaning walk-through
+
+This rMarkdown document has been written to take the reader through the data cleaning process for the White Stork Survey dataset. 
+
+The key aims of this rMarkdown are as follows:
+
+1. View the data and familiarise the reader with the overall dataset
+2. Format any data/questions into the appropritae format (e.g. factors or numerical responses)
+3. Convert any raw data into more useable fomrats (e.g. seconds, rather than sec/min/hr)
+4. Check for straightlining, even-odd consistencies and non-serious responses and consider for removal
+5. Check open-ended questions and remove any non-serious/joke responses
+6. Check for internal consistency of scores using Cronbach's Alpha
+
+
+#### Initial formatting
+
+To easily view which respondents had seen white Storks inside or outside the UK, and I have created a new composite value column with which we can sort or subset respondents (column = "Q8.WhereSeen, values = UK, Outside UK, Both, Neither, NA)
+
+I have created a new age column to create matching age groups for both surveys (new column = 'Age_group_match'). The oldest age group for both surveys is now 65+.
+I converted the 'TimeTaken' column to a total number of seconds (SecsTaken) for easier to more easily investigate means and quantiles. 
+
+
+
+
+```{r data formatting main dataset}
+
+## Create a composite columns of where respondents had seen White Storks (UK, Outside UK, or Both)
+# colnames(all_data)
+all_data <- all_data %>% mutate(Q8_Seen =
+                     case_when(Q8_wild_seen == 1L ~ "Wild", 
+                               Q8_wild_seen == 1L & Q8_captivity_seen == 1L ~ "Wild", 
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L ~ "Captivity",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_pictures_video == 1L ~ "Captivity",
+                               Q8_wild_seen == 1L & Q8_captivity_seen == 1L & Q8_No == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_No == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 1L & Q8_captivity_seen == 1L & Q8_NotSure == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_NotSure == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 1L & Q8_NotSure == 1L & Q8_NotSure == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 0L & Q8_pictures_video == 1L ~ "No/Not sure",
+                               Q8_wild_seen == 0L & Q8_captivity_seen == 0L & Q8_pictures_video == 0L ~ "No/Not sure"))
+all_Q8_colnames <- select(all_data, starts_with("Q8_"))
+
+# Multiple conditions when adding new column to dataframe:
+str(all_data$Q8.1_UK) # Column is integer so need to format case_when accordingly
+all_data <- all_data %>% mutate(Q8.WhereSeen =
+                     case_when(Q8.1_UK == 1L & Q8.1_OutsideUK == 0L ~ "UK", 
+                               Q8.1_UK == 1L & Q8.1_OutsideUK == NA_integer_ ~ "UK",
+                               Q8.1_UK == 0L & Q8.1_OutsideUK == 1L ~ "OutsideUK",
+                               Q8.1_UK == NA_integer_ & Q8.1_OutsideUK == 1L ~ "OutsideUK",
+                               Q8.1_UK == 1L & Q8.1_OutsideUK == 1L ~ "Both",
+                               Q8.1_UK == 0L & Q8.1_OutsideUK == 0L ~ "Neither",
+                               Q8.1_UK == NA_integer_ & Q8.1_OutsideUK == NA_integer_ ~ "NA",))
+
+# Move new column next to existing Q8 columns and view new column
+all_data %>% 
+  sjmisc::move_columns(Q8.WhereSeen, .after = "Q8.1_OutsideUK") %>%
+  select(., starts_with("Q8.")) %>% 
+  head(., n=5)
+
+
+## Cleaning full dataset to prevent having to do code for all samples
+all_data$Age_group_match <- all_data$Age_group # Create new column with matching age-group formats
+all_data <- all_data  %>%
+  dplyr::mutate(Age_group_match = recode(Age_group_match, "c('65-74', '75 and over')='65+'"))
+summary(all_data$Age_group_match)
+# Formatting date and time columns
+# Create numeric column of time taken (seconds)
+all_data$SecsTaken <- as.numeric(lubridate::seconds(all_data$TimeTaken)) 
+all_data$StartDate <- as.Date(all_data$StartDate, format = "%d/%m/%Y")
+all_data$CompletionDate <- as.Date(all_data$CompletionDate, format = "%d/%m/%Y")
+
+
+```
+
+
+After the WSP group meeting on 17/05/21 I removed the 3 Northern Irish respondents from the Proactive sample and merged the respondents thta selected Wadhurst and Wadhurst Park as the nearest release site.
+
+```{r respondent merging or removal}
+# Remove rows where Region = "Northern Ireland"
+all_data <- subset(all_data, all_data$Region != "Northern Ireland") 
+ # Drop the N.Ireland factor level
+all_data$Region <- droplevels(all_data$Region)
+
+### Merging the Wadhurst and Wadhurst Park respondents
+all_data <- transform(all_data,
+          ReleaseSite=plyr::revalue(ReleaseSite,c("Wadhurst"="Wadhurst Park")))
+summary(all_data$ReleaseSite)
+
+
+```
+
+\newpage
+
+#### Full dataset checks
+
+I initially went through the full dataset manually and checked for any respondents that were clearly straightlining and/or not taking the questionnaire seriously (e.g. open answers such as "jkjkjkjk"). I removed the entire row for respondents that were both non-serious and straightlining, but I removed the open answers only for those who appreared to take the close questions seriously and put junk answers for the open questions.
+
+
+```{r straightlining, warning=FALSE, messages=FALSE}
+
+##### Data cleaning using the 'careless' package
+
+# Overall straightlining (whole survey)
+ # Identifies the longest string of identical consecutive responses for each observation
+all_straightline <- longstring(all_data, avg = FALSE)
+summary(all_straightline) # Mean number of consecutive attitude answers = 14, max = 14
+ # 127 rows with 14 consecutive answers (possible candidates for removal)
+all_possible_st <- which(grepl(14, all_straightline))
+
+
+### Checking straightlining for all Likert style questions with over 3 columns
+# Checking the attitudes to WS columns (Q12, 13 and 14)
+ncol(all_attitude_colnames) # Max possible number of consecutive answers is 10
+# Identifies the longest string of identical consecutive
+attitudes_straight <- longstring(all_attitude_colnames, avg = FALSE)
+summary(attitudes_straight) # Mean number of consecutive attitude answers = 3
+# Find rows with 10 consecutive answers (possible candidates for removal)
+attitude_possible_st <-which(grepl(10, attitudes_straight)) 
+
+# Checking the NCI columns
+ncol(Q19_NCI_colnames) # Max possible number of consecutive answers is 6
+nci_straight <- longstring(Q19_NCI_colnames, avg = FALSE) 
+summary(nci_straight) # Mean number of consecutive attitude answers = 3
+# Find rows with 6 consecutive answers (~1700 gave max consecutive for NCI
+# across both surveys, which makes sense especially for proactive sample, 
+# as sample will have a high interest and connection to nature)
+summary(which(grepl(6, nci_straight))) 
+
+# Checking the ProCoBS columns
+ncol(Q21_ProCoBS_colnames) # Max possible number of consecutive answers is 4
+ProCoBS_straight <- longstring(Q21_ProCoBS_colnames, avg = FALSE)
+summary(ProCoBS_straight) # Mean number of consecutive attitude answers = 3
+# 245 rows with 10 consecutive answers (possible candidates for removal,
+# but only 4 questions so unintentional straightlining would be likely for this question)
+summary(which(grepl(4, ProCoBS_straight))) 
+
+# Comparing overall straightlining row numbers to attitude row numbers
+both_straightline_rownames <- intersect(all_possible_st,attitude_possible_st) # rows in both
+rows_straightlined <- all_data[c(2678, 2713, 2723, 2738, 2772,
+             3121, 3209, 3287, 3307, 3455, 3503), ] # Create df to view
+summary(rows_straightlined$SecsTaken) # Most took survey quickly and have skipped the open questions
+
+# Removing straightlined participants
+ID_straightlined <- c(2678, 2713, 2723, 2738, 2772,
+             3121, 3209, 3287, 3307, 3455, 3503) # 11 respondents
+## Create new dataset for further analysis and remove rows with straightlining etc.
+data_clean <- all_data[!all_data$UniqueID_all %in% ID_straightlined,]
+
+# Removing non-serious (and often also straightlined through most questions) participants
+ID_notserious <- c(2607, 2630, 3297, 3285, 3340, 3441, 3439, 3474) # 8 respondents
+## Create new dataset for further analysis and remove rows with straightlining etc.
+data_clean <- data_clean[!data_clean$UniqueID_all %in% ID_notserious,]
+
+nrow(all_data)
+nrow(data_clean)
+
+```
+
+\newpage
+
+#### Checking the fastest responses
+
+I then focussed on the fastest 5% of respondents across both surveys as they are most likely to have straightlined through the survey. I visually inspected the data, then used the 'careless' package to find evidence of straightlining 'even-odd' consistencies, and intra-individual response variability (IRV), across the whole survey and within the multiple choice questions (particularly questions 4, 5, 13, 15, 16, 17, 22, 23, 24).
+
+```{r data time-checks}
+
+### Explore average time taken to complete questionnaire and check for straightlining
+quantile(data_clean$SecsTaken, 0.1) # Fastest 10% of all respondents = completion in 188.9 seconds/ about 3 mins
+quantile(data_clean$SecsTaken, 0.05) # Fastest 5% of all respondents = completion in 117.95 seconds/ about 2 mins
+quantile(data_clean$SecsTaken, 0.025) # Fastest 2.5% of all respondents = completion in 70.975 seconds/ about 1.2 mins
+fastest_10 <- subset(data_clean, SecsTaken < 191) # Sample of fastest 10% of all respondents
+fastest_5 <- subset(data_clean, SecsTaken < 121) # Sample of fastest 5% of all respondents
+fastest_2.5 <- subset(data_clean, SecsTaken < 72) # Sample of fastest 2.5% of all respondents
+summary(fastest_5$SurveyType) # 96% of respondents in fastest 5% are from the NatRep sample
+summary(fastest_2.5$SurveyType) # 100% of respondents in fastest 2.5% are from the NatRep sample
+```
+
+\newpage
+
+### Focussing on the the fastest 5% of responses
+
+Here I have checked the responses of the fastest 5% of the dataframe (after straightlined responses had been removed). I compare the mean values of the numeric/score columns between the full cleaned dataset and the fastest 5%, checked for overall straightlining again and then manually checked the dataset for any irregularities.
+
+I have then created a 'final' dataset for further data checking, stats and analysis called 'final_data'.
+
+```{r data checks fastest 5, warning=FALSE, messages=FALSE}
+
+### Checking the fastest 5% of respondents for straightlining across whole survey 
+ # Identifies the longest string of identical consecutive responses for each respondent
+long_fastest_5 <- longstring(fastest_5, avg = FALSE)
+ # Calculates the even-odd consistency score
+evenodd_fastest_5 <- evenodd(fastest_5, rep(5,10))
+
+# Checking the fastest 5% for straightlining within each set of mutliple choice questions
+# e.g. Q5 diet
+# summary(data_clean$Q5_overallscore_diet)
+# summary(fastest_5$Q5_overallscore_diet) ### Not a significant difference in Q5 diet score
+# between all_data, fastest 5% and 2.5% samples
+  
+### Full cleaned dataset
+# Calculates the even-odd consistency score
+careless_all <- evenodd(data_clean, rep(5,10))
+# Calculates the intra-individual response variability (IRV)
+irv_total <- irv(data_clean)
+
+### Fastest 5%
+# Calculates the even-odd consistency score
+careless_fast <- evenodd(fastest_5, rep(5,10))
+# Calculates the intra-individual response variability (IRV)
+irv_fast <- irv(fastest_5)
+
+
+# Writing the fastest 5% subset of the cleaned dataframe as a dataframe for visual inspection in Excel
+# write.csv(fastest_5, "WSP_fastest5.csv") 
+
+# Manually check the data
+# Removed as comments suggested not taking the survey seriously (e.g. "lololol")
+manualcheckID_to_remove <- c(3321, 2643, 566, 916) 
+## Create new dataset for further analysis and remove rows with straightlining etc.
+data_clean <- data_clean[!data_clean$UniqueID_all %in% manualcheckID_to_remove,]
+
+
+```
+
+```{r final dataframes, echo=FALSE, warning=FALSE, message=FALSE}
+# Write in cleaned dataset as a new dataframe - 'final_data'
+# View cleaned dataset
+# summary(data_clean)
+
+# View and save the final cleaned dataframe as a CSV file for use in other r scripts
+# write.csv(final_data, "WSP_R_cleaned_dataset.csv")
+
+# Load in manually cleaned dataset
+# final_data <- read.csv("WSP_R_cleaned_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
+
+```
+
+
+
+
+```{r check double answers, include = FALSE}
+# colnames(final_data)
+
+# \newpage
+# 
+# ### Checking the final dataframes for incompatible answers
+# 
+# Questions with multiple choice columns (e.g., Diet, habitat and nesting habitat - see the full questions below). For these questions respondents had the opportunity to provide multiple answers (e.g., Diet =  fish/ carrion) and to also select "don't know". For these columns I am using the following code to inspect the data and remove any 'don't know' answers where a respondent has also selected any other choice/answer.
+# 
+# Questions:
+# Q5) What do white stork’s typically eat? select all that apply 
+# Q6) What are white stork’s preferred feeding habitat? select all that apply 
+# Q7) Where do white stork’s typically nest? select all that apply 
+
+
+
+
+# ### DIET
+# # Create a sum of all Q5_diet columns (not Don't know, rawscore, overallscore)
+# final_data <- final_data %>% 
+#   mutate(Q5_diet_sum = rowSums(select(., starts_with("Q5") & ends_with("diet"))))
+# # Where the summed columns >0 set 'don't know' column to 0
+# final_data$Q5l_diet_Don.tKnow <- ifelse(final_data$Q5_diet_sum > 0, final_data$Q5l_diet_Don.tKnow, 0)
+# # View all diet columns to check data
+# Q5_alldiet_colnames <- select(final_data, starts_with("Q5"))
+# # Q5_alldiet_colnames
+# 
+# 
+# ### PREFERRED HABITAT
+# # Create a sum of all Q6_habitat columns (not Don't know, rawscore, overallscore)
+# final_data <- final_data %>% 
+#   mutate(Q6_habitat_sum = rowSums(select(., starts_with("Q6") & ends_with("habitat"))))
+# # Where the summed columns >0 set 'don't know' column to 0
+# final_data$Q6f_habitat_Don.tKnow <- ifelse(final_data$Q6_habitat_sum > 0, final_data$Q6f_habitat_Don.tKnow, 0)
+# # View all habitat columns to check data
+# Q6_allhabitat_colnames <- select(final_data, starts_with("Q6"))
+# # Q6_allhabitat_colnames
+# 
+# 
+# ### NESTING HABITAT
+# # Create a sum of all Q7_nesting columns (not Don't know, rawscore, overallscore)
+# final_data <- final_data %>% 
+#   mutate(Q7_nesting_sum = rowSums(select(., ends_with("nesting"))))
+# # Where the summed columns >0 set 'don't know' column to 0
+# final_data$Q7f_nesting_Don.tKnow <- ifelse(final_data$Q7_nesting_sum > 0, final_data$Q7f_nesting_Don.tKnow, 0)
+# # View all habitat columns to check data
+# Q7_allnesting_colnames <- select(final_data, starts_with("Q7"))
+# # Q7_allnesting_colnames
+# 
+# # View the overall score columns 
+# overall_score_colnames <- select(final_data, ends_with("overallscore")) # Can use for stacked bar charts in closed question analysis
+# # overall_score_colnames
+
+# View and save the FINAL cleaned dataframe as a CSV file for use in other r scripts
+# write.csv(final_data, "WSP_R_cleaned_dataset3.csv")
+
+```
+
+
+\newpage
+
+### Cronbach's alpha
+
+Now we have a cleaned dataset I have gone through the grouped columns are numeric scores of Likert or multiple choice questions, including: AttitudeScore, NCI, EnvConcern.score, ProCoBS and BirdInterestScore.
+
+Based on the 0.7 threshold, all groups have an acceptable Cronbach's alpha score.
+
+
+```{r cronbachs alpha, warning=FALSE, message=FALSE}
+
+# Load in the FINAL dataset for publication 
+final_data <- read.csv("WSP_R_FINAL_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
+
+### Reminding myself of the column names again!
+colnames(final_data)
+library("psych")
+
+# Using Cronbach's alpha on the score columns using the psych package (alpha::psych)
+# Questions 13 & 14 attitudes
+final_data %>%
+  select(., starts_with("Q12"), starts_with("Q13"), starts_with("Q14")) %>%
+  select(., ends_with('score')) %>%
+  psych::alpha(title = "Attitudes")
+
+# Question 19 NCI
+final_data %>%
+  select(., starts_with("Q19") & ends_with('score')) %>%
+  psych::alpha(title = "NCI")
+
+# Question 21 ProCoBS
+final_data %>%
+  select(., starts_with("Q21") & ends_with('score')) %>%
+  psych::alpha(title = "ProCoBS")
+
+# Question 22 BirdInterestScore
+final_data %>%
+  select(., starts_with("Q23") & ends_with('Score')) %>%
+  psych::alpha(title = "BirdInterestScore")
+
+```
+

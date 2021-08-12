@@ -1,0 +1,524 @@
+---
+title: "Thoughts on Storks - Demographics code"
+author: "Lizzie Jones^[University of Brighton, l.jones4@brighton.ac.uk]"
+date: "26/07/2021"
+output:
+  html_document:
+    number_sections: no
+  pdf_document:
+    number_sections: no
+  word_document: default
+---
+
+
+## WSP - Demographics exploration, analysis and visualisations
+
+#### About this rMarkdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. To generate the document of all content, click the **Knit** button. 
+
+This rMarkdown document will be periodically updated and uploaded to the OneDrive folder and pushed to the WSP GitHub code repository. The primary format of this document is HTML, but this can be easily changed by changing the output (e.g. PDF, GitHub) using the 'output' section at the top of the document. The possible output formats are listed here: https://rmarkdown.rstudio.com/lesson-9.html.
+
+```{r setup/packages, include=FALSE}
+# This code assumes that all packages are installed. If not, use 'install.packages' e.g. install.packages("likert")
+# install.packages("hms")
+
+# Key packages for data wrangling
+wrangling <- c("dplyr","tidyverse","purr","magrittr","lubridate","hms",
+             "data.table","plyr","tidyr","tibble","reshape2")
+lapply(wrangling, require, character.only = TRUE) 
+
+# Useful survey analysis packages
+survey <- c("likert","careless")
+lapply(survey, require, character.only = TRUE) 
+
+# Useful packages for statistics
+stats <- c("stats","ggpubr","lme4","MASS","car","psych",
+                   "MuMIn","glmmTMB","nlme","DHARMa")
+lapply(stats, require, character.only = TRUE) 
+
+# Useful packages for text analysis
+# text <- c("tm","tau","koRpus","lexicon","sylly","textir",
+#          "textmineR","MediaNews", "lsa","SemNeT","ngram","ngramrr",
+#          "corpustools","udpipe","textstem", "tidytext","text2vec")
+# lapply(text, require, character.only = TRUE) 
+
+# Favourite data visualisation packages
+vismap <- c("ggvis","htmlwidgets","maps", "lattice","ggmap","ggplot2","plotly","rnaturalearth",
+            "RColorBrewer", "sjPlot", "ggrepel", "rgdal", "maptools", "gpclib", "rcartocolor", "leaflet")
+lapply(vismap, require, character.only = TRUE) 
+gpclibPermit()  # Gives maptool permission to use gpclib
+
+# Creating a colourblind-friendly 'safe' palette
+safe_colorblind_palette <- c("#88CCEE", "#CC6677", "#DDCC77", "#117733", "#332288", "#AA4499", 
+                             "#44AA99", "#999933", "#882255", "#661100", "#6699CC", "#888888")
+scales::show_col(safe_colorblind_palette)
+
+```
+
+```{r working directories and data upload, include=FALSE}
+# Load in working  directory and datasets
+setwd("~/Documents/Thoughts_on_Storks/Working_directory")
+# Load in the data
+original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
+all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
+
+# # Load in cleaned dataset
+final_data <- read.csv("WSP_R_FINAL_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
+
+
+### Hashing out the rows below as these columns are saved in the finalised dataset
+
+# Create new  group columns for graph/tables
+# PROXIMITY to any WS release site
+all_data <- mutate(all_data, SiteProximity =
+                       ifelse(ReleaseSite ==
+                                "No", "Not local", "Local"))
+## GENDER
+# Collapse levels of Gender that have very low sample size to N/A
+summary(all_data$Gender)
+levels(all_data$Gender)[levels(all_data$Gender)%in%c("Prefer not to answer","Prefer to self-describe")] <- "N/A"
+
+## AGE
+str(all_data$Age)
+# Age recode groups.
+young = c("18-24", "25-34", "35-44")
+mid = c("45-54", "55-64")
+older = c("65+")
+# add another column.
+all_data$Age_short <- ifelse(all_data$Age_group %in% young, "18-44",
+                        ifelse(all_data$Age_group %in% mid, "45-64",
+                              ifelse(all_data$Age_group %in% older, "65+", "N/A")))
+
+# EDUCATION
+summary(all_data$Education)
+# Recode groups.
+degree = c("Postgraduate degree (Masters; Doctorate)", "Undergraduate degree")
+high = c( "Secondary school (GCSEs, A Levels or equivalent)", "Further Education")
+noformal = c("No formal qualifications")
+prefernot = c("Prefer not to answer")
+all_data$Education_short <- ifelse(all_data$Education %in% degree, "University graduate",
+                              ifelse(all_data$Education %in% high, "Secondary school/College",
+                              ifelse(all_data$Education %in% noformal, "No formal quals.", "Other")))
+## OCCUPATION
+# View others
+# Recode groups.
+unemployed = c("Unemployed")
+retired = c(("Retired"))
+environmental = c("Environment, Nature & Wildlife")
+natres_management = c("Farming & Agriculture", "Horticulture/Gardening/Landscaping",
+                   "Fisheries & Aquaculture", "Forestry & Woodland Management")
+prefer_not = c("Prefer not to answer")
+# add another column and define factor levels
+final_data$Occupation_short <-as.factor(ifelse(final_data$Occupation %in% unemployed, "Unemployed",
+                              ifelse(final_data$Occupation  %in% retired, "Retired",
+                              ifelse(final_data$Occupation  %in% environmental, "Environment/Nature",
+                              ifelse(final_data$Occupation %in% natres_management, "Natural resource management",
+                              ifelse(final_data$Occupation  %in% prefer_not, "Prefer not to answer","Other"))))))
+summary(final_data$Occupation_short)
+
+# Define ReleaseSite and SiteProximity columns
+final_data <- final_data %>%
+            mutate(SiteProximity = if_else(ReleaseSite == "No", 'No', 'Yes'))
+final_data$SiteLocal <- dplyr::recode_factor(final_data$SiteProximity, 'Yes' = "Local", 'No' = "Not local")
+# Move columns together
+final_data <- final_data %>%
+          sjmisc::move_columns(SiteProximity, .after = "ReleaseSite") %>%
+          sjmisc::move_columns(SiteLocal, .after = "SiteProximity")
+
+# ### Write new 
+# write.csv(final_data, "WSP_R_FINAL_dataset1.csv")
+
+
+
+
+
+########################### LOAD IN FORMATTED DATA #############################
+
+# Load in cleaned dataset
+final_data <- read.csv("WSP_R_FINAL_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
+# nrow(final_data)
+
+final_data$Age_table <- ifelse(final_data$Age_group %in% young, "18-44",
+                        ifelse(final_data$Age_group %in% mid, "45-64",
+                              ifelse(final_data$Age_group %in% older, "65+", "Prefer not to answer")))
+# add another column.
+final_data$Education_table <- ifelse(final_data$Education %in% degree, "University graduate",
+                              ifelse(final_data$Education %in% high, "Secondary school/College",
+                              ifelse(final_data$Education %in% noformal, "No formal quals.",
+                              ifelse(final_data$Education %in% prefernot,"Prefer not to answer", "Other"))))
+
+### Create two dataframes: one for each data collection (Proactive survey and Nationally representative survey) for easier comparison
+proact_data <- final_data[which(final_data$SurveyType == "Proactive"),]
+natrep_data <- final_data[which(final_data$SurveyType == "NatRep"),]
+
+```
+
+
+\newpage
+
+
+## Exploring respondent demographics
+
+The distributions of age, gender, occupation and education are explored and compared between samples using stacked bar plots.
+
+```{r demographics, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Create seperate dataframe for all demographics
+demo_columns <- c("SurveyType", "Age_group_match","Age_short", "Age_table","Gender", "Education", "Education_short",
+                  "Education_table", "Occupation", "Occupation_short","Occupation_short_clean", "Region", "Area_type", "Postcode", "ReleaseSite", "SiteProximity", "SiteLocal")
+# Create seperate dataframe for All data, Nationally representative and Proactive demographics
+all_demo <- final_data %>% select(demo_columns)
+natrep_demo <- natrep_data %>% select(demo_columns)
+proact_demo <- proact_data %>% select(demo_columns)
+
+## Age
+# Stacked barplot of gender per survey
+all_age_df<- all_demo  %>%
+  group_by(SurveyType, Age_short) %>%
+  summarise(counts = n()) %>%
+  mutate(Percentage = round(counts/sum(counts)*100, 2))
+age_bar <- ggplot(all_age_df, aes(x = SurveyType, y = Percentage, fill = Age_short)) +
+  geom_col(position = position_stack(reverse = TRUE)) +
+  geom_text(aes(label = paste0(Percentage, "%")),
+            position = position_stack(vjust = 0.5, reverse = TRUE)) +
+  scale_fill_brewer(palette = "Pastel1") +
+  theme_minimal(base_size = 12) + xlab("Sample")+ labs(fill = "Age group", x = "Sample") 
+## Gender
+# Stacked barplot of gender per survey
+all_gender_df<- all_demo  %>%
+  group_by(SurveyType, Gender) %>%
+  summarise(counts = n()) %>%
+  mutate(Percentage = round(counts/sum(counts)*100, 2))
+gender_bar <- ggplot(all_gender_df, aes(x = SurveyType, y = Percentage, fill = Gender)) +
+  geom_col(position = position_stack(reverse = TRUE)) +
+  geom_text(aes(label = paste0(Percentage, "%")),
+            position = position_stack(vjust = 0.5, reverse = TRUE)) +
+  scale_fill_brewer(palette = "Pastel1") +
+  theme_minimal(base_size = 12) + xlab("Sample")
+## Education
+# Stacked barplot of gender per survey
+all_education_df <- all_demo  %>%
+  group_by(SurveyType, Education_short) %>%
+  summarise(counts = n()) %>%
+  mutate(Percentage = round(counts/sum(counts)*100, 2))
+all_education_df$Education_short <- ordered(all_education_df$Education_short, 
+            levels = c("University graduate","Secondary school/College","No formal quals.","Other"))
+education_bar <- ggplot(all_education_df, aes(x = SurveyType, y = Percentage,
+         fill = factor(Education_short))) +
+  geom_col(position = position_stack(reverse = TRUE)) +
+  geom_text(aes(label = paste0(Percentage, "%")),
+            position = position_stack(vjust = 0.5, reverse = TRUE)) + # geom_text_repel
+  scale_fill_brewer(palette = "Pastel1") + labs(fill = "Education group", x = "Sample") +
+  theme_minimal(base_size = 12)
+
+## Occupation
+# Create percentages
+all_occupation_df <- all_demo  %>%
+  group_by(SurveyType, Occupation_short_clean) %>%
+  summarise(counts = n()) %>%
+  mutate(Percentage = round(counts/sum(counts)*100, 2))
+all_occupation_df$Occupation_short_clean <- ordered(all_occupation_df$Occupation_short_clean, levels = c("Environment/Nature","Natural resource management","Retired","Unemployed","Other","Prefer not to answer"))
+occupation_bar <- ggplot(all_occupation_df, aes(x = SurveyType, y = Percentage,
+         fill = factor(Occupation_short_clean))) +
+  geom_col(position = position_stack(reverse = FALSE)) +
+  geom_text(aes(label = paste0(Percentage, "%")),
+            position = position_stack(vjust = 0.5, reverse = FALSE)) + # geom_text_repel
+  scale_fill_brewer(palette = "Pastel1") + labs(fill = "Occupation group", x = "Sample") +
+  theme_minimal(base_size = 12)
+```
+
+```{r age bar, echo=FALSE, message=FALSE, warning=FALSE}
+age_bar
+```
+```{r gender bar, echo=FALSE, message=FALSE, warning=FALSE}
+gender_bar
+```
+
+```{r education bar, echo=FALSE, message=FALSE, warning=FALSE}
+education_bar
+```
+
+```{r occupation bar, echo=FALSE, message=FALSE, warning=FALSE}
+occupation_bar
+```
+
+
+\newpage
+
+
+### Respondent demographics tables
+
+The table below (created using the package "table1") outlines the demographic characteriscs of each of the two samples, and the overall demographics of all respondents across both samples. For each demographic variable the tables provides a breakdown of the number of respondents within each level/group and the percentage.
+
+#### Short demographics table (simplified strata plus interaction of Local and Survey type)
+
+```{r SHORT demographics table, echo=FALSE, message=FALSE, warning=FALSE}
+# Demographics table for publication
+
+library("table1")
+all_demo$Education_table <- ordered(all_demo$Education_table, 
+            levels = c("University graduate","Secondary school/College",
+                       "No formal quals.", "Other", "Prefer not to answer"))
+all_demo$Occupation_short_clean <- ordered(all_demo$Occupation_short_clean, 
+            levels = c("Environment/Nature","Natural resource management",
+                       "Retired","Unemployed","Other","Prefer not to answer"))
+
+short_demo <- as.data.frame(all_demo)
+short_demo_data <- lapply(short_demo, function(x) x[sample(c(TRUE, NA),
+                                                         prob = c(0.99999, 0.00001),size = length(x), replace = TRUE)])
+# Rename and reorder variables
+levels(short_demo$SurveyType)[levels(short_demo$SurveyType)=="NatRep"] <- "Nationally rep."
+# Format table
+table1::label(short_demo$Age_table) <- "Age"
+table1::label(short_demo$Area_type) <- "Area type"
+table1::label(short_demo$Occupation_short_clean) <- "Occupation"
+table1::label(short_demo$Education_table) <- "Education"
+
+# Create demo table
+short_demo_table <- table1::table1(~Age_table + Gender + Education_table +
+                                     Occupation_short_clean + Area_type | SurveyType + SiteLocal,
+                                   data = short_demo, footnote = "Combined factor levels - Gender, NA = 'Prefer not to answer' or 'Prefer to self-describe'; Occupation, 'Other' = all other occupations not included in other categories")
+short_demo_table
+
+
+```
+
+
+\newpage
+
+
+#### Simple demographics table (no interaction of Local and Survey type)
+
+
+```{r simple short demographics table, echo=FALSE, message=FALSE, warning=FALSE}
+# Demographics table for publication
+
+simp_demo_table <- table1::table1(~Age_table + Gender + Education_table +
+                                     Occupation_short_clean + Area_type | SiteLocal,
+                                   data = short_demo, footnote = "Combined factor levels - Gender, NA = 'Prefer not to answer' or 'Prefer to self-describe'")
+simp_demo_table
+
+```
+
+
+
+\newpage
+
+
+#### Long demographics table (all strata plus interaction of Local and Survey type)
+
+Original format of the demographics table with all variables, strata and sample interations.
+
+```{r LONG demographics table, echo=FALSE, message=FALSE, warning=FALSE}
+# Demographics table for publication
+
+
+library("table1")
+both_demo <- as.data.frame(all_demo)
+both_demo_data <- lapply(both_demo, function(x) x[sample(c(TRUE, NA),
+                                                         prob = c(0.99999, 0.00001),size = length(x), replace = TRUE)])
+# Reanme variables
+levels(both_demo$SurveyType)[levels(both_demo$SurveyType)=="NatRep"] <- "Nationally rep."
+levels(both_demo$Education)[levels(both_demo$Education)=="Secondary school (GCSEs, A Levels or equivalent)"] <- "Secondary school"
+levels(both_demo$Education)[levels(both_demo$Education)=="Postgraduate degree (Masters; Doctorate)"] <- "Postgraduate degree"
+
+# Format table
+table1::label(both_demo$Age_group_match) <- "Age group"
+table1::label(both_demo$Area_type) <- "Area type"
+table1::label(both_demo$ReleaseSite) <- "Release site"
+# Create demo table
+library(htmlTable)
+library(kableExtra)
+library(magick)
+
+full_demo_table <- table1::table1(~Age_group_match + Gender + Education +
+                                    Occupation + Area_type | SurveyType + SiteLocal, data = both_demo)
+full_demo_table
+
+
+```
+
+
+
+\newpage
+
+### Respondent postcode mapping 
+
+Maps of respondent location, seperating respondents according to survey type. The map indicates location using the first 4 digits of postcode (e.g., TN28), and points are colour-coded according to survey type.
+
+
+
+```{r mapping postcodes polygon, include=FALSE}
+# Download UK postcode polygon Shapefile
+# download.file(
+#   "http://www.opendoorlogistics.com/wp-content/uploads/Data/UK-postcode-boundaries-Jan-2015.zip",
+#   "postal_shapefile"
+# )
+unzip("postal_shapefile")
+# Read the downloaded Shapefile from disk
+postal <- maptools::readShapeSpatial("./Distribution/Areas")
+# Assign each "region" an unique id
+postal.count <- nrow(postal@data)
+postal@data$id <- 1:postal.count
+# Transform SpatialPolygonsDataFrame to regular data.frame in ggplot format
+postal.fort <- ggplot2::fortify(postal, region='id')
+# Extract first two digits of postcode and make uppercase
+all_demo$postal_area_code = toupper(substr(final_data$Postcode, 1, 2))
+all_demo$postal_area_code <- gsub('[0-9]+', '', all_demo$postal_area_code)
+df <- all_demo %>%
+  dplyr::select(postal_area_code) %>% 
+  group_by(postal_area_code) %>%
+  summarise(freq = n())
+# Add "region" id to frequency data
+df <- merge(df, postal@data, by.x="postal_area_code", by.y="name")
+# Merge frequency data onto geogrphical postal polygons
+postal.fort <- merge(postal.fort,  df, by="id", all.x=T, all.y=F)
+postal.fort <- postal.fort[order(postal.fort$order),] # Reordering since ggplot expect data.fram in same order as "order" column
+postcode_2_map <- ggplot(postal.fort) + 
+  geom_polygon(aes(x = long, y = lat, group = group, fill=freq), colour="#e6f7ff") + 
+  scale_fill_gradient(low = "blue", high = "red") +
+  labs(fill = "Respondent frequency", x = "Longitude", y = "Latitude") +
+  coord_fixed()
+
+
+```
+
+```{r mapping postcodes points, include=FALSE}
+
+### Alternative mapping method using first 4 digits (finer scale)
+########################################
+# Read the downloaded Shapefile from disk
+postcode_outcodes <- read_csv("Distribution/postcode-outcodes.csv") # linking into a folder within working directory
+head(postcode_outcodes)
+# Extract first two four continuous digits of postcode and make uppercase
+natrep_demo$postal_area_code = gsub( "\\s.*", "", natrep_data$Postcode)
+natrep_demo$postal_area_code = toupper(substr(natrep_demo$postal_area_code, 1, 4))
+#Your initial list is in Df_JVT with variable PostCodes.
+natrep_list <- as.list(unique(natrep_demo$postal_area_code))
+#Select your postcodes from Df_UK and choose variable to display on the map
+natrep_datamap <- subset(postcode_outcodes, postcode_outcodes$postcode %in% natrep_list, select= c("postcode","latitude",  "longitude"))  
+row.names(natrep_datamap) <- 1:nrow(natrep_datamap)
+natrep_datamap$Survey <- "Nat.Representative"
+# Extract first two four continuous digits of postcode and make uppercase
+proact_demo$postal_area_code = gsub( "\\s.*", "", proact_data$Postcode)
+proact_demo$postal_area_code = toupper(substr(proact_demo$postal_area_code, 1, 4))
+#Your initial list is in Df_JVT with variable PostCodes.
+proact_list <- as.list(unique(proact_demo$postal_area_code))
+#Select your postcodes from Df_UK and choose variable to display on the map
+proact_datamap <- subset(postcode_outcodes, postcode_outcodes$postcode %in% proact_list, select= c("postcode","latitude",  "longitude"))  
+row.names(proact_datamap) <- 1:nrow(proact_datamap)
+proact_datamap$Survey <- "Proactive"
+#Combine map data
+datamap <- rbind(natrep_datamap, proact_datamap)
+
+###### Mapping reserve locations following https://www.r-spatial.org/r/2018/10/25/ggplot2-sf.html 
+world <- ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+theme <- theme_set(theme())
+theme_set(theme)
+
+# Check coloublind palette
+# display_carto_all(colorblind_friendly = TRUE)
+# scales::show_col(safe_colorblind_palette)
+
+# Plot reserves map (both surveys on one map)
+postcode_4_map <- ggplot(data = world) +
+  geom_sf(fill= "gray95") +
+  coord_sf(xlim = c(-11, 3), ylim = c(49, 60), expand = FALSE) +
+  geom_point(data = datamap, aes(x = longitude, y = latitude, colour=Survey), size = 1, shape = 19, alpha = 0.2)  +
+  scale_colour_manual(values = c("#0072B2", "#D55E00")) + 
+  ggspatial::annotation_scale(location = "bl", width_hint = 0.2) +
+  labs(colour="Survey type", title="Respondent postcode map") + xlab("Longitude") + ylab("Latitude") +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.5),
+        panel.background = element_rect(fill = "#e6f7ff")) + facet_grid(~ Survey)
+# both_postcode_4_map
+ggsave("Ch4.both_reservesmap.png", width = 10, height = 6, dpi = 300)
+```
+
+```{r postcode map 2, fig.cap = "Map of first 4 digits of postcode (e.g., ), colour = survey type", fig.dim = c(10, 7), message=FALSE, echo=FALSE, warning=FALSE}
+
+postcode_4_map
+```
+
+
+### Mapping proximity to WSP release sites 
+
+Maps of each WSP release site and a 15km radius encompassing the 'local area' as referred to in the main manuscript. The following code creates an interactive map of each site on an Open Street Map base which can be explored like a Google map.
+
+I have also created this map as an interactive Shiny object (hosted via Shiny.io in my personal account but this can be transferred over to a Project account later on). The map is accessible via this link: https://ljones42.shinyapps.io/WSP_site_map/ 
+
+The code file for this is in the Shiny file called 'app.R', which can be updated, run and pushed to the server.
+
+```{r Site OpenStreetMap, message=FALSE, warning=FALSE}
+
+# Define data frame of site names and coordinates
+marker_df <- read.csv(textConnection(
+"Name,Lat,Long
+Knepp,50.98341,-0.35485
+Wadhurst,51.03579,0.32769
+Wintershall,51.16605,-0.55289"))
+
+## Create map iusing Leaflet
+uk_map <- leaflet(marker_df) %>% 
+  addTiles() %>%
+  setView(lng=-0.35485, lat=50.98341, zoom = 9) %>%  # Set view to local area and zoom
+  addMarkers(lng=~Long, lat=~Lat, popup = ~htmltools::htmlEscape(Name)) %>% 
+  addCircles(lng=-0.35485, lat=50.98341, color = "red", radius = 15000) %>% 
+  addCircles(lng=0.32769, lat=51.03579, color = "blue", radius = 15000) %>% 
+  addCircles(lng=-0.55289, lat=51.16605, color = "green", radius = 15000) %>% 
+  addMeasure() %>% # Add scale and ability to manually measure distance between points
+  addMiniMap() # Add in a small minimap of wider area
+uk_map
+
+```
+
+
+
+```{r mapping proxmity as circle, include=FALSE}
+
+#### Alternative mapping option matching the participant location map
+
+# 
+# #### Create daaframe of coordinates
+# data = data.frame(
+#     ID = as.numeric(c(1:3)),
+#     name = as.factor(c("Knepp", "Wadhurst", "Wintershall")),
+#     latitude = as.numeric(c(50.98341, 51.03579, 51.16605)),
+#     longitude = as.numeric(c(-0.35485, 0.32769, -0.55289))
+# )
+# # create circles data frame from the centers data frame
+# make_circles <- function(centers, radius, nPoints = 100){
+#     # centers: the data frame of centers with ID
+#     # radius: radius measured in kilometer
+#     #
+#     meanLat <- mean(centers$latitude)
+#     # length per longitude changes with lattitude, so need correction
+#     radiusLon <- radius /15 / cos(meanLat/57.3) 
+#     radiusLat <- radius / 15
+#     circleDF <- data.frame(ID = rep(centers$ID, each = nPoints))
+#     angle <- seq(0,2*pi,length.out = nPoints)
+# 
+#     circleDF$lon <- unlist(lapply(centers$longitude, function(x) x + radiusLon * cos(angle)))
+#     circleDF$lat <- unlist(lapply(centers$latitude, function(x) x + radiusLat * sin(angle)))
+#     return(circleDF)
+# }
+# # here is the data frame for all circles
+# myCircles <- make_circles(data, 1.5)
+# myCircles$Site <- recode_factor(as.factor(myCircles$ID),
+#                       "1" = "Knepp", "2" = "Wadhurst", "3" = "Wintershall")
+# # Plot reserves map (both surveys on one map)
+# ggplot(data = GBR_sf) +
+#   geom_sf(fill= "gray95") +
+#   coord_sf(xlim = c(-1.5, 1.5), ylim = c(50.4, 51.75), expand = FALSE) +
+#   geom_point(aes(x = longitude, y = latitude), data = data, color = "black")+
+#   geom_polygon(data = myCircles, aes(lon, lat, group = Site, colour = as.factor(Site)), alpha = 0, size = 1.5) +
+#   ggspatial::annotation_scale(location = "bl", width_hint = 0.2) +
+#   labs(colour="Site") + 
+#     xlab("Longitude") + ylab("Latitude") +
+#   theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.2),
+#         panel.background = element_rect(fill = "#e6f7ff"))
+# 
+
+```
+
