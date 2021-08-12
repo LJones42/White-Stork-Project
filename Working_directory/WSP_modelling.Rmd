@@ -40,7 +40,7 @@ lapply(vis, require, character.only = TRUE)
 ```{r setup, messages = FALSE, include=FALSE}
 
 # Load in working  directory and datasets
-setwd("~/Documents/Thoughts_on_Storks/Working_directory")
+setwd("~/Documents/White-Stork-Project/Working_directory")
 # Load in the data
 original_data <- read.csv("Stork_MainDataset.csv", header = TRUE, stringsAsFactors=TRUE)
 all_data <- read.csv("Stork_Dataset_Radapted.csv", header = TRUE, stringsAsFactors=TRUE)
