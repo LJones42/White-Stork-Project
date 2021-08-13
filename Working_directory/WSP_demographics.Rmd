@@ -68,38 +68,38 @@ final_data <- read.csv("WSP_R_FINAL_dataset2.csv", header = TRUE, stringsAsFacto
 
 
 ### Hashing out the rows below as these columns are saved in the finalised dataset
-
-# Create new  group columns for graph/tables
-# PROXIMITY to any WS release site
-all_data <- mutate(all_data, SiteProximity =
-                       ifelse(ReleaseSite ==
-                                "No", "Not local", "Local"))
-## GENDER
-# Collapse levels of Gender that have very low sample size to N/A
-summary(all_data$Gender)
-levels(all_data$Gender)[levels(all_data$Gender)%in%c("Prefer not to answer","Prefer to self-describe")] <- "N/A"
-
-## AGE
-str(all_data$Age)
-# Age recode groups.
-young = c("18-24", "25-34", "35-44")
-mid = c("45-54", "55-64")
-older = c("65+")
-# add another column.
-all_data$Age_short <- ifelse(all_data$Age_group %in% young, "18-44",
-                        ifelse(all_data$Age_group %in% mid, "45-64",
-                              ifelse(all_data$Age_group %in% older, "65+", "N/A")))
-
-# EDUCATION
-summary(all_data$Education)
-# Recode groups.
-degree = c("Postgraduate degree (Masters; Doctorate)", "Undergraduate degree")
-high = c( "Secondary school (GCSEs, A Levels or equivalent)", "Further Education")
-noformal = c("No formal qualifications")
-prefernot = c("Prefer not to answer")
-all_data$Education_short <- ifelse(all_data$Education %in% degree, "University graduate",
-                              ifelse(all_data$Education %in% high, "Secondary school/College",
-                              ifelse(all_data$Education %in% noformal, "No formal quals.", "Other")))
+# 
+# # Create new  group columns for graph/tables
+# # PROXIMITY to any WS release site
+# all_data <- mutate(all_data, SiteProximity =
+#                        ifelse(ReleaseSite ==
+#                                 "No", "Not local", "Local"))
+# ## GENDER
+# # Collapse levels of Gender that have very low sample size to N/A
+# summary(all_data$Gender)
+# levels(all_data$Gender)[levels(all_data$Gender)%in%c("Prefer not to answer","Prefer to self-describe")] <- "N/A"
+# 
+# ## AGE
+# str(all_data$Age)
+# # Age recode groups.
+# young = c("18-24", "25-34", "35-44")
+# mid = c("45-54", "55-64")
+# older = c("65+")
+# # add another column.
+# all_data$Age_short <- ifelse(all_data$Age_group %in% young, "18-44",
+#                         ifelse(all_data$Age_group %in% mid, "45-64",
+#                               ifelse(all_data$Age_group %in% older, "65+", "N/A")))
+# 
+# # EDUCATION
+# summary(all_data$Education)
+# # Recode groups.
+# degree = c("Postgraduate degree (Masters; Doctorate)", "Undergraduate degree")
+# high = c( "Secondary school (GCSEs, A Levels or equivalent)", "Further Education")
+# noformal = c("No formal qualifications")
+# prefernot = c("Prefer not to answer")
+# all_data$Education_short <- ifelse(all_data$Education %in% degree, "University graduate",
+#                               ifelse(all_data$Education %in% high, "Secondary school/College",
+#                               ifelse(all_data$Education %in% noformal, "No formal quals.", "Other")))
 ## OCCUPATION
 # View others
 # Recode groups.
@@ -117,14 +117,14 @@ final_data$Occupation_short <-as.factor(ifelse(final_data$Occupation %in% unempl
                               ifelse(final_data$Occupation  %in% prefer_not, "Prefer not to answer","Other"))))))
 summary(final_data$Occupation_short)
 
-# Define ReleaseSite and SiteProximity columns
-final_data <- final_data %>%
-            mutate(SiteProximity = if_else(ReleaseSite == "No", 'No', 'Yes'))
-final_data$SiteLocal <- dplyr::recode_factor(final_data$SiteProximity, 'Yes' = "Local", 'No' = "Not local")
-# Move columns together
-final_data <- final_data %>%
-          sjmisc::move_columns(SiteProximity, .after = "ReleaseSite") %>%
-          sjmisc::move_columns(SiteLocal, .after = "SiteProximity")
+# # Define ReleaseSite and SiteProximity columns
+# final_data <- final_data %>%
+#             mutate(SiteProximity = if_else(ReleaseSite == "No", 'No', 'Yes'))
+# final_data$SiteLocal <- dplyr::recode_factor(final_data$SiteProximity, 'Yes' = "Local", 'No' = "Not local")
+# # Move columns together
+# final_data <- final_data %>%
+#           sjmisc::move_columns(SiteProximity, .after = "ReleaseSite") %>%
+#           sjmisc::move_columns(SiteLocal, .after = "SiteProximity")
 
 # ### Write new 
 # write.csv(final_data, "WSP_R_FINAL_dataset1.csv")
@@ -136,7 +136,7 @@ final_data <- final_data %>%
 ########################### LOAD IN FORMATTED DATA #############################
 
 # Load in cleaned dataset
-final_data <- read.csv("WSP_R_FINAL_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
+# final_data <- read.csv("WSP_R_FINAL_dataset2.csv", header = TRUE, stringsAsFactors=TRUE)
 # nrow(final_data)
 
 final_data$Age_table <- ifelse(final_data$Age_group %in% young, "18-44",
@@ -174,73 +174,58 @@ proact_demo <- proact_data %>% select(demo_columns)
 
 ## Age
 # Stacked barplot of gender per survey
-all_age_df<- all_demo  %>%
-  group_by(SurveyType, Age_short) %>%
-  summarise(counts = n()) %>%
-  mutate(Percentage = round(counts/sum(counts)*100, 2))
-age_bar <- ggplot(all_age_df, aes(x = SurveyType, y = Percentage, fill = Age_short)) +
-  geom_col(position = position_stack(reverse = TRUE)) +
-  geom_text(aes(label = paste0(Percentage, "%")),
-            position = position_stack(vjust = 0.5, reverse = TRUE)) +
-  scale_fill_brewer(palette = "Pastel1") +
-  theme_minimal(base_size = 12) + xlab("Sample")+ labs(fill = "Age group", x = "Sample") 
-## Gender
-# Stacked barplot of gender per survey
-all_gender_df<- all_demo  %>%
-  group_by(SurveyType, Gender) %>%
-  summarise(counts = n()) %>%
-  mutate(Percentage = round(counts/sum(counts)*100, 2))
-gender_bar <- ggplot(all_gender_df, aes(x = SurveyType, y = Percentage, fill = Gender)) +
-  geom_col(position = position_stack(reverse = TRUE)) +
-  geom_text(aes(label = paste0(Percentage, "%")),
-            position = position_stack(vjust = 0.5, reverse = TRUE)) +
-  scale_fill_brewer(palette = "Pastel1") +
-  theme_minimal(base_size = 12) + xlab("Sample")
-## Education
-# Stacked barplot of gender per survey
-all_education_df <- all_demo  %>%
-  group_by(SurveyType, Education_short) %>%
-  summarise(counts = n()) %>%
-  mutate(Percentage = round(counts/sum(counts)*100, 2))
-all_education_df$Education_short <- ordered(all_education_df$Education_short, 
-            levels = c("University graduate","Secondary school/College","No formal quals.","Other"))
-education_bar <- ggplot(all_education_df, aes(x = SurveyType, y = Percentage,
-         fill = factor(Education_short))) +
-  geom_col(position = position_stack(reverse = TRUE)) +
-  geom_text(aes(label = paste0(Percentage, "%")),
-            position = position_stack(vjust = 0.5, reverse = TRUE)) + # geom_text_repel
-  scale_fill_brewer(palette = "Pastel1") + labs(fill = "Education group", x = "Sample") +
-  theme_minimal(base_size = 12)
-
-## Occupation
-# Create percentages
-all_occupation_df <- all_demo  %>%
-  group_by(SurveyType, Occupation_short_clean) %>%
-  summarise(counts = n()) %>%
-  mutate(Percentage = round(counts/sum(counts)*100, 2))
-all_occupation_df$Occupation_short_clean <- ordered(all_occupation_df$Occupation_short_clean, levels = c("Environment/Nature","Natural resource management","Retired","Unemployed","Other","Prefer not to answer"))
-occupation_bar <- ggplot(all_occupation_df, aes(x = SurveyType, y = Percentage,
-         fill = factor(Occupation_short_clean))) +
-  geom_col(position = position_stack(reverse = FALSE)) +
-  geom_text(aes(label = paste0(Percentage, "%")),
-            position = position_stack(vjust = 0.5, reverse = FALSE)) + # geom_text_repel
-  scale_fill_brewer(palette = "Pastel1") + labs(fill = "Occupation group", x = "Sample") +
-  theme_minimal(base_size = 12)
-```
-
-```{r age bar, echo=FALSE, message=FALSE, warning=FALSE}
-age_bar
-```
-```{r gender bar, echo=FALSE, message=FALSE, warning=FALSE}
-gender_bar
-```
-
-```{r education bar, echo=FALSE, message=FALSE, warning=FALSE}
-education_bar
-```
-
-```{r occupation bar, echo=FALSE, message=FALSE, warning=FALSE}
-occupation_bar
+# all_age_df<- all_demo  %>%
+#   group_by(SurveyType, Age_short) %>%
+#   summarise(counts = n()) %>%
+#   mutate(Percentage = round(counts/sum(counts)*100, 2))
+# age_bar <- ggplot(all_age_df, aes(x = SurveyType, y = Percentage, fill = Age_short)) +
+#   geom_col(position = position_stack(reverse = TRUE)) +
+#   geom_text(aes(label = paste0(Percentage, "%")),
+#             position = position_stack(vjust = 0.5, reverse = TRUE)) +
+#   scale_fill_brewer(palette = "Pastel1") +
+#   theme_minimal(base_size = 12) + xlab("Sample")+ labs(fill = "Age group", x = "Sample") 
+# ## Gender
+# # Stacked barplot of gender per survey
+# all_gender_df<- all_demo  %>%
+#   group_by(SurveyType, Gender) %>%
+#   summarise(counts = n()) %>%
+#   mutate(Percentage = round(counts/sum(counts)*100, 2))
+# gender_bar <- ggplot(all_gender_df, aes(x = SurveyType, y = Percentage, fill = Gender)) +
+#   geom_col(position = position_stack(reverse = TRUE)) +
+#   geom_text(aes(label = paste0(Percentage, "%")),
+#             position = position_stack(vjust = 0.5, reverse = TRUE)) +
+#   scale_fill_brewer(palette = "Pastel1") +
+#   theme_minimal(base_size = 12) + xlab("Sample")
+# ## Education
+# # Stacked barplot of gender per survey
+# all_education_df <- all_demo  %>%
+#   group_by(SurveyType, Education_short) %>%
+#   summarise(counts = n()) %>%
+#   mutate(Percentage = round(counts/sum(counts)*100, 2))
+# all_education_df$Education_short <- ordered(all_education_df$Education_short, 
+#             levels = c("University graduate","Secondary school/College","No formal quals.","Other"))
+# education_bar <- ggplot(all_education_df, aes(x = SurveyType, y = Percentage,
+#          fill = factor(Education_short))) +
+#   geom_col(position = position_stack(reverse = TRUE)) +
+#   geom_text(aes(label = paste0(Percentage, "%")),
+#             position = position_stack(vjust = 0.5, reverse = TRUE)) + # geom_text_repel
+#   scale_fill_brewer(palette = "Pastel1") + labs(fill = "Education group", x = "Sample") +
+#   theme_minimal(base_size = 12)
+# 
+# ## Occupation
+# # Create percentages
+# all_occupation_df <- all_demo  %>%
+#   group_by(SurveyType, Occupation_short_clean) %>%
+#   summarise(counts = n()) %>%
+#   mutate(Percentage = round(counts/sum(counts)*100, 2))
+# all_occupation_df$Occupation_short_clean <- ordered(all_occupation_df$Occupation_short_clean, levels = c("Environment/Nature","Natural resource management","Retired","Unemployed","Other","Prefer not to answer"))
+# occupation_bar <- ggplot(all_occupation_df, aes(x = SurveyType, y = Percentage,
+#          fill = factor(Occupation_short_clean))) +
+#   geom_col(position = position_stack(reverse = FALSE)) +
+#   geom_text(aes(label = paste0(Percentage, "%")),
+#             position = position_stack(vjust = 0.5, reverse = FALSE)) + # geom_text_repel
+#   scale_fill_brewer(palette = "Pastel1") + labs(fill = "Occupation group", x = "Sample") +
+#   theme_minimal(base_size = 12)
 ```
 
 
@@ -311,9 +296,8 @@ simp_demo_table
 Original format of the demographics table with all variables, strata and sample interations.
 
 ```{r LONG demographics table, echo=FALSE, message=FALSE, warning=FALSE}
+
 # Demographics table for publication
-
-
 library("table1")
 both_demo <- as.data.frame(all_demo)
 both_demo_data <- lapply(both_demo, function(x) x[sample(c(TRUE, NA),

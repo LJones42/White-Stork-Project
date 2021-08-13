@@ -759,8 +759,8 @@ likert_attitudes <- likert_attitudes %>%
          "The countryside will be worse off with white storks around"  = ".The.countryside.will.be.worse.off.with.white.storks.around.")
 
 # Set likert levels
-likert_att_levels <- c("Group","Item","Strongly agree", "Agree", "Neutral",
-                  "Disagree", "Strongly disagree")
+likert_att_levels <- c("Group","Item","Strongly disagree","Disagree","Neutral",
+                    "Agree", "Strongly agree")
 
 # Seperate out the negative and positive likert objects (7 of each)
 library(likert)
@@ -768,15 +768,14 @@ library(likert)
 likert_positive <- likert(items=likert_attitudes[, c(1,2,5,6,7,12,13)], grouping=likert_attitudes[,17])
 likert_positive$results <- likert_positive$results[, likert_att_levels]
 # Likert plot
-likert_positive_plot <- plot(likert_positive, type="bar", text.size = 4, include.histogram = TRUE)
-likert_positive_plot
-ggsave("Likert_attitudes_positive.png", width = 20, height = 25, units = "cm")
+plot(likert_positive, type="bar", text.size = 4) # include.histogram = TRUE)
+ # ggsave("Likert_attitudes_positive.png", width = 20, height = 25, units = "cm")
 
 ### NEGATIVE
 likert_negative <- likert(items=likert_attitudes[, c(3,4,8,9,10,11,14)], grouping=likert_attitudes[,17])
 likert_negative$results <- likert_negative$results[, likert_att_levels]
 # Likert plot
-plot(likert_negative, type="bar", text.size = 4, include.histogram = TRUE)
+plot(likert_negative, type="bar", text.size = 4) # include.histogram = TRUE)
 # ggsave("Likert_attitudes_negative.png", width = 20, height = 25, units = "cm")
 ggsave("Likert_attitudes_negative_histogram.png", width = 30, height = 25, units = "cm")
 
@@ -886,15 +885,17 @@ Q17_management_summary$Management_options <- mapvalues(Q17_management_summary$Ma
                  "Not needed","Don't know", "Other"))
 
 # Plot the data
-ggplot(Q17_management_summary, 
-  aes(x = reorder(Management_options, Percent), y = Percent, fill = WSP_support)) +
-    geom_bar(position="stack", stat="identity") +
-    labs(x = "Management options", y="Percentage of responses",
+positions <- c("Nest monitoring","Nesting platform", 
+                   "Tracking","Public engagement","Stork relocation","Supplementary food",
+               "Damage compensation","Discourage nests","Culling","Nest removal",
+                 "Not needed","Other","Don't know")
+ggplot(Q17_management_summary, aes(x = reorder(Management_options, Percent), y = Percent, fill = WSP_support)) +
+  geom_bar(position="stack", stat="identity") +
+  scale_x_discrete(limits = rev(positions))+ 
+  labs(x = "Management options", y="Percentage of responses",
          fill = "Support for white \nstork reintroduction") +
-    # geom_text(aes(Management_options, Percent, label = sprintf("%2.1f", Percent)), 
-    #         position = position_dodge(width = 1)) + 
   scale_fill_wsp(discrete = TRUE, palette = "light", reverse = TRUE) +
-  theme_minimal( base_size = 12) + 
+  theme_minimal(base_size = 12) + 
   coord_flip()
 # Original plot by WSP_support
 ggsave("Q17_management options.png", width = 20, height = 15, units = "cm")
